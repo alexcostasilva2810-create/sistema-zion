@@ -26,9 +26,9 @@ if escolha == "🏠 Início":
         try:
             st.image("logo.png", use_container_width=True)
         except:
-            st.info("Aguardando upload da logo no GitHub.")
+            st.info("Aguardando logo.png no GitHub.")
 
-# --- TELA 2: NOVA O.S (SEQUÊNCIA DO VÍDEO) ---
+# --- TELA 2: NOVA O.S ---
 elif escolha == "📝 Nova O.S":
     st.title("📝 Cadastro de Missão")
     with st.form("form_os", clear_on_submit=True):
@@ -54,5 +54,5 @@ elif escolha == "👥 Cadastrar Empurrador":
     if st.button("Adicionar à Lista"):
         if novo_nome and novo_nome not in st.session_state.lista_empurradores:
             st.session_state.lista_empurradores.append(novo_nome)
-            st.success("Nome adicionado com sucesso!")
+            st.success("Nome adicionado!")
             st.rerun()
