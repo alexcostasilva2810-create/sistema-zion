@@ -1,53 +1,53 @@
 import streamlit as st
 import pandas as pd
 
-# Configuração visual profissional
+# Configuração da página
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
-# Estilo para botões e cores da marca
-st.markdown("""
-    <style>
-    .stButton>button { width: 100%; background-color: #007bff; color: white; }
-    [data-testid="stSidebar"] { background-color: #f8f9fa; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- MENU LATERAL COM ÍCONES ---
-st.sidebar.markdown("<h2 style='color: #007bff; text-align: center;'>ZION</h2>", unsafe_allow_html=True)
+# Menu Lateral
+st.sidebar.markdown("<h1 style='text-align: center; color: #007bff;'>ZION</h1>", unsafe_allow_html=True)
 escolha = st.sidebar.radio("Navegação", ["🏠 Início (Capa)", "📝 Novo Cadastro", "💰 Financeiro", "📊 Gráficos"])
 
-# --- TELA 1: CAPA ---
+# --- TELA DE INÍCIO (CAPA) ---
 if escolha == "🏠 Início (Capa)":
     st.markdown("<h1 style='text-align: center;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center;'>Gestão de Vigilância e Escolta</h3>", unsafe_allow_html=True)
     st.divider()
-    st.image("https://via.placeholder.com/800x300/007bff/ffffff?text=SISTEMA+DE+GESTÃO+ZION", use_container_width=True)
+    # Imagem de capa (Link atualizado para não quebrar)
+    st.image("https://raw.githubusercontent.com/streamlit/docs/main/public/images/dashboards-hero.png", caption="Sistema de Gestão Zion", use_container_width=True)
 
-# --- TELA 2: FORMULÁRIO DE PREENCHIMENTO ---
+# --- TELA DE CADASTRO (SEQUÊNCIA DO VÍDEO) ---
 elif escolha == "📝 Novo Cadastro":
-    st.title("📝 Cadastro de Nova O.S")
-    with st.form("meu_formulario", clear_on_submit=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.text_input("Número da O.S")
-            st.date_input("Data do Serviço")
-            st.selectbox("Motorista", ["SAMUEL PONTES", "RODRIGO SANTANA", "JOÃO DIAS"])
-        with col2:
-            st.text_input("Local de Origem/Destino")
-            st.number_input("Valor Bruto (R$)", format="%.2f")
-            st.number_input("Soma de Despesas (R$)", format="%.2f")
+    st.title("📝 O.S Form")
+    with st.form("form_os", clear_on_submit=True):
+        # Sequência conforme o seu vídeo
+        pedido = st.text_input("PEDIDO")
+        os_numero = st.number_input("O.S", step=1)
+        data_inicio = st.date_input("INÍCIO DA MISSÃO")
+        hora_embarque = st.text_input("HORA DO EMBARQUE")
+        local = st.text_input("LOCAL")
+        empurrador = st.selectbox("EMPURRADOR", ["Opção 1", "Opção 2", "Opção 3"])
+        cmt = st.text_input("CMT")
+        saida = st.text_input("SAÍDA")
+        data_fim = st.date_input("FIM DA MISSÃO")
+        hora_termino = st.text_input("HORA/TÉRMINO DA MISSÃO")
         
-        st.form_submit_button("SALVAR DADOS NO SISTEMA")
+        st.divider()
+        escolta1 = st.text_input("ESCOLTA 1")
+        escolta2 = st.text_input("ESCOLTA 2")
+        descricao = st.text_area("DESCRIÇÃO")
+        
+        st.divider()
+        status = st.radio("STATUS", ["ANDAMENTO", "ENCERRADO"])
+        retroativo = st.radio("RETROATIVO", ["R", "FINALIZADO"])
+        despesas = st.number_input("SOMA DE DESPESAS (R$)", format="%.2f")
+        cliente = st.text_input("CLIENTE")
+        destino = st.text_input("DESTINO")
+        
+        if st.form_submit_button("SALVAR O.S"):
+            st.success("Dados salvos com sucesso!")
 
-# --- TELA 3: FINANCEIRO ---
-elif escolha == "💰 Financeiro":
-    st.title("💰 Controle Financeiro")
-    st.metric("Faturamento Total Mensal", "R$ 15.400,00", "+5%")
-    # Tabela simulada
-    df_exemplo = pd.DataFrame({
-        'DATA': ['29/12/2025', '28/12/2025'],
-        'MOTORISTA': ['SAMUEL PONTES', 'RODRIGO SANTANA'],
-        'VALOR': [740.00, 1210.00],
-        'STATUS': ['FINALIZADO', 'EM ANDAMENTO']
-    })
-    st.table(df_exemplo)
+# --- OUTRAS TELAS ---
+else:
+    st.title(f"{escolha}")
+    st.info("Área em desenvolvimento para conexão com banco de dados.")
