@@ -1,75 +1,53 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 
-# Configuração da página para esconder menus padrão e focar no sistema
-st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide", initial_sidebar_state="expanded")
+# Configuração visual profissional
+st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
-# Estilização CSS para criar o visual de "App" com fundo escuro e cards
+# Estilo para botões e cores da marca
 st.markdown("""
     <style>
-    .main { background-color: #0c0f14; color: white; }
-    [data-testid="stSidebar"] { background-color: #161b22; }
-    .stButton>button { width: 100%; border-radius: 5px; background-color: #00acee; color: white; }
+    .stButton>button { width: 100%; background-color: #007bff; color: white; }
+    [data-testid="stSidebar"] { background-color: #f8f9fa; }
     </style>
     """, unsafe_allow_html=True)
 
 # --- MENU LATERAL COM ÍCONES ---
-with st.sidebar:
-    st.image("https://raw.githubusercontent.com/alexcostasilva2810-criar/sistema-zion/main/logo.png", width=200) # Substituiremos pela sua logo
-    st.title("SISTEMA GESTÃO")
-    escolha = st.radio("Selecione uma opção:", 
-        ["🏠 Início", "📝 Novo Cadastro", "💰 Financeiro", "📊 Gráficos", "📋 Lista de O.S"])
+st.sidebar.markdown("<h2 style='color: #007bff; text-align: center;'>ZION</h2>", unsafe_allow_html=True)
+escolha = st.sidebar.radio("Navegação", ["🏠 Início (Capa)", "📝 Novo Cadastro", "💰 Financeiro", "📊 Gráficos"])
 
-# --- TELA 1: CAPA (INÍCIO) ---
-if escolha == "🏠 Início":
+# --- TELA 1: CAPA ---
+if escolha == "🏠 Início (Capa)":
     st.markdown("<h1 style='text-align: center;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'>Controle de Vigilância e Gestão de Escolta</p>", unsafe_allow_html=True)
-    
-    # Grid de ícones decorativos no centro
-    col1, col2, col3 = st.columns(3)
-    with col1: st.info("🗓️ AGENDAMENTOS")
-    with col2: st.info("📈 RELATÓRIOS")
-    with col3: st.info("👥 MOTORISTAS")
-    
-    st.image("https://via.placeholder.com/800x300/161b22/00acee?text=BEM-VINDO+AO+APP+GESTÃO+DE+ESCOLTA", use_container_width=True)
+    st.markdown("<h3 style='text-align: center;'>Gestão de Vigilância e Escolta</h3>", unsafe_allow_html=True)
+    st.divider()
+    st.image("https://via.placeholder.com/800x300/007bff/ffffff?text=SISTEMA+DE+GESTÃO+ZION", use_container_width=True)
 
 # --- TELA 2: FORMULÁRIO DE PREENCHIMENTO ---
 elif escolha == "📝 Novo Cadastro":
-    st.title("📝 Preenchimento de Ordem de Serviço")
-    
-    with st.container():
-        with st.form("form_registro", clear_on_submit=True):
-            st.subheader("Informações da Missão")
-            c1, c2, c3 = st.columns(3)
-            num_os = c1.text_input("Número da O.S")
-            data_missao = c2.date_input("Data da Missão")
-            motorista = c3.selectbox("Motorista", ["SAMUEL PONTES", "RODRIGO SANTANA", "JOÃO DIAS", "LUZ FELIPE"])
-            
-            st.divider()
-            st.subheader("Dados Financeiros")
-            f1, f2, f3 = st.columns(3)
-            valor_total = f1.number_input("Valor Total (R$)", min_value=0.0)
-            debito = f2.number_input("Débito/Adiantamento (R$)", min_value=0.0)
-            despesas = f3.number_input("Soma de Despesas (R$)", min_value=0.0)
-            
-            status = st.select_slider("Status do Serviço", options=["PROGRAMADO", "EM ANDAMENTO", "FINALIZADO"])
-            
-            enviar = st.form_submit_button("CONCLUIR CADASTRO")
-            
-            if enviar:
-                st.success(f"O.S {num_os} registrada com sucesso no sistema!")
+    st.title("📝 Cadastro de Nova O.S")
+    with st.form("meu_formulario", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.text_input("Número da O.S")
+            st.date_input("Data do Serviço")
+            st.selectbox("Motorista", ["SAMUEL PONTES", "RODRIGO SANTANA", "JOÃO DIAS"])
+        with col2:
+            st.text_input("Local de Origem/Destino")
+            st.number_input("Valor Bruto (R$)", format="%.2f")
+            st.number_input("Soma de Despesas (R$)", format="%.2f")
+        
+        st.form_submit_button("SALVAR DADOS NO SISTEMA")
 
-# --- TELA 3: FINANCEIRO (LISTA IGUAL AO VÍDEO) ---
+# --- TELA 3: FINANCEIRO ---
 elif escolha == "💰 Financeiro":
-    st.title("💰 Painel Financeiro")
-    # Aqui simulamos a visualização da tabela que aparece no vídeo
-    dados_exemplo = {
-        'ID': ['1.001', '1.002'],
+    st.title("💰 Controle Financeiro")
+    st.metric("Faturamento Total Mensal", "R$ 15.400,00", "+5%")
+    # Tabela simulada
+    df_exemplo = pd.DataFrame({
+        'DATA': ['29/12/2025', '28/12/2025'],
         'MOTORISTA': ['SAMUEL PONTES', 'RODRIGO SANTANA'],
-        'VALOR TOTAL': [740.00, 1210.00],
-        'DÉBITO': [0.00, 150.00],
-        'SOMA DESPESAS': [120.00, 300.00],
-        'STATUS': ['ENCERRADO', 'EM ANDAMENTO']
-    }
-    st.dataframe(pd.DataFrame(dados_exemplo), use_container_width=True)
+        'VALOR': [740.00, 1210.00],
+        'STATUS': ['FINALIZADO', 'EM ANDAMENTO']
+    })
+    st.table(df_exemplo)
