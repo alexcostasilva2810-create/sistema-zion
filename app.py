@@ -1,70 +1,61 @@
 import streamlit as st
 import os
 
-# Configuração da página
+# 1. Configuração da Página
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
-# Gerenciamento da lista de empurradores
+# 2. Inicialização da Lista de Empurradores
 if 'lista_empurradores' not in st.session_state:
     st.session_state.lista_empurradores = ["SAMUEL PONTES", "RODRIGO SANTANA", "JOÃO DIAS"]
 
-# Função para encontrar a logo (não importa se é logo.png ou LOGO.PNG)
-def buscar_logo():
-    arquivos = os.listdir('.')
-    for f in arquivos:
-        if f.lower() == "logo.png":
-            return f
-    return None
-
-logo_encontrada = buscar_logo()
-
-# --- MENU LATERAL ---
+# 3. Barra Lateral com Logo e Menu
 with st.sidebar:
-    if logo_encontrada:
-        st.image(logo_encontrada, use_container_width=True)
+    # Procura a imagem logo.png (ou Logo.png)
+    if os.path.exists("logo.png"):
+        st.image("logo.png", use_container_width=True)
+    elif os.path.exists("Logo.png"):
+        st.image("Logo.png", use_container_width=True)
     else:
-        st.error("Renomeie o arquivo no GitHub para: logo.png")
+        st.warning("Arquivo logo.png não detectado.")
     
-    st.markdown("<h2 style='text-align: center;'>SISTEMA ZION</h2>", unsafe_allow_html=True)
-    aba = st.radio("Navegação", ["🏠 Início", "📝 Nova O.S", "👥 Gerenciar Nomes"])
+    st.markdown("### MENU PRINCIPAL")
+    aba = st.radio("Selecione:", ["🏠 Início", "📝 Nova O.S", "👥 Cadastrar Nomes"])
 
-# --- TELA 1: INÍCIO ---
+# 4. Tela de Início (Capa)
 if aba == "🏠 Início":
     st.markdown("<h1 style='text-align: center;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
     st.divider()
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
-        if logo_encontrada:
-            st.image(logo_encontrada, use_container_width=True)
-        st.markdown("<h3 style='text-align: center;'>Controle de Vigilância</h3>", unsafe_allow_html=True)
+        if os.path.exists("logo.png"):
+            st.image("logo.png", use_container_width=True)
+        st.info("Sistema de Gestão de Vigilância")
 
-# --- TELA 2: FORMULÁRIO (CONFORME O VÍDEO) ---
+# 5. Tela de Cadastro (O.S Bloqueada)
 elif aba == "📝 Nova O.S":
-    st.title("📝 Cadastro de Missão")
-    with st.form("form_os", clear_on_submit=True):
+    st.subheader("📝 Cadastro de Ordem de Serviço")
+    with st.form("form_os"):
         c1, c2 = st.columns(2)
         with c1:
             pedido = st.text_input("PEDIDO")
-            # O número da O.S uma vez preenchido e salvo não pode ser editado
             os_num = st.number_input("NÚMERO DA O.S", min_value=1, step=1)
-            data_inicio = st.date_input("DATA INÍCIO")
-            local = st.text_input("LOCAL")
         with c2:
-            # Lista suspensa dinâmica que você alimenta
+            # Lista suspensa dinâmica
             empurrador = st.selectbox("EMPURRADOR", st.session_state.lista_empurradores)
-            cmt = st.text_input("CMT")
-            saida = st.text_input("SAÍDA")
             status = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
+        
+        # Botão de salvar
+        enviar = st.form_submit_button("SALVAR REGISTRO")
+        if enviar:
+            st.success(f"O.S {os_num} salva e bloqueada!")
 
-        if st.form_submit_button("SALVAR E BLOQUEAR O.S"):
-            st.success(f"O.S {os_num} salva com sucesso e bloqueada para alteração!")
-
-# --- TELA 3: CADASTRO DE NOMES ---
-elif aba == "👥 Gerenciar Nomes":
-    st.title("👥 Adicionar à Lista Suspensa")
-    novo = st.text_input("Novo nome:").upper()
-    if st.button("Salvar na Lista"):
+# 6. Gerenciar Nomes (Onde você cria os cadastros)
+elif aba == "👥 Cadastrar Nomes":
+    st.subheader("👥 Adicionar novo Empurrador")
+    novo = st.text_input("Nome completo:").upper()
+    if st.button("Salvar Nome"):
         if novo and novo not in st.session_state.lista_empurradores:
             st.session_state.lista_empurradores.append(novo)
-            st.success(f"{novo} adicionado!")
+            st.success("Nome adicionado à lista suspensa!")
+            # O rerun deve estar sozinho em sua própria linha
             st.rerun()
