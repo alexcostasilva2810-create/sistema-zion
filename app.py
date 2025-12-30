@@ -11,7 +11,7 @@ if 'empurradores' not in st.session_state:
 # Barra Lateral
 with st.sidebar:
     # Tenta carregar a logo independente da letra ser maiúscula ou minúscula
-    nome_arquivo = "logo.png"
+    nome_arquivo = "LOGO.PNG"
     if os.path.exists(nome_arquivo):
         st.image(nome_arquivo, use_container_width=True)
     else:
