@@ -5,7 +5,7 @@ st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
 # Memória para os nomes dos empurradores
 if 'lista' not in st.session_state:
-    st.session_state.lista = ["SAMUEL PONTES", "RODRIGO SANTANA", "JOÃO DIAS"]
+    st.session_state.lista = ["NOME", "NOME", "NOME"]
 
 # --- MENU LATERAL ---
 with st.sidebar:
@@ -13,7 +13,7 @@ with st.sidebar:
     if st.button("🏠 IR PARA O INÍCIO", use_container_width=True):
         st.session_state.aba = "Início"
     
-    st.image("logo.png", use_container_width=True)
+    st.image("LOGO.PNG", use_container_width=True)
     st.markdown("---")
     
     # Navegação simples
@@ -28,7 +28,7 @@ if st.session_state.aba == "Início":
     st.markdown("<h1 style='text-align: center;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
-        st.image("logo.png")
+        st.image("LOGO.PNG")
 
 # --- TELA 2: FORMULÁRIO (ORDEM DO SEU VÍDEO) ---
 elif st.session_state.aba == "Nova O.S":
