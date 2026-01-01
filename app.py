@@ -2,22 +2,19 @@ import streamlit as st
 import pandas as pd
 from fpdf import FPDF
 import os
-import base64
 
 # Configuração da Página
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
 # Inicialização do Banco de Dados
 if 'db_os' not in st.session_state: st.session_state.db_os = []
-if 'lista_emp' not in st.session_state: st.session_state.lista_emp = []
 if 'tela' not in st.session_state: st.session_state.tela = "HOME"
+if 'editando_idx' not in st.session_state: st.session_state.editando_idx = None
 
-# --- FUNÇÃO PDF A4 PROFISSIONAL ---
+# --- FUNÇÃO PDF A4 ---
 def gerar_pdf_a4_cliente(dados):
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
-    
-    # Recupera a logo do cliente se houver
     logo_path = dados.get('LOGO_CLI_PATH')
     if logo_path and os.path.exists(logo_path):
         try:
@@ -25,44 +22,36 @@ def gerar_pdf_a4_cliente(dados):
             pdf.ln(35)
         except: pdf.ln(10)
     else: pdf.ln(10)
-
     pdf.set_font("Arial", 'B', 16)
     pdf.cell(0, 10, f"{str(dados.get('CLIENTE', 'ORDEM DE SERVIÇO'))}", ln=True, align='C')
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, f"O.S Nº: {str(dados.get('O.S', '---'))} | PEDIDO: {str(dados.get('PEDIDO', '---'))}", ln=True, align='C')
     pdf.ln(5); pdf.line(10, pdf.get_y(), 200, pdf.get_y()); pdf.ln(5)
-    
     pdf.set_font("Arial", size=10)
-    # Exibe campos operacionais no PDF
-    excluir = ["VALOR_TOTAL", "LOGO_CLI_PATH", "ASSINATURA_PRESTADOR", "ASSINATURA_SOLICITANTE"]
+    campos_excluir = ["VALOR_TOTAL", "LOGO_CLI_PATH", "ASS_PRESTADOR", "ASS_SOLICITANTE"]
     for chave, valor in dados.items():
-        if chave not in excluir:
+        if chave not in campos_excluir:
             pdf.set_fill_color(245, 245, 245)
             pdf.cell(55, 7, txt=f"{chave}:", border=1, fill=True)
             pdf.cell(135, 7, txt=f"{str(valor)}", border=1); pdf.ln()
-
-    # --- CAMPOS DE ASSINATURA VIRTUAL E FÍSICA ---
     pdf.ln(20)
-    # Linhas
     pdf.cell(95, 10, "__________________________", 0, 0, 'C')
     pdf.cell(95, 10, "__________________________", 0, 1, 'C')
-    
-    # Nomes da Assinatura Virtual (Digitados no sistema)
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(95, 5, f"{str(dados.get('ASSINATURA_PRESTADOR', 'ASSINATURA DO PRESTADOR'))}", 0, 0, 'C')
-    pdf.cell(95, 5, f"{str(dados.get('ASSINATURA_SOLICITANTE', 'ASSINATURA DO SOLICITANTE'))}", 0, 1, 'C')
-    
-    pdf.set_font("Arial", 'I', 7)
-    pdf.cell(95, 5, "(ZION TECNOLOGIA)", 0, 0, 'C')
-    pdf.cell(95, 5, "(SOLICITANTE / CLIENTE)", 0, 1, 'C')
-
+    pdf.cell(95, 5, f"{str(dados.get('ASS_PRESTADOR', 'PRESTADOR'))}", 0, 0, 'C')
+    pdf.cell(95, 5, f"{str(dados.get('ASS_SOLICITANTE', 'SOLICITANTE'))}", 0, 1, 'C')
     return pdf.output(dest='S').encode('latin-1', 'ignore')
 
-# --- NAVEGAÇÃO ---
+# --- NAVEGAÇÃO LATERAL (LOGO NAVEGÁVEL) ---
 with st.sidebar:
-    if os.path.exists("LOGO.PNG"): st.image("LOGO.PNG")
-    if st.button("🏠 MENU PRINCIPAL", use_container_width=True): 
-        st.session_state.tela = "MENU_ICONES"; st.rerun()
+    if os.path.exists("LOGO.PNG"):
+        # A logo agora é um botão de imagem que reseta para o Menu de Ícones
+        if st.button("🏠 RETORNAR AO PAINEL", use_container_width=True):
+            st.session_state.tela = "MENU_ICONES"
+            st.rerun()
+        st.image("LOGO.PNG", use_container_width=True)
+    st.divider()
+    if st.button("📊 RESUMO FINANCEIRO", use_container_width=True):
+        st.session_state.tela = "FINANCEIRO"
+        st.rerun()
 
 # --- TELAS ---
 if st.session_state.tela == "HOME":
@@ -70,7 +59,7 @@ if st.session_state.tela == "HOME":
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if os.path.exists("LOGO.PNG"): st.image("LOGO.PNG")
-        if st.button("🔵 ENTRAR NO SISTEMA", use_container_width=True):
+        if st.button("🔵 ACESSAR SISTEMA", use_container_width=True):
             st.session_state.tela = "MENU_ICONES"; st.rerun()
 
 elif st.session_state.tela == "MENU_ICONES":
@@ -84,52 +73,40 @@ elif st.session_state.tela == "MENU_ICONES":
         if st.button("📝 NOVO CADASTRO", use_container_width=True): st.session_state.tela = "CADASTRO"; st.rerun()
 
 elif st.session_state.tela == "CADASTRO":
-    st.title("📝 Novo Cadastro de Missão")
+    st.title("📝 Cadastro de Missão")
     with st.form("f_cadastro"):
         col_c1, col_c2 = st.columns([2, 1])
-        cli_n = col_c1.text_input("CLIENTE (NOME)")
-        logo_c = col_c2.file_uploader("SUBIR LOGO DO CLIENTE", type=['png', 'jpg'])
-        
+        cli_n = col_c1.text_input("CLIENTE")
+        logo_c = col_c2.file_uploader("LOGO CLIENTE", type=['png', 'jpg'])
         c1, c2 = st.columns(2)
         with c1:
-            ped = st.text_input("PEDIDO")
             os_n = st.text_input("O.S Nº")
-            d1 = st.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY")
-            h_e = st.text_input("HORA EMBARQUE")
-            loc_origem = st.text_input("LOCAL (ORIGEM)")
-            bal = st.text_input("BALSAS")
-            tipo = st.selectbox("SERVIÇO", ["ESCOLTA", "POSTO DE VIGILÂNCIA"])
+            d1 = st.date_input("INÍCIO")
+            loc_o = st.text_input("ORIGEM")
+            tipo = st.selectbox("TIPO", ["ESCOLTA", "POSTO"])
         with c2:
             emp = st.text_input("EMPURRADOR")
-            cmt = st.text_input("CMT")
-            sai = st.text_input("SAÍDA (DESTINO)")
-            d2 = st.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
-            h_t = st.text_input("HORA TÉRMINO")
-            despesas = st.number_input("DESPESAS (R$)", min_value=0.0)
+            d2 = st.date_input("FIM")
+            sai_d = st.text_input("DESTINO")
             stt = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
         
         desc = st.text_area("DESCRIÇÃO DO SERVIÇO")
         
-        st.subheader("🖋️ Validação e Assinaturas Virtuais")
-        col_as1, col_as2 = st.columns(2)
-        ass_prest = col_as1.text_input("NOME DO PRESTADOR (ASS. VIRTUAL)")
-        ass_solic = col_as2.text_input("NOME DO SOLICITANTE (ASS. VIRTUAL)")
+        ca1, ca2 = st.columns(2)
+        as_p = ca1.text_input("ASS. PRESTADOR")
+        as_s = ca2.text_input("ASS. SOLICITANTE")
 
-        if st.form_submit_button("✅ SALVAR MISSÃO"):
-            # Salva logo em pasta local para garantir que o PDF a encontre
-            path = None
+        if st.form_submit_button("✅ SALVAR"):
+            path = f"logo_{os_n}.png" if logo_c else None
             if logo_c:
-                path = f"logo_os_{os_n}.png"
                 with open(path, "wb") as f: f.write(logo_c.getbuffer())
-            
             dias = (d2 - d1).days if (d2 - d1).days > 0 else 1
             st.session_state.db_os.append({
-                "CLIENTE": cli_n, "PEDIDO": ped, "O.S": os_n, "INÍCIO": d1.strftime('%d/%m/%Y'),
-                "EMBARQUE": h_e, "LOCAL ORIGEM": loc_origem, "SAÍDA DESTINO": sai, "BALSAS": bal, 
-                "EMPURRADOR": emp, "CMT": cmt, "FIM": d2.strftime('%d/%m/%Y'), "TÉRMINO": h_t,
-                "DIAS": dias, "DESCRIÇÃO DO SERVIÇO": desc, "STATUS": stt, 
-                "ASSINATURA_PRESTADOR": ass_prest, "ASSINATURA_SOLICITANTE": ass_solic,
-                "VALOR_TOTAL": dias * (1870.0 if tipo == "ESCOLTA" else 970.0), "DESPESAS": despesas, "LOGO_CLI_PATH": path
+                "CLIENTE": cli_n, "O.S": os_n, "INÍCIO": d1.strftime('%d/%m/%Y'),
+                "FIM": d2.strftime('%d/%m/%Y'), "ORIGEM": loc_o, "DESTINO": sai_d,
+                "EMPURRADOR": emp, "DESCRIÇÃO DO SERVIÇO": desc, "STATUS": stt,
+                "VALOR_TOTAL": dias * (1870.0 if tipo == "ESCOLTA" else 970.0),
+                "ASS_PRESTADOR": as_p, "ASS_SOLICITANTE": as_s, "LOGO_CLI_PATH": path
             })
             st.session_state.tela = "AGENDAMENTO"; st.rerun()
 
@@ -137,19 +114,17 @@ elif st.session_state.tela == "AGENDAMENTO":
     st.title("⏳ Agendamento")
     if st.session_state.db_os:
         df = pd.DataFrame(st.session_state.db_os)
-        st.dataframe(df[["CLIENTE", "O.S", "PEDIDO", "EMPURRADOR", "STATUS"]], use_container_width=True)
+        st.dataframe(df[["CLIENTE", "O.S", "INÍCIO", "STATUS"]], use_container_width=True)
         for i, row in df.iterrows():
-            with st.expander(f"Ações: O.S {row['O.S']} - {row['CLIENTE']}"):
-                col_ed, col_pd = st.columns(2)
-                if col_ed.button(f"🟠 EDITAR/FINALIZAR", key=f"btn_ed_{i}"):
+            with st.expander(f"O.S {row['O.S']}"):
+                if st.button(f"🟠 EDITAR/FINALIZAR", key=f"ed_{i}"):
                     st.session_state.editando_idx = i; st.session_state.tela = "EDITAR"; st.rerun()
-                
-                pdf_bytes = gerar_pdf_a4_cliente(row.to_dict())
-                col_pd.download_button("📥 BAIXAR O.S EM A4", data=pdf_bytes, file_name=f"OS_{row['O.S']}.pdf", key=f"dl_{i}")
+                pdf = gerar_pdf_a4_cliente(row.to_dict())
+                st.download_button("📥 BAIXAR PDF", data=pdf, file_name=f"OS_{row['O.S']}.pdf", key=f"dl_{i}")
+    else: st.info("Sem registros.")
 
 elif st.session_state.tela == "FINANCEIRO":
-    st.title("💰 Financeiro Completo")
+    st.title("💰 Financeiro")
     if st.session_state.db_os:
         df_f = pd.DataFrame(st.session_state.db_os)
-        cols_fin = ["PEDIDO", "O.S", "CLIENTE", "INÍCIO", "FIM", "LOCAL ORIGEM", "SAÍDA DESTINO", "EMPURRADOR", "DIAS", "VALOR_TOTAL", "DESPESAS", "STATUS"]
-        st.dataframe(df_f[cols_fin], use_container_width=True)
+        st.dataframe(df_f, use_container_width=True)
