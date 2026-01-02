@@ -113,8 +113,8 @@ elif st.session_state.tela == "AGENDAMENTO":
             tipo = c4.selectbox("TIPO SERVIÇO", ["ESCOLTA", "VIGILANTE"])
             
             c5, c6, c7, c8 = st.columns(4)
-           ini = c5.date_input("INÍCIO", format="DD/MM/YYYY")
-           fim = c6.date_input("FIM", format="DD/MM/YYYY")
+            ini = c5.date_input("INÍCIO", format="DD/MM/YYYY")
+            fim = c6.date_input("FIM", format="DD/MM/YYYY")
             h_emb, sai = c7.text_input("HORA EMBARQUE"), c8.text_input("SAÍDA")
             
             c9, c10, c11, c12 = st.columns(4)
