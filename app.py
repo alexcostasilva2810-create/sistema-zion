@@ -65,7 +65,7 @@ def gerar_pdf_zion(dados):
 # --- SIDEBAR ---
 with st.sidebar:
     if os.path.exists("LOGO.PNG"):
-        if st.button("🏠 MENU PRINCIPAL", use_container_width=True):
+        if st.button("🏠 MENU PRINCIPAL", key="btn_sidebar_home", use_container_width=True):
             st.session_state.tela = "MENU_ICONES"
             st.rerun()
         st.image("LOGO.PNG", use_container_width=True)
@@ -104,8 +104,9 @@ elif st.session_state.tela == "AGENDAMENTO":
                 ped = st.text_input("PEDIDO")
                 os_n = st.text_input("O.S")
             with c2:
-                ini = st.date_input("INÍCIO DA MISSÃO")
-                fim_m = st.date_input("FIM DA MISSÃO")
+                # Data configurada para exibição padrão brasileira no seletor
+                ini = st.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY")
+                fim_m = st.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
                 h_emb = st.text_input("HORA DE EMBARQUE")
                 emp = st.text_input("EMPURRADOR")
             with c3:
@@ -114,22 +115,26 @@ elif st.session_state.tela == "AGENDAMENTO":
                 esc2 = st.text_input("ESCOLTA 2")
                 stt = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
             
-            ori = st.text_input("LOCAL")
-            dest = st.text_input("DESTINO")
-            bal = st.text_area("BALSA")
+            # Ajuste de Layout: Campos agora são text_input (retangulares pequenos)
+            l1, l2, l3 = st.columns(3)
+            ori = l1.text_input("LOCAL")
+            dest = l2.text_input("DESTINO")
+            bal = l3.text_input("BALSA")
+            
             desc = st.text_area("DESCRIÇÃO")
             ass_nome = st.text_input("ASSINATURA (NOME)")
 
             if st.form_submit_button("✅ SALVAR"):
-                # Cálculo de Dias e Valores
                 dias = (fim_m - ini).days
-                if dias <= 0: dias = 1 # Garante pelo menos 1 diária
+                if dias <= 0: dias = 1
                 
                 valor_diaria = 1870.0 if tipo_serv == "ESCOLTA" else 970.0
                 total_financeiro = dias * valor_diaria
 
                 st.session_state.db_os.append({
-                    "O.S": os_n, "INICIO": ini.strftime('%d/%m/%Y'), "FIM": fim_m.strftime('%d/%m/%Y'),
+                    "O.S": os_n, 
+                    "INICIO": ini.strftime('%d/%m/%Y'), # Salva no formato brasileiro
+                    "FIM": fim_m.strftime('%d/%m/%Y'),    # Salva no formato brasileiro
                     "DIAS": dias, "TIPO": tipo_serv, "VALOR_DIARIA": valor_diaria, "TOTAL": total_financeiro,
                     "HORA": h_emb, "LOCAL": ori, "EMPURRADOR": emp, "CMT": cmt, "SAIDA": ori,
                     "ESCOLTA1": esc1, "ESCOLTA2": esc2, "DESCRIÇÃO": desc, "ASSINATURA": ass_nome, 
@@ -158,13 +163,10 @@ elif st.session_state.tela == "FINANCEIRO":
     
     if st.session_state.db_os:
         df_f = pd.DataFrame(st.session_state.db_os)
-        
-        # Exibição da Tabela Financeira Focada em Matemática
         cols_fin = ["O.S", "CLIENTE", "TIPO", "INICIO", "FIM", "DIAS", "VALOR_DIARIA", "TOTAL"]
         st.write("### Resumo de Faturamento")
-        st.table(df_f[cols_fin]) # Usei st.table para ficar fixo e claro
+        st.table(df_f[cols_fin])
         
-        # Métricas de Faturamento Total
         total_geral = df_f["TOTAL"].sum()
         st.metric("FATURAMENTO TOTAL ACUMULADO", f"R$ {total_geral:,.2f}")
     else:
