@@ -16,7 +16,7 @@ def gerar_pdf_zion(dados):
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
     
-    # Logo do Cliente (Transdourada)
+    # Logo do Cliente (logo app.jpg)
     logo_cliente = "logo app.jpg"
     if os.path.exists(logo_cliente):
         try:
@@ -28,12 +28,12 @@ def gerar_pdf_zion(dados):
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "ORDEM DE SERVIÇO DE ESCOLTA", ln=True, align='C')
     pdf.set_font("Arial", 'B', 11)
+    # Campo CLIENTE adicionado no topo do PDF
     pdf.cell(0, 7, f"CLIENTE: {str(dados.get('CLIENTE', '---'))}", ln=True, align='C')
     pdf.cell(0, 7, f"O.S Nº: {str(dados.get('O.S', '---'))} | PEDIDO: {str(dados.get('PEDIDO', '---'))}", ln=True, align='C')
     pdf.ln(5); pdf.line(10, pdf.get_y(), 200, pdf.get_y()); pdf.ln(5)
     
     pdf.set_font("Arial", size=10)
-    # Campos na Ordem Solicitada
     campos_pdf = [
         ("INÍCIO DA MISSÃO", "INICIO"), ("HORA EMBARQUE", "HORA"),
         ("FIM DA MISSÃO", "FIM"), ("LOCAL", "LOCAL"),
@@ -58,17 +58,17 @@ def gerar_pdf_zion(dados):
     pdf.set_font("Arial", size=10)
     pdf.multi_cell(0, 7, txt=str(dados.get('DESCRIÇÃO', '---')), border=1)
 
-    # Assinaturas Corrigidas
+    # Assinaturas
     pdf.ln(25)
     pdf.cell(95, 10, "__________________________", 0, 0, 'C')
     pdf.cell(95, 10, "__________________________", 0, 1, 'C')
     pdf.set_font("Arial", 'B', 10)
-    pdf.cell(95, 5, "SOLICITANTE", 0, 0, 'C') # Mudança conforme pedido
+    pdf.cell(95, 5, "SOLICITANTE", 0, 0, 'C')
     pdf.cell(95, 5, "RESPONSÁVEL CLIENTE", 0, 1, 'C')
     
     return pdf.output(dest='S').encode('latin-1', 'ignore')
 
-# --- SIDEBAR (LOGO ZION COMO BOTÃO) ---
+# --- SIDEBAR ---
 with st.sidebar:
     if os.path.exists("LOGO.PNG"):
         if st.button("🏠 MENU PRINCIPAL", use_container_width=True):
@@ -102,12 +102,12 @@ elif st.session_state.tela == "AGENDAMENTO":
     
     st.title("⏳ Agendamento e Novo Cadastro")
     
-    # FORMULÁRIO DE CADASTRO (Limpa após salvar)
+    # FORMULÁRIO DE CADASTRO
     with st.expander("➕ NOVO CADASTRO", expanded=False):
         with st.form("f_cadastro", clear_on_submit=True):
             c1, c2, c3 = st.columns(3)
             with c1:
-                cli = st.text_input("CLIENTE", value="TRANSDOURADA")
+                cli = st.text_input("NOME DO CLIENTE", value="TRANSDOURADA") # CAMPO ADICIONADO
                 ped = st.text_input("PEDIDO")
                 os_n = st.text_input("O.S")
                 ini = st.date_input("INÍCIO DA MISSÃO")
@@ -136,15 +136,14 @@ elif st.session_state.tela == "AGENDAMENTO":
                     "DESCRIÇÃO": desc, "ASSINATURA": ass_nome, "CLIENTE": cli,
                     "BALSA": bal, "DESTINO": dest, "PEDIDO": ped, "STATUS": stt
                 })
-                st.success("Cadastro realizado com sucesso!")
+                st.success("Cadastro realizado!")
                 st.rerun()
 
     st.divider()
     
-    # TABELA DE AGENDAMENTOS COM TODAS AS COLUNAS
+    # TABELA DE AGENDAMENTOS
     if st.session_state.db_os:
         df = pd.DataFrame(st.session_state.db_os)
-        # Reordenando colunas conforme solicitado
         colunas_ordem = [
             "O.S", "INICIO", "HORA", "LOCAL", "EMPURRADOR", "CMT", "SAIDA", 
             "FIM", "ESCOLTA1", "ESCOLTA2", "DESCRIÇÃO", "ASSINATURA", 
@@ -153,11 +152,9 @@ elif st.session_state.tela == "AGENDAMENTO":
         st.write("### Registros de Missões")
         st.dataframe(df[colunas_ordem], use_container_width=True)
         
-        # ÁREA DE AÇÕES (EDIÇÃO E PDF)
         for i, row in df.iterrows():
-            with st.expander(f"⚙️ Ações O.S {row['O.S']} ({row['EMPURRADOR']})"):
+            with st.expander(f"⚙️ Ações O.S {row['O.S']} - {row['CLIENTE']}"):
                 col_btn1, col_btn2 = st.columns(2)
-                # Botão Laranja para Edição
                 if col_btn1.button(f"🟠 EDITAR O.S {row['O.S']}", key=f"ed_{i}"):
                     st.session_state.editando_idx = i
                     st.session_state.tela = "EDITAR"
@@ -172,14 +169,16 @@ elif st.session_state.tela == "EDITAR":
     if idx is not None:
         st.title(f"🟠 Editando O.S {st.session_state.db_os[idx]['O.S']}")
         with st.form("f_editar"):
-            # Exemplo de edição simples (pode expandir para todos os campos)
-            novo_stt = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"], 
+            # Campos para edição (Exemplos)
+            ed_cli = st.text_input("CLIENTE", value=st.session_state.db_os[idx]['CLIENTE'])
+            ed_stt = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"], 
                                     index=0 if st.session_state.db_os[idx]['STATUS'] == "ANDAMENTO" else 1)
-            nova_desc = st.text_area("DESCRIÇÃO", value=st.session_state.db_os[idx]['DESCRIÇÃO'])
+            ed_desc = st.text_area("DESCRIÇÃO", value=st.session_state.db_os[idx]['DESCRIÇÃO'])
             
             if st.form_submit_button("💾 SALVAR ALTERAÇÕES"):
-                st.session_state.db_os[idx]['STATUS'] = novo_stt
-                st.session_state.db_os[idx]['DESCRIÇÃO'] = nova_desc
+                st.session_state.db_os[idx]['CLIENTE'] = ed_cli
+                st.session_state.db_os[idx]['STATUS'] = ed_stt
+                st.session_state.db_os[idx]['DESCRIÇÃO'] = ed_desc
                 st.session_state.tela = "AGENDAMENTO"
                 st.rerun()
         if st.button("❌ CANCELAR"):
