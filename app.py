@@ -4,65 +4,84 @@ from fpdf import FPDF
 import os
 from datetime import datetime
 
-# Configuração da Página
+# 1. CONFIGURAÇÃO E IDENTIDADE VISUAL
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
-# Estilização de Cores
 st.markdown("""
     <style>
-    div.stButton > button:first-child { background-color: #f44336; color: white; } /* Vermelho */
-    .st-emotion-cache-19rxjzoef { background-color: #4CAF50 !important; color: white !important; } /* Verde Salvar */
+    /* Botão Novo Cadastro - Vermelho */
+    div.stButton > button:first-child { background-color: #f44336; color: white; border-radius: 5px; height: 3em; font-weight: bold; }
+    /* Botão Salvar dentro do formulário - Verde */
+    .st-emotion-cache-19rxjzoef { background-color: #4CAF50 !important; color: white !important; font-weight: bold !important; }
+    /* Estilo das tabelas */
+    .stDataFrame { border: 1px solid #f44336; border-radius: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
-# Inicialização do Banco de Dados
+# 2. ESTRUTURA DE DADOS (LISTA MESTRA - NÃO REMOVER)
+# Garante que todos os campos apareçam no formulário, tabela e PDF
+CAMPOS_MESTRES = [
+    "O.S", "PEDIDO", "CLIENTE", "TIPO", "INICIO", "FIM", "HORA", "SAIDA", 
+    "EMPURRADOR", "CMT", "ESCOLTA1", "ESCOLTA2", "LOCAL", "DESTINO", "BALSA", "STATUS", "DESCRIÇÃO", "ASSINATURA"
+]
+
 if 'db_os' not in st.session_state: st.session_state.db_os = []
 if 'tela' not in st.session_state: st.session_state.tela = "HOME"
 if 'exibir_form' not in st.session_state: st.session_state.exibir_form = False
 
-# --- FUNÇÃO GERADORA DE PDF ---
+# 3. GERADOR DE PDF (O.S. COMPLETA)
 def gerar_pdf_os(dados):
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
+    
+    # Logo
     if os.path.exists("logo app.jpg"):
         try: pdf.image("logo app.jpg", x=80, y=10, w=45); pdf.ln(30)
         except: pdf.ln(10)
     
-    pdf.set_font("Arial", 'B', 14); pdf.cell(0, 10, "ORDEM DE SERVIÇO DE ESCOLTA", ln=True, align='C')
-    pdf.set_font("Arial", 'B', 10); pdf.cell(0, 7, f"CLIENTE: {dados.get('CLIENTE')} | O.S: {dados.get('O.S')} | TIPO: {dados.get('TIPO')}", ln=True, align='C')
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "ORDEM DE SERVIÇO DE ESCOLTA", ln=True, align='C')
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 7, f"CLIENTE: {dados.get('CLIENTE')} | O.S: {dados.get('O.S')}", ln=True, align='C')
     pdf.ln(5); pdf.line(10, pdf.get_y(), 200, pdf.get_y()); pdf.ln(5)
 
-    campos = [
-        ("INÍCIO", "INICIO"), ("FIM", "FIM"), ("SAÍDA", "SAIDA"), ("HORA EMBARQUE", "HORA"),
-        ("TIPO SERVIÇO", "TIPO"), ("EMPURRADOR", "EMPURRADOR"), ("CMT", "CMT"),
-        ("ESCOLTA 1", "ESCOLTA1"), ("ESCOLTA 2", "ESCOLTA2"), ("LOCAL", "LOCAL"),
-        ("DESTINO", "DESTINO"), ("BALSA", "BALSA"), ("PEDIDO", "PEDIDO"), ("STATUS", "STATUS")
-    ]
-    
     pdf.set_font("Arial", size=10)
-    for label, chave in campos:
-        pdf.set_fill_color(240, 240, 240)
-        pdf.cell(50, 7, txt=f" {label}:", border=1, fill=True)
-        texto = str(dados.get(chave, '---')).encode('latin-1', 'replace').decode('latin-1')
-        pdf.cell(140, 7, txt=f" {texto}", border=1); pdf.ln()
+    # Loop pelos campos mestres para garantir que nada fique de fora
+    for campo in CAMPOS_MESTRES:
+        if campo not in ["DESCRIÇÃO", "ASSINATURA"]:
+            pdf.set_fill_color(240, 240, 240)
+            pdf.cell(50, 7, txt=f" {campo}:", border=1, fill=True)
+            val = str(dados.get(campo, '---')).encode('latin-1', 'replace').decode('latin-1')
+            pdf.cell(140, 7, txt=f" {val}", border=1); pdf.ln()
     
+    # Descrição
     pdf.ln(5); pdf.set_font("Arial", 'B', 10); pdf.cell(0, 8, "DESCRIÇÃO:", ln=True)
-    pdf.set_font("Arial", size=10); pdf.multi_cell(0, 7, txt=str(dados.get('DESCRIÇÃO', '---')), border=1)
+    pdf.set_font("Arial", size=10)
+    desc = str(dados.get('DESCRIÇÃO', '---')).encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 7, txt=desc, border=1)
+    
+    # Assinatura (Linha e Nome)
+    pdf.ln(20)
+    pdf.cell(0, 10, "________________________________________________", 0, 1, 'C')
+    pdf.set_font("Arial", 'B', 10)
+    nome_ass = str(dados.get('ASSINATURA', 'ZION TECNOLOGIA')).encode('latin-1', 'replace').decode('latin-1')
+    pdf.cell(0, 5, nome_ass, 0, 1, 'C')
+    
     return pdf.output(dest='S').encode('latin-1', 'ignore')
 
-# --- SIDEBAR ---
+# 4. INTERFACE E NAVEGAÇÃO
 with st.sidebar:
     if os.path.exists("LOGO.PNG"):
-        if st.button("🏠 MENU PRINCIPAL"): st.session_state.tela = "MENU_ICONES"; st.rerun()
+        if st.button("🏠 MENU PRINCIPAL", use_container_width=True): 
+            st.session_state.tela = "MENU_ICONES"; st.rerun()
         st.image("LOGO.PNG", use_container_width=True)
-
-# --- TELAS ---
 
 if st.session_state.tela == "HOME":
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if os.path.exists("LOGO.PNG"): st.image("LOGO.PNG", use_container_width=True)
-        if st.button("🔵 ENTRAR NO SISTEMA", use_container_width=True): st.session_state.tela = "MENU_ICONES"; st.rerun()
+        if st.button("🔵 ENTRAR NO SISTEMA", use_container_width=True): 
+            st.session_state.tela = "MENU_ICONES"; st.rerun()
 
 elif st.session_state.tela == "MENU_ICONES":
     st.markdown("<h2 style='text-align: center;'>PAINEL DE GESTÃO</h2>", unsafe_allow_html=True)
@@ -71,7 +90,7 @@ elif st.session_state.tela == "MENU_ICONES":
     if c2.button("💰 FINANCEIRO", use_container_width=True): st.session_state.tela = "FINANCEIRO"; st.rerun()
 
 elif st.session_state.tela == "AGENDAMENTO":
-    # Dashboard de Indicadores
+    # Dashboard de Controle
     if st.session_state.db_os:
         df_d = pd.DataFrame(st.session_state.db_os)
         a = len(df_d[df_d['STATUS'].str.contains("ANDAMENTO")])
@@ -81,72 +100,68 @@ elif st.session_state.tela == "AGENDAMENTO":
         m2.metric("O.S. ENCERRADAS", f)
         m3.metric("TOTAL DE OPERAÇÕES", len(df_d))
 
+    # Botão de Cadastro (Vermelho)
     if st.button("🔴 NOVO CADASTRO"):
         st.session_state.exibir_form = not st.session_state.exibir_form
 
     if st.session_state.exibir_form:
         with st.form("f_cadastro", clear_on_submit=True):
-            st.subheader("📝 Detalhes da Ordem de Serviço")
+            st.subheader("📝 Preencher Ordem de Serviço")
             c1, c2, c3, c4 = st.columns(4)
-            os_n = c1.text_input("Nº O.S")
-            ped = c2.text_input("PEDIDO")
+            os_n, ped = c1.text_input("Nº O.S"), c2.text_input("PEDIDO")
             cli = c3.text_input("CLIENTE", value="TRANSDOURADA")
             tipo = c4.selectbox("TIPO SERVIÇO", ["ESCOLTA", "VIGILANTE"])
             
             c5, c6, c7, c8 = st.columns(4)
-            ini = c5.date_input("INÍCIO MISSÃO", format="DD/MM/YYYY")
-            fim = c6.date_input("FIM MISSÃO", format="DD/MM/YYYY")
-            h_emb = c7.text_input("HORA EMBARQUE")
-            sai = c8.text_input("SAÍDA")
+            ini, fim = c5.date_input("INÍCIO"), c6.date_input("FIM")
+            h_emb, sai = c7.text_input("HORA EMBARQUE"), c8.text_input("SAÍDA")
             
             c9, c10, c11, c12 = st.columns(4)
-            emp = c9.text_input("EMPURRADOR")
-            cmt = c10.text_input("CMT")
-            esc1 = c11.text_input("ESCOLTA 1")
-            esc2 = c12.text_input("ESCOLTA 2")
+            emp, cmt = c9.text_input("EMPURRADOR"), c10.text_input("CMT")
+            esc1, esc2 = c11.text_input("ESCOLTA 1"), c12.text_input("ESCOLTA 2")
             
             c13, c14, c15, c16 = st.columns(4)
-            ori = c13.text_input("LOCAL ORIGEM")
-            dst = c14.text_input("DESTINO")
-            bal = c15.text_input("BALSA")
-            stt = c16.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
+            ori, dst = c13.text_input("LOCAL ORIGEM"), c14.text_input("DESTINO")
+            bal, stt = c15.text_input("BALSA"), c16.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
             
-            desc = st.text_area("DESCRIÇÃO COMPLETA")
-            ass = st.text_input("ASSINATURA")
+            desc = st.text_area("DESCRIÇÃO")
+            ass = st.text_input("ASSINATURA (Nome no PDF)")
 
             if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
                 dias = (fim - ini).days if (fim - ini).days > 0 else 1
-                valor_dia = 1870.0 if tipo == "ESCOLTA" else 970.0
+                v_dia = 1870.0 if tipo == "ESCOLTA" else 970.0
                 st.session_state.db_os.append({
-                    "O.S": os_n, "PEDIDO": ped, "CLIENTE": cli, "TIPO": tipo,
-                    "INICIO": ini.strftime('%d/%m/%Y'), "FIM": fim.strftime('%d/%m/%Y'),
-                    "HORA": h_emb, "SAIDA": sai, "EMPURRADOR": emp, "CMT": cmt,
-                    "ESCOLTA1": esc1, "ESCOLTA2": esc2, "LOCAL": ori, "DESTINO": dst,
+                    "O.S": os_n, "PEDIDO": ped, "CLIENTE": cli, "TIPO": tipo, "INICIO": ini.strftime('%d/%m/%Y'),
+                    "FIM": fim.strftime('%d/%m/%Y'), "HORA": h_emb, "SAIDA": sai, "EMPURRADOR": emp,
+                    "CMT": cmt, "ESCOLTA1": esc1, "ESCOLTA2": esc2, "LOCAL": ori, "DESTINO": dst,
                     "BALSA": bal, "STATUS": "⏳ ANDAMENTO" if stt == "ANDAMENTO" else "✅ ENCERRADO",
-                    "DESCRIÇÃO": desc, "ASSINATURA": ass, "DIAS": dias, "TOTAL": dias * valor_dia, "DT_OBJ": ini
+                    "DESCRIÇÃO": desc, "ASSINATURA": ass, "DIAS": dias, "TOTAL": dias * v_dia, "DT_OBJ": ini
                 })
                 st.session_state.exibir_form = False; st.rerun()
 
+    # Exibição da Tabela com todos os campos da Lista Mestra
     if st.session_state.db_os:
         df = pd.DataFrame(st.session_state.db_os)
-        # Tabela com TODOS os campos visíveis conforme solicitado
-        colunas_vistas = ["O.S", "PEDIDO", "CLIENTE", "TIPO", "INICIO", "FIM", "DIAS", "EMPURRADOR", "CMT", "ESCOLTA1", "ESCOLTA2", "LOCAL", "DESTINO", "BALSA", "STATUS"]
-        st.dataframe(df[colunas_vistas], use_container_width=True, hide_index=True)
+        st.dataframe(df[CAMPOS_MESTRES], use_container_width=True, hide_index=True)
         
         for i, row in df.iterrows():
-            with st.expander(f"⚙️ AÇÕES O.S {row['O.S']}"):
+            with st.expander(f"⚙️ GERENCIAR O.S {row['O.S']}"):
                 c_ed, c_pr = st.columns(2)
-                if c_ed.button(f"🟠 EDITAR O.S {row['O.S']}", key=f"ed_{i}"):
+                if c_ed.button(f"🟠 EDITAR", key=f"ed_{i}"):
                     st.session_state.editando_idx = i; st.session_state.tela = "EDITAR"; st.rerun()
                 pdf_b = gerar_pdf_os(row.to_dict())
-                c_pr.download_button(f"📥 BAIXAR PDF", data=pdf_b, file_name=f"OS_{row['O.S']}.pdf", key=f"pdf_{i}")
+                c_pr.download_button(f"📥 IMPRIMIR PDF", data=pdf_b, file_name=f"OS_{row['O.S']}.pdf", key=f"pdf_{i}")
 
 elif st.session_state.tela == "FINANCEIRO":
     st.title("💰 Consolidação Financeira")
     if st.session_state.db_os:
         df_f = pd.DataFrame(st.session_state.db_os)
-        df_f['VALOR_TOTAL'] = df_f.apply(lambda x: f"R$ {x['TOTAL']:,.2f}" if "ENCERRADO" in x['STATUS'] else "AGUARDANDO FIM", axis=1)
-        st.table(df_f[["O.S", "CLIENTE", "TIPO", "DIAS", "STATUS", "VALOR_TOTAL"]])
+        df_f['VALOR_FECHAMENTO'] = df_f.apply(lambda x: f"R$ {x['TOTAL']:,.2f}" if "ENCERRADO" in x['STATUS'] else "---", axis=1)
+        st.table(df_f[["O.S", "CLIENTE", "TIPO", "DIAS", "STATUS", "VALOR_FECHAMENTO"]])
+        
+        # Resumo do Mês
+        total = df_f[df_f['STATUS'].str.contains("ENCERRADO")]['TOTAL'].sum()
+        st.metric("TOTAL FATURADO (CONCLUÍDAS)", f"R$ {total:,.2f}")
 
 elif st.session_state.tela == "EDITAR":
     idx = st.session_state.editando_idx
