@@ -9,7 +9,7 @@ from streamlit_gsheets import GSheetsConnection
 # CONFIGURAÇÃO E IDENTIDADE VISUAL
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
-# 2. CONFIGURAÇÃO DA URL (Substitua pela sua URL entre as aspas)
+# 2. CONFIGURAÇÃO DA URL (https://docs.google.com/spreadsheets/d/1Rzm55i-k9PSIc3TUownF4wBiGkQz6IaU-Lruy-dEZQM/edit?usp=sharing)
 URL_PLANILHA = "SUA_URL_DA_PLANILHA_AQUI"
 
 # Cria a conexão
