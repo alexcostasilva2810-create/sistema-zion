@@ -152,7 +152,7 @@ elif st.session_state.tela == "AGENDAMENTO":
                     st.session_state.editando_idx = i; st.session_state.tela = "EDITAR"; st.rerun()
                 pdf_b = gerar_pdf_os(row.to_dict())
                 c_pr.download_button(f"📥 IMPRIMIR PDF", data=pdf_b, file_name=f"OS_{row['O.S']}.pdf", key=f"pdf_{i}")
-       elif st.session_state.tela == "FINANCEIRO":
+ elif st.session_state.tela == "FINANCEIRO":
     st.title("💰 Relatórios e Consolidação Financeira")
     
     if st.session_state.db_os:
