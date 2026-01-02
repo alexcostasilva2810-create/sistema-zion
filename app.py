@@ -153,71 +153,67 @@ elif st.session_state.tela == "AGENDAMENTO":
                 pdf_b = gerar_pdf_os(row.to_dict())
                 c_pr.download_button(f"📥 IMPRIMIR PDF", data=pdf_b, file_name=f"OS_{row['O.S']}.pdf", key=f"pdf_{i}")
  elif st.session_state.tela == "FINANCEIRO":
-    st.title("💰 Relatórios e Consolidação Financeira")
+    st.title("💰 Relatórios Financeiros")
     
     if st.session_state.db_os:
         df_f = pd.DataFrame(st.session_state.db_os)
-        # Converte para data para poder filtrar
         df_f['DT_OBJ'] = pd.to_datetime(df_f['DT_OBJ']).dt.date
         
-        # --- Interface de Filtro ---
-        st.subheader("📅 Filtrar por Período")
+        st.subheader("📅 Selecionar Período para o Relatório")
         c1, c2, c3 = st.columns([2, 2, 2])
-        d_inicio = c1.date_input("Data Inicial", value=datetime.now().date().replace(day=1), format="DD/MM/YYYY")
-        d_final = c2.date_input("Data Final", format="DD/MM/YYYY")
+        data_ini = c1.date_input("De:", value=datetime.now().date().replace(day=1), format="DD/MM/YYYY")
+        data_fim = c2.date_input("Até:", format="DD/MM/YYYY")
         
-        # Filtragem dos dados
-        df_filtrado = df_f[(df_f['DT_OBJ'] >= d_inicio) & (df_f['DT_OBJ'] <= d_final)]
+        # Filtrar dados
+        df_filtrado = df_f[(df_f['DT_OBJ'] >= data_ini) & (df_f['DT_OBJ'] <= data_fim)]
         
-        # Exibição simples na tela (Sem valores, conforme solicitado)
-        st.write(f"Operações encontradas: {len(df_filtrado)}")
+        # Tabela limpa na tela
         st.dataframe(df_filtrado[["O.S", "CLIENTE", "TIPO", "INICIO", "FIM", "STATUS"]], use_container_width=True, hide_index=True)
         
-        # --- Cálculo e PDF ---
-        total_encerrado = df_filtrado[df_filtrado['STATUS'].str.contains("ENCERRADO")]['TOTAL'].sum()
+        # Cálculo do total do período
+        total_p = df_filtrado[df_filtrado['STATUS'].str.contains("ENCERRADO")]['TOTAL'].sum()
 
-        def gerar_pdf_financeiro_periodo(df, total):
+        def gerar_pdf_financeiro(df, total):
             pdf = FPDF(orientation='L', unit='mm', format='A4')
             pdf.add_page()
             pdf.set_font("Arial", 'B', 16)
-            pdf.cell(0, 10, "ZION TECNOLOGIA - RELATÓRIO FINANCEIRO", ln=True, align='C')
+            pdf.cell(0, 10, "RELATÓRIO FINANCEIRO ZION", ln=True, align='C')
             pdf.set_font("Arial", size=10)
-            pdf.cell(0, 10, f"Período: {d_inicio.strftime('%d/%m/%Y')} até {d_final.strftime('%d/%m/%Y')}", ln=True, align='C')
+            pdf.cell(0, 8, f"Período: {data_ini.strftime('%d/%m/%Y')} a {data_fim.strftime('%d/%m/%Y')}", ln=True, align='C')
             pdf.ln(5)
             
-            # Cabeçalho
-            pdf.set_fill_color(230, 230, 230)
-            pdf.set_font("Arial", 'B', 10)
+            # Cabeçalho do PDF
+            pdf.set_fill_color(220, 220, 220)
+            pdf.set_font("Arial", 'B', 9)
             pdf.cell(20, 8, "O.S", 1, 0, 'C', True)
-            pdf.cell(60, 8, "CLIENTE", 1, 0, 'C', True)
+            pdf.cell(50, 8, "CLIENTE", 1, 0, 'C', True)
             pdf.cell(30, 8, "TIPO", 1, 0, 'C', True)
             pdf.cell(30, 8, "INÍCIO", 1, 0, 'C', True)
             pdf.cell(30, 8, "FIM", 1, 0, 'C', True)
             pdf.cell(20, 8, "DIAS", 1, 0, 'C', True)
-            pdf.cell(40, 8, "VALOR", 1, 1, 'C', True)
+            pdf.cell(40, 8, "TOTAL", 1, 1, 'C', True)
             
-            # Conteúdo
-            pdf.set_font("Arial", size=10)
+            pdf.set_font("Arial", size=9)
             for _, r in df.iterrows():
                 pdf.cell(20, 7, str(r['O.S']), 1, 0, 'C')
-                pdf.cell(60, 7, str(r['CLIENTE']), 1)
+                pdf.cell(50, 7, str(r['CLIENTE'])[:25], 1)
                 pdf.cell(30, 7, str(r['TIPO']), 1, 0, 'C')
                 pdf.cell(30, 7, str(r['INICIO']), 1, 0, 'C')
                 pdf.cell(30, 7, str(r['FIM']), 1, 0, 'C')
                 pdf.cell(20, 7, str(r['DIAS']), 1, 0, 'C')
-                val = f"R$ {r['TOTAL']:,.2f}" if "ENCERRADO" in r['STATUS'] else "---"
-                pdf.cell(40, 7, val, 1, 1, 'R')
+                v = f"R$ {r['TOTAL']:,.2f}" if "ENCERRADO" in r['STATUS'] else "---"
+                pdf.cell(40, 7, v, 1, 1, 'R')
             
-            pdf.ln(10)
-            pdf.set_font("Arial", 'B', 14)
-            pdf.cell(0, 10, f"VALOR TOTAL DO PERÍODO: R$ {total:,.2f}", ln=True, align='R')
+            pdf.ln(5)
+            pdf.set_font("Arial", 'B', 12)
+            pdf.cell(0, 10, f"VALOR TOTAL: R$ {total:,.2f}", ln=True, align='R')
             return pdf.output(dest='S').encode('latin-1', 'ignore')
 
         if c3.button("📊 GERAR RELATÓRIO PDF"):
-            pdf_bytes = gerar_pdf_financeiro_periodo(df_filtrado, total_encerrado)
-            st.download_button("📥 BAIXAR RELATÓRIO", data=pdf_bytes, file_name="Relatorio_Financeiro.pdf", mime="application/pdf")
-
+            pdf_rel = gerar_pdf_financeiro(df_filtrado, total_p)
+            st.download_button("📥 BAIXAR PDF", data=pdf_rel, file_name="Relatorio_Financeiro.pdf", mime="application/pdf")
+        
         st.divider()
-        st.metric("TOTAL CONCLUÍDO NO PERÍODO", f"R$ {total_encerrado:,.2f}")
+        st.metric("SOMA TOTAL (PERÍODO)", f"R$ {total_p:,.2f}")
     else:
-        st.info("Aguardando dados para gerar o financeiro.")   
+        st.info("Nenhuma O.S. para processar.")
