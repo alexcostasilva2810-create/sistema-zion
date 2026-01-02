@@ -6,75 +6,70 @@ import os
 # Configuração da Página
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
-# Inicialização do Banco de Dados em Memória
+# Inicialização do Banco de Dados
 if 'db_os' not in st.session_state: st.session_state.db_os = []
 if 'tela' not in st.session_state: st.session_state.tela = "HOME"
 if 'editando_idx' not in st.session_state: st.session_state.editando_idx = None
 
-# --- FUNÇÃO GERADORA DE PDF A4 (IDENTIDADE TRANSDOURADA) ---
-def gerar_pdf_a4_cliente(dados):
+# --- FUNÇÃO GERADORA DE PDF (ESTRUTURA COMPLETA) ---
+def gerar_pdf_zion(dados):
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
     
-    # Nome EXATO do arquivo que você subiu no GitHub
-    logo_transdourada = "logo app.jpg" 
-    
-    if os.path.exists(logo_transdourada):
+    # Logo do Cliente (Transdourada)
+    logo_cliente = "logo app.jpg"
+    if os.path.exists(logo_cliente):
         try:
-            # Ajuste de proporção para a logo da Transdourada
-            pdf.image(logo_transdourada, x=55, y=10, w=100) 
+            pdf.image(logo_cliente, x=65, y=10, w=80)
             pdf.ln(30)
-        except Exception as e:
-            pdf.ln(10)
-    else:
-        pdf.set_font("Arial", 'I', 8)
-        pdf.cell(0, 5, "[Logo Transdourada não carregada]", ln=True, align='C')
-        pdf.ln(10)
+        except: pdf.ln(10)
+    else: pdf.ln(10)
 
-    pdf.set_font("Arial", 'B', 16)
+    pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "ORDEM DE SERVIÇO DE ESCOLTA", ln=True, align='C')
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 7, f"CLIENTE: {str(dados.get('CLIENTE', 'TRANSDOURADA'))}", ln=True, align='C')
+    pdf.cell(0, 7, f"CLIENTE: {str(dados.get('CLIENTE', '---'))}", ln=True, align='C')
     pdf.cell(0, 7, f"O.S Nº: {str(dados.get('O.S', '---'))} | PEDIDO: {str(dados.get('PEDIDO', '---'))}", ln=True, align='C')
     pdf.ln(5); pdf.line(10, pdf.get_y(), 200, pdf.get_y()); pdf.ln(5)
     
-    # Tabela de Dados Operacionais
     pdf.set_font("Arial", size=10)
-    ordem_campos = [
-        ("INÍCIO DA MISSÃO", "INÍCIO"), ("FIM DA MISSÃO", "FIM"),
+    # Campos na Ordem Solicitada
+    campos_pdf = [
+        ("INÍCIO DA MISSÃO", "INICIO"), ("HORA EMBARQUE", "HORA"),
+        ("FIM DA MISSÃO", "FIM"), ("LOCAL", "LOCAL"),
         ("EMPURRADOR", "EMPURRADOR"), ("CMT", "CMT"),
-        ("LOCAL ORIGEM", "LOCAL (ORIGEM)"), ("SAÍDA DESTINO", "SAÍDA (DESTINO)"),
-        ("BALSAS", "BALSAS"), ("STATUS ATUAL", "STATUS")
+        ("SAÍDA", "SAIDA"), ("DESTINO", "DESTINO"),
+        ("BALSAS", "BALSA"), ("ESCOLTA 1", "ESCOLTA1"),
+        ("ESCOLTA 2", "ESCOLTA2"), ("STATUS ATUAL", "STATUS")
     ]
-
-    for label, chave in ordem_campos:
+    
+    for label, chave in campos_pdf:
         valor = dados.get(chave, "---")
-        pdf.set_fill_color(240, 240, 240)
+        pdf.set_fill_color(245, 245, 245)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(50, 8, txt=f" {label}:", border=1, fill=True)
+        pdf.cell(50, 7, txt=f" {label}:", border=1, fill=True)
         pdf.set_font("Arial", size=10)
-        pdf.cell(140, 8, txt=f" {str(valor)}", border=1); pdf.ln()
+        pdf.cell(140, 7, txt=f" {str(valor)}", border=1); pdf.ln()
 
-    # Descrição
+    # Detalhamento
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(0, 8, "DETALHAMENTO DA MISSÃO:", ln=True)
     pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 7, txt=str(dados.get('DESCRIÇÃO DO SERVIÇO', '---')), border=1)
+    pdf.multi_cell(0, 7, txt=str(dados.get('DESCRIÇÃO', '---')), border=1)
 
-    # Assinaturas
-    pdf.ln(20)
+    # Assinaturas Corrigidas
+    pdf.ln(25)
     pdf.cell(95, 10, "__________________________", 0, 0, 'C')
     pdf.cell(95, 10, "__________________________", 0, 1, 'C')
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(95, 5, "ZION TECNOLOGIA", 0, 0, 'C')
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(95, 5, "SOLICITANTE", 0, 0, 'C') # Mudança conforme pedido
     pdf.cell(95, 5, "RESPONSÁVEL CLIENTE", 0, 1, 'C')
     
     return pdf.output(dest='S').encode('latin-1', 'ignore')
 
-# --- NAVEGAÇÃO LATERAL ---
+# --- SIDEBAR (LOGO ZION COMO BOTÃO) ---
 with st.sidebar:
-    # Ajuste para sua logo azul da Zion (LOGO.PNG)
     if os.path.exists("LOGO.PNG"):
         if st.button("🏠 MENU PRINCIPAL", use_container_width=True):
             st.session_state.tela = "MENU_ICONES"
@@ -102,54 +97,98 @@ elif st.session_state.tela == "MENU_ICONES":
             st.session_state.tela = "FINANCEIRO"; st.rerun()
 
 elif st.session_state.tela == "AGENDAMENTO":
-    if st.button("⬅️ VOLTAR AO PAINEL"):
+    if st.button("⬅️ VOLTAR"):
         st.session_state.tela = "MENU_ICONES"; st.rerun()
     
     st.title("⏳ Agendamento e Novo Cadastro")
     
-    with st.expander("➕ CADASTRAR NOVA MISSÃO", expanded=False):
-        with st.form("f_cadastro"):
-            c1, c2 = st.columns(2)
+    # FORMULÁRIO DE CADASTRO (Limpa após salvar)
+    with st.expander("➕ NOVO CADASTRO", expanded=False):
+        with st.form("f_cadastro", clear_on_submit=True):
+            c1, c2, c3 = st.columns(3)
             with c1:
-                cli_n = st.text_input("CLIENTE", value="TRANSDOURADA")
+                cli = st.text_input("CLIENTE", value="TRANSDOURADA")
                 ped = st.text_input("PEDIDO")
-                os_n = st.text_input("O.S Nº")
-                d1 = st.date_input("DATA INÍCIO")
+                os_n = st.text_input("O.S")
+                ini = st.date_input("INÍCIO DA MISSÃO")
+                h_emb = st.text_input("HORA DE EMBARQUE")
             with c2:
                 emp = st.text_input("EMPURRADOR")
                 cmt = st.text_input("CMT")
-                sai_d = st.text_input("DESTINO")
-                d2 = st.date_input("DATA FIM")
+                ori = st.text_input("LOCAL")
+                sai = st.text_input("SAÍDA")
+                fim_m = st.date_input("FIM DA MISSÃO")
+            with c3:
+                esc1 = st.text_input("ESCOLTA 1")
+                esc2 = st.text_input("ESCOLTA 2")
+                dest = st.text_input("DESTINO")
+                stt = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
             
-            loc_o = st.text_input("LOCAL ORIGEM")
-            bal = st.text_area("BALSAS")
-            desc = st.text_area("DESCRIÇÃO / RELATÓRIO")
-            stt = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
+            bal = st.text_area("BALSA")
+            desc = st.text_area("DESCRIÇÃO")
+            ass_nome = st.text_input("ASSINATURA (NOME)")
 
-            if st.form_submit_button("✅ SALVAR MISSÃO"):
-                dias = (d2 - d1).days if (d2 - d1).days > 0 else 1
+            if st.form_submit_button("✅ SALVAR"):
                 st.session_state.db_os.append({
-                    "CLIENTE": cli_n, "PEDIDO": ped, "O.S": os_n, "INÍCIO": d1.strftime('%d/%m/%Y'),
-                    "FIM": d2.strftime('%d/%m/%Y'), "LOCAL (ORIGEM)": loc_o, "SAÍDA (DESTINO)": sai_d,
-                    "BALSAS": bal, "EMPURRADOR": emp, "CMT": cmt, "DIAS": dias, 
-                    "DESCRIÇÃO DO SERVIÇO": desc, "STATUS": stt, 
-                    "VALOR_TOTAL": dias * 1870.0
+                    "O.S": os_n, "INICIO": ini.strftime('%d/%m/%Y'), "HORA": h_emb,
+                    "LOCAL": ori, "EMPURRADOR": emp, "CMT": cmt, "SAIDA": sai,
+                    "FIM": fim_m.strftime('%d/%m/%Y'), "ESCOLTA1": esc1, "ESCOLTA2": esc2,
+                    "DESCRIÇÃO": desc, "ASSINATURA": ass_nome, "CLIENTE": cli,
+                    "BALSA": bal, "DESTINO": dest, "PEDIDO": ped, "STATUS": stt
                 })
-                st.success("Salvo!")
+                st.success("Cadastro realizado com sucesso!")
                 st.rerun()
 
     st.divider()
+    
+    # TABELA DE AGENDAMENTOS COM TODAS AS COLUNAS
     if st.session_state.db_os:
         df = pd.DataFrame(st.session_state.db_os)
+        # Reordenando colunas conforme solicitado
+        colunas_ordem = [
+            "O.S", "INICIO", "HORA", "LOCAL", "EMPURRADOR", "CMT", "SAIDA", 
+            "FIM", "ESCOLTA1", "ESCOLTA2", "DESCRIÇÃO", "ASSINATURA", 
+            "CLIENTE", "BALSA", "DESTINO", "PEDIDO"
+        ]
+        st.write("### Registros de Missões")
+        st.dataframe(df[colunas_ordem], use_container_width=True)
+        
+        # ÁREA DE AÇÕES (EDIÇÃO E PDF)
         for i, row in df.iterrows():
-            with st.expander(f"O.S {row['O.S']} - {row['EMPURRADOR']}"):
-                pdf_b = gerar_pdf_a4_cliente(row.to_dict())
-                st.download_button(f"📥 BAIXAR PDF O.S {row['O.S']}", data=pdf_b, 
-                                 file_name=f"OS_{row['O.S']}.pdf", key=f"btn_{i}")
+            with st.expander(f"⚙️ Ações O.S {row['O.S']} ({row['EMPURRADOR']})"):
+                col_btn1, col_btn2 = st.columns(2)
+                # Botão Laranja para Edição
+                if col_btn1.button(f"🟠 EDITAR O.S {row['O.S']}", key=f"ed_{i}"):
+                    st.session_state.editando_idx = i
+                    st.session_state.tela = "EDITAR"
+                    st.rerun()
+                
+                pdf_b = gerar_pdf_zion(row.to_dict())
+                col_btn2.download_button(f"📥 BAIXAR PDF O.S {row['O.S']}", data=pdf_b, 
+                                       file_name=f"OS_{row['O.S']}.pdf", key=f"pdf_{i}")
+
+elif st.session_state.tela == "EDITAR":
+    idx = st.session_state.editando_idx
+    if idx is not None:
+        st.title(f"🟠 Editando O.S {st.session_state.db_os[idx]['O.S']}")
+        with st.form("f_editar"):
+            # Exemplo de edição simples (pode expandir para todos os campos)
+            novo_stt = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"], 
+                                    index=0 if st.session_state.db_os[idx]['STATUS'] == "ANDAMENTO" else 1)
+            nova_desc = st.text_area("DESCRIÇÃO", value=st.session_state.db_os[idx]['DESCRIÇÃO'])
+            
+            if st.form_submit_button("💾 SALVAR ALTERAÇÕES"):
+                st.session_state.db_os[idx]['STATUS'] = novo_stt
+                st.session_state.db_os[idx]['DESCRIÇÃO'] = nova_desc
+                st.session_state.tela = "AGENDAMENTO"
+                st.rerun()
+        if st.button("❌ CANCELAR"):
+            st.session_state.tela = "AGENDAMENTO"
+            st.rerun()
 
 elif st.session_state.tela == "FINANCEIRO":
-    if st.button("⬅️ VOLTAR AO PAINEL"):
+    if st.button("⬅️ VOLTAR"):
         st.session_state.tela = "MENU_ICONES"; st.rerun()
-    st.title("💰 Resumo Financeiro")
+    st.title("💰 Financeiro")
     if st.session_state.db_os:
         st.dataframe(pd.DataFrame(st.session_state.db_os), use_container_width=True)
