@@ -7,20 +7,12 @@ from datetime import datetime
 # Configuração da Página
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
-# Estilização CSS para a Tabela estilo Dark do Vídeo
-st.markdown("""
-    <style>
-    .stDataFrame { border-radius: 10px; }
-    div[data-testid="stExpander"] { border: 1px solid #ff4b4b; border-radius: 10px; }
-    </style>
-    """, unsafe_allow_html=True)
-
 # Inicialização do Banco
 if 'db_os' not in st.session_state: st.session_state.db_os = []
 if 'tela' not in st.session_state: st.session_state.tela = "HOME"
 if 'editando_idx' not in st.session_state: st.session_state.editando_idx = None
 
-# --- GERADOR DE PDF ---
+# --- FUNÇÃO GERADORA DE PDF O.S ---
 def gerar_pdf_zion(dados):
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
@@ -29,50 +21,58 @@ def gerar_pdf_zion(dados):
         try: pdf.image(logo_cliente, x=65, y=10, w=80); pdf.ln(30)
         except: pdf.ln(10)
     else: pdf.ln(10)
-
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "ORDEM DE SERVIÇO DE ESCOLTA", ln=True, align='C')
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 7, f"CLIENTE: {str(dados.get('CLIENTE', '---'))}", ln=True, align='C')
     pdf.cell(0, 7, f"O.S Nº: {str(dados.get('O.S', '---'))} | PEDIDO: {str(dados.get('PEDIDO', '---'))}", ln=True, align='C')
     pdf.ln(5); pdf.line(10, pdf.get_y(), 200, pdf.get_y()); pdf.ln(5)
-    
-    campos = [
-        ("INÍCIO DA MISSÃO", "INICIO"), ("HORA EMBARQUE", "HORA"),
-        ("FIM DA MISSÃO", "FIM"), ("LOCAL", "LOCAL"),
-        ("EMPURRADOR", "EMPURRADOR"), ("CMT", "CMT"),
-        ("SAÍDA", "SAIDA"), ("DESTINO", "DESTINO"),
-        ("BALSAS", "BALSA"), ("ESCOLTA 1", "ESCOLTA1"),
-        ("ESCOLTA 2", "ESCOLTA2"), ("STATUS", "STATUS")
-    ]
-    
+    campos = [("INÍCIO", "INICIO"), ("FIM", "FIM"), ("EMPURRADOR", "EMPURRADOR"), ("CMT", "CMT"), ("STATUS", "STATUS")]
     pdf.set_font("Arial", size=10)
     for label, chave in campos:
-        pdf.set_fill_color(245, 245, 245)
-        pdf.set_font("Arial", 'B', 10)
-        pdf.cell(50, 7, txt=f" {label}:", border=1, fill=True)
-        pdf.set_font("Arial", size=10)
+        pdf.cell(50, 7, txt=f" {label}:", border=1)
         pdf.cell(140, 7, txt=f" {str(dados.get(chave, '---'))}", border=1); pdf.ln()
-
-    pdf.ln(5); pdf.set_font("Arial", 'B', 10); pdf.cell(0, 8, "DETALHAMENTO DA MISSÃO:", ln=True)
-    pdf.set_font("Arial", size=10); pdf.multi_cell(0, 7, txt=str(dados.get('DESCRIÇÃO', '---')), border=1)
-
-    pdf.ln(25)
-    pdf.cell(95, 10, "__________________________", 0, 0, 'C')
-    pdf.cell(95, 10, "__________________________", 0, 1, 'C')
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(95, 5, "SOLICITANTE", 0, 0, 'C')
-    pdf.cell(95, 5, "RESPONSÁVEL CLIENTE", 0, 1, 'C')
-    
     return pdf.output(dest='S').encode('latin-1', 'ignore')
 
-# --- NAVEGAÇÃO ---
-with st.sidebar:
-    if os.path.exists("LOGO.PNG"):
-        if st.button("🏠 MENU PRINCIPAL", use_container_width=True):
-            st.session_state.tela = "MENU_ICONES"; st.rerun()
-        st.image("LOGO.PNG", use_container_width=True)
+# --- FUNÇÃO RELATÓRIO FINANCEIRO PDF ---
+def gerar_relatorio_financeiro(df_periodo, data_i, data_f):
+    pdf = FPDF(orientation='L', unit='mm', format='A4')
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, f"RELATÓRIO FINANCEIRO - {data_i.strftime('%d/%m/%Y')} A {data_f.strftime('%d/%m/%Y')}", ln=True, align='C')
+    pdf.ln(10)
+    # Cabeçalho da Tabela
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_fill_color(200, 200, 200)
+    pdf.cell(20, 8, "O.S", 1, 0, 'C', True)
+    pdf.cell(60, 8, "CLIENTE", 1, 0, 'C', True)
+    pdf.cell(30, 8, "INICIO", 1, 0, 'C', True)
+    pdf.cell(30, 8, "FIM", 1, 0, 'C', True)
+    pdf.cell(20, 8, "DIAS", 1, 0, 'C', True)
+    pdf.cell(40, 8, "TIPO", 1, 0, 'C', True)
+    pdf.cell(40, 8, "TOTAL", 1, 1, 'C', True)
+    
+    pdf.set_font("Arial", size=10)
+    total_geral = 0
+    for _, row in df_periodo.iterrows():
+        # Somente soma e exibe valor se encerrado
+        valor_str = f"R$ {row['TOTAL']:,.2f}" if "ENCERRADO" in str(row['STATUS']) else "R$ 0,00"
+        if "ENCERRADO" in str(row['STATUS']): total_geral += row['TOTAL']
+        
+        pdf.cell(20, 8, str(row['O.S']), 1)
+        pdf.cell(60, 8, str(row['CLIENTE'])[:25], 1)
+        pdf.cell(30, 8, str(row['INICIO']), 1)
+        pdf.cell(30, 8, str(row['FIM']), 1)
+        pdf.cell(20, 8, str(row['DIAS']), 1)
+        pdf.cell(40, 8, str(row['TIPO']), 1)
+        pdf.cell(40, 8, valor_str, 1, 1)
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, f"TOTAL DO PERÍODO: R$ {total_geral:,.2f}", 0, 1, 'R')
+    return pdf.output(dest='S').encode('latin-1', 'ignore')
 
+# --- TELAS ---
 if st.session_state.tela == "HOME":
     st.markdown("<h1 style='text-align: center;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -90,86 +90,70 @@ elif st.session_state.tela == "MENU_ICONES":
         if st.button("💰 FINANCEIRO", use_container_width=True): st.session_state.tela = "FINANCEIRO"; st.rerun()
 
 elif st.session_state.tela == "AGENDAMENTO":
-    if st.button("⬅️ VOLTAR AO PAINEL"): st.session_state.tela = "MENU_ICONES"; st.rerun()
-    
-    st.title("⏳ Agendamento e Novo Cadastro")
-    
-    with st.expander("➕ NOVO CADASTRO", expanded=False):
+    if st.button("⬅️ VOLTAR"): st.session_state.tela = "MENU_ICONES"; st.rerun()
+    st.title("⏳ Agendamento e Cadastro")
+    with st.expander("➕ NOVO CADASTRO"):
         with st.form("f_cadastro", clear_on_submit=True):
             c1, c2, c3 = st.columns(3)
-            with c1:
-                cli = st.text_input("CLIENTE", value="TRANSDOURADA")
-                tipo = st.selectbox("TIPO SERVIÇO", ["ESCOLTA", "VIGILANTE"])
-                ped = st.text_input("PEDIDO")
-                os_n = st.text_input("O.S")
-            with c2:
-                ini = st.date_input("INÍCIO MISSÃO", format="DD/MM/YYYY")
-                fim = st.date_input("FIM MISSÃO", format="DD/MM/YYYY")
-                h_emb = st.text_input("HORA EMBARQUE")
-                emp = st.text_input("EMPURRADOR")
-            with c3:
-                cmt = st.text_input("CMT")
-                esc1 = st.text_input("ESCOLTA 1")
-                esc2 = st.text_input("ESCOLTA 2")
-                stt = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
-            
-            # Campos Retangulares Pequenos
+            cli = c1.text_input("CLIENTE", value="TRANSDOURADA")
+            tipo = c1.selectbox("TIPO", ["ESCOLTA", "VIGILANTE"])
+            os_n = c1.text_input("O.S")
+            ini = c2.date_input("INÍCIO", format="DD/MM/YYYY")
+            fim = c2.date_input("FIM", format="DD/MM/YYYY")
+            emp = c2.text_input("EMPURRADOR")
+            cmt = c3.text_input("CMT")
+            stt = c3.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
             r1, r2, r3 = st.columns(3)
-            ori = r1.text_input("LOCAL")
-            dest = r2.text_input("DESTINO")
-            bal = r3.text_input("BALSA")
-            
+            ori, dest, bal = r1.text_input("LOCAL"), r2.text_input("DESTINO"), r3.text_input("BALSA")
             desc = st.text_area("DESCRIÇÃO")
-            ass = st.text_input("ASSINATURA (NOME)")
-
             if st.form_submit_button("✅ SALVAR"):
                 dias = (fim - ini).days if (fim - ini).days > 0 else 1
                 v_diaria = 1870.0 if tipo == "ESCOLTA" else 970.0
                 st.session_state.db_os.append({
                     "O.S": os_n, "INICIO": ini.strftime('%d/%m/%Y'), "FIM": fim.strftime('%d/%m/%Y'),
-                    "HORA": h_emb, "LOCAL": ori, "EMPURRADOR": emp, "CMT": cmt, "SAIDA": ori,
-                    "ESCOLTA1": esc1, "ESCOLTA2": esc2, "DESCRIÇÃO": desc, "ASSINATURA": f"🖋️ {ass}",
-                    "CLIENTE": cli, "BALSA": bal, "DESTINO": dest, "PEDIDO": ped, 
-                    "STATUS": "✅ ENCERRADO" if stt == "ENCERRADO" else "⏳ ANDAMENTO",
-                    "DIAS": dias, "TIPO": tipo, "TOTAL": dias * v_diaria
+                    "DT_OBJ": ini, "DIAS": dias, "TIPO": tipo, "VALOR_DIARIA": v_diaria, "TOTAL": dias * v_diaria,
+                    "EMPURRADOR": emp, "CMT": cmt, "CLIENTE": cli, "BALSA": bal, "STATUS": "✅ ENCERRADO" if stt == "ENCERRADO" else "⏳ ANDAMENTO", "DESCRIÇÃO": desc
                 })
-                st.success("Salvo!")
                 st.rerun()
-
-    st.divider()
-    
-    # EXIBIÇÃO ESTILO VÍDEO (TABELA COMPLETA)
     if st.session_state.db_os:
-        df = pd.DataFrame(st.session_state.db_os)
-        cols = ["O.S", "INICIO", "HORA", "LOCAL", "EMPURRADOR", "CMT", "SAIDA", "FIM", "ESCOLTA1", "ESCOLTA2", "DESCRIÇÃO", "ASSINATURA", "CLIENTE", "BALSA", "DESTINO", "PEDIDO", "STATUS"]
-        st.write("### 📋 Registros de Operações")
-        st.dataframe(df[cols], use_container_width=True, hide_index=True)
-        
-        for i, row in df.iterrows():
-            with st.expander(f"OPÇÕES O.S {row['O.S']} - {row['EMPURRADOR']}"):
-                col_a, col_b = st.columns(2)
-                if col_a.button(f"🟠 EDITAR", key=f"ed_{i}"):
-                    st.session_state.editando_idx = i; st.session_state.tela = "EDITAR"; st.rerun()
-                pdf = gerar_pdf_zion(row.to_dict())
-                col_b.download_button(f"📥 BAIXAR PDF", data=pdf, file_name=f"OS_{row['O.S']}.pdf", key=f"pdf_{i}")
+        st.dataframe(pd.DataFrame(st.session_state.db_os).drop(columns=['DT_OBJ']), use_container_width=True)
 
 elif st.session_state.tela == "FINANCEIRO":
     if st.button("⬅️ VOLTAR"): st.session_state.tela = "MENU_ICONES"; st.rerun()
-    st.title("💰 Financeiro Zion")
+    st.title("💰 Financeiro")
+    
     if st.session_state.db_os:
         df_f = pd.DataFrame(st.session_state.db_os)
-        st.table(df_f[["O.S", "CLIENTE", "TIPO", "DIAS", "TOTAL", "STATUS"]])
-        st.metric("FATURAMENTO TOTAL", f"R$ {df_f['TOTAL'].sum():,.2f}")
+        
+        # Filtro de Período para o Relatório
+        st.markdown("### 📅 Gerar Relatório por Período")
+        col_d1, col_d2, col_btn = st.columns([2, 2, 2])
+        data_inicio = col_d1.date_input("Data Inicial", datetime.now())
+        data_final = col_d2.date_input("Data Final", datetime.now())
+        
+        # Filtragem dos dados
+        df_filtrado = df_f[(df_f['DT_OBJ'] >= data_inicio) & (df_f['DT_OBJ'] <= data_final)]
+        
+        # BOTÃO AZUL PARA PDF
+        pdf_relatorio = gerar_relatorio_financeiro(df_filtrado, data_inicio, data_final)
+        col_btn.markdown("<br>", unsafe_allow_html=True)
+        col_btn.download_button(
+            label="🔵 GERAR RELATÓRIO PDF",
+            data=pdf_relatorio,
+            file_name=f"Relatorio_Zion_{data_inicio}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
 
-elif st.session_state.tela == "EDITAR":
-    idx = st.session_state.editando_idx
-    if idx is not None:
-        st.title(f"🟠 Editar O.S {st.session_state.db_os[idx]['O.S']}")
-        with st.form("f_ed"):
-            ed_stt = st.selectbox("STATUS", ["ANDAMENTO", "ENCERRADO"])
-            ed_desc = st.text_area("DESCRIÇÃO", value=st.session_state.db_os[idx]['DESCRIÇÃO'])
-            if st.form_submit_button("💾 SALVAR"):
-                st.session_state.db_os[idx]['STATUS'] = "✅ ENCERRADO" if ed_stt == "ENCERRADO" else "⏳ ANDAMENTO"
-                st.session_state.db_os[idx]['DESCRIÇÃO'] = ed_desc
-                st.session_state.tela = "AGENDAMENTO"; st.rerun()
-        if st.button("❌ CANCELAR"): st.session_state.tela = "AGENDAMENTO"; st.rerun()
+        st.divider()
+        st.write("### 💵 Detalhamento por Operação")
+        # Criar exibição onde valor só aparece se encerrado
+        df_display = df_f.copy()
+        df_display['VALOR EXIBIDO'] = df_display.apply(lambda x: f"R$ {x['TOTAL']:,.2f}" if "ENCERRADO" in x['STATUS'] else "---", axis=1)
+        
+        st.table(df_display[["O.S", "CLIENTE", "INICIO", "FIM", "STATUS", "VALOR EXIBIDO"]])
+        
+        total_encerrado = df_f[df_f['STATUS'].str.contains("ENCERRADO")]['TOTAL'].sum()
+        st.metric("TOTAL RECEBÍVEL (ENCERRADOS)", f"R$ {total_encerrado:,.2f}")
+    else:
+        st.info("Nenhuma O.S cadastrada.")
