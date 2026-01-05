@@ -3,7 +3,7 @@ import requests
 
 st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
-# LIMPANDO OS DADOS AUTOMATICAMENTE
+# Limpeza automática de segurança para o Token e ID
 TOKEN = st.secrets["notion"]["token"].replace('"', '').replace('\\', '').strip()
 DATABASE = st.secrets["notion"]["database_id"].replace('"', '').replace('\\', '').strip()
 
@@ -37,7 +37,7 @@ with st.form("form_final"):
                 "Nº OS": {"title": [{"text": {"content": os}}]},
                 "PEDIDO": {"rich_text": [{"text": {"content": pedido}}]},
                 "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
-                "TIPO": {"select": {"name": tipo}},
+                "TIPO": {"select": {"name": tipo}}, # CAMPO AJUSTADO PARA SELECT
                 "INÍCIO": {"rich_text": [{"text": {"content": str(data)}}]},
                 "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]},
                 "ASSINATURA": {"rich_text": [{"text": {"content": ass}}]}
@@ -46,6 +46,6 @@ with st.form("form_final"):
         res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
         
         if res.status_code == 200:
-            st.success("🎯 FINALMENTE! Dados salvos na tabela Zion.")
+            st.success("🎯 AGORA FOI! Verifique sua tabela no Notion.")
         else:
             st.error(f"Erro {res.status_code}: {res.text}")
