@@ -1,11 +1,10 @@
 import streamlit as st
 import requests
 from fpdf import FPDF
-import pandas as pd
 
-st.set_page_config(page_title="Zion Tecnologia - Gestão OS", layout="wide")
+st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
-# Configurações de conexão
+# Limpeza automática de segurança
 TOKEN = st.secrets["notion"]["token"].replace('"', '').replace('\\', '').strip()
 DATABASE = st.secrets["notion"]["database_id"].replace('"', '').replace('\\', '').strip()
 
@@ -15,23 +14,23 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- FUNÇÃO PARA BUSCAR DADOS DO NOTION ---
+# Funções auxiliares
 def buscar_dados():
-    url = f"https://api.notion.com/v1/databases/{DATABASE}/query"
-    res = requests.post(url, headers=headers)
-    if res.status_code == 200:
-        data = res.json()
-        paginas = []
-        for page in data["results"]:
-            props = page["properties"]
-            # Extraindo os campos conforme sua tabela
-            os_val = props["Nº OS"]["title"][0]["text"]["content"] if props["Nº OS"]["title"] else "Sem OS"
-            cliente_val = props["CLIENTE"]["rich_text"][0]["text"]["content"] if props["CLIENTE"]["rich_text"] else ""
-            paginas.append({"id": page["id"], "os": os_val, "cliente": cliente_val, "props": props})
-        return paginas
+    try:
+        url = f"https://api.notion.com/v1/databases/{DATABASE}/query"
+        res = requests.post(url, headers=headers)
+        if res.status_code == 200:
+            results = res.json().get("results", [])
+            paginas = []
+            for page in results:
+                p = page["properties"]
+                os_val = p["Nº OS"]["title"][0]["text"]["content"] if p["Nº OS"]["title"] else "S/N"
+                cli_val = p["CLIENTE"]["rich_text"][0]["text"]["content"] if p["CLIENTE"]["rich_text"] else ""
+                paginas.append({"id": page["id"], "os": os_val, "cliente": cli_val, "full": p})
+            return paginas
+    except: return []
     return []
 
-# --- FUNÇÃO PARA GERAR PDF ---
 def gerar_pdf(dados):
     pdf = FPDF()
     pdf.add_page()
@@ -39,58 +38,68 @@ def gerar_pdf(dados):
     pdf.cell(200, 10, "ZION TECNOLOGIA - ORDEM DE SERVIÇO", ln=True, align='C')
     pdf.ln(10)
     pdf.set_font("Arial", size=12)
-    for chave, valor in dados.items():
-        pdf.cell(200, 10, f"{chave}: {valor}", ln=True)
+    for k, v in dados.items():
+        pdf.cell(200, 8, f"{k}: {v}", ln=True)
     return pdf.output(dest='S').encode('latin-1')
 
-st.title("🚨 Zion Tecnologia - Gestão de OS")
+st.title("🚨 Sistema Zion")
 
-aba_cad, aba_edit = st.tabs(["🆕 Nova OS", "✏️ Editar / Gerar PDF"])
+aba1, aba2 = st.tabs(["🆕 Nova OS", "✏️ Editar e PDF"])
 
-# --- ABA 1: CADASTRO (O que já está funcionando) ---
-with aba_cad:
-    with st.form("novo_cadastro"):
-        col1, col2 = st.columns(2)
-        with col1:
-            os_n = st.text_input("Nº OS")
-            cli = st.text_input("CLIENTE")
-        with col2:
-            data_v = st.date_input("DATA")
-            tipo_v = st.selectbox("TIPO", ["ESCOLTA", "VIGILÂNCIA", "OUTROS"])
-        
+with aba1:
+    with st.form("form_nova", clear_on_submit=True):
+        c1, c2 = st.columns(2)
+        os_n = c1.text_input("Nº OS")
+        cli_n = c1.text_input("CLIENTE")
+        ped_n = c2.text_input("PEDIDO")
+        tipo_n = c2.selectbox("TIPO", ["ESCOLTA", "VIGILÂNCIA", "OUTROS"])
+        desc_n = st.text_area("DESCRIÇÃO")
         if st.form_submit_button("✅ SALVAR"):
-            # Lógica de salvar que já testamos
-            st.success("Salvo com sucesso!")
+            payload = {
+                "parent": {"database_id": DATABASE},
+                "properties": {
+                    "Nº OS": {"title": [{"text": {"content": os_n}}]},
+                    "CLIENTE": {"rich_text": [{"text": {"content": cli_n}}]},
+                    "PEDIDO": {"rich_text": [{"text": {"content": ped_n}}]},
+                    "TIPO": {"select": {"name": tipo_n}},
+                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc_n}}]}
+                }
+            }
+            res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
+            if res.status_code == 200: st.success("🎯 Salvo!")
+            else: st.error(f"Erro: {res.text}")
 
-# --- ABA 2: EDIÇÃO E PDF ---
-with aba_edit:
-    st.subheader("Selecione uma OS para editar ou imprimir")
-    lista_os = buscar_dados()
-    
-    if lista_os:
-        opcoes = {f"OS: {item['os']} - {item['cliente']}": item for item in lista_os}
-        escolha = st.selectbox("Escolha a OS", list(opcoes.keys()))
+with aba2:
+    dados_lista = buscar_dados()
+    if dados_lista:
+        dict_os = {f"OS {d['os']} - {d['cliente']}": d for d in dados_lista}
+        escolha = st.selectbox("Selecione a OS para Ações", list(dict_os.keys()))
         
         if escolha:
-            item_selecionado = opcoes[escolha]
-            prop_atuais = item_selecionado["props"]
+            selecionado = dict_os[escolha]
             
-            # Formulário de Edição preenchido com dados do Notion
-            with st.form("editar_os"):
-                col_e1, col_e2 = st.columns(2)
-                with col_e1:
-                    novo_cliente = st.text_input("Cliente", value=item_selecionado["cliente"])
-                with col_e2:
-                    nova_desc = st.text_area("Descrição")
+            # Form de edição (sem o botão de download dentro)
+            with st.form("form_edicao"):
+                st.write(f"--- Editando OS: {selecionado['os']} ---")
+                ed_cli = st.text_input("Cliente", value=selecionado['cliente'])
+                ed_desc = st.text_area("Descrição")
                 
-                c1, c2 = st.columns(2)
-                with c1:
-                    if st.form_submit_button("💾 ATUALIZAR NO NOTION"):
-                        st.info("Atualizando dados...")
-                with c2:
-                    # Geração de PDF
-                    dados_pdf = {"Nº OS": item_selecionado["os"], "Cliente": novo_cliente}
-                    pdf_bytes = gerar_pdf(dados_pdf)
-                    st.download_button("📄 BAIXAR PDF", data=pdf_bytes, file_name=f"OS_{item_selecionado['os']}.pdf")
+                if st.form_submit_button("💾 SALVAR ALTERAÇÕES"):
+                    url_update = f"https://api.notion.com/v1/pages/{selecionado['id']}"
+                    up_payload = {"properties": {"CLIENTE": {"rich_text": [{"text": {"content": ed_cli}}]}}}
+                    requests.patch(url_update, headers=headers, json=up_payload)
+                    st.success("Atualizado!")
+                    st.rerun()
+
+            # BOTÃO DE PDF FORA DO FORMULÁRIO (Para evitar o erro)
+            st.write("--- Exportar ---")
+            pdf_data = {"OS": selecionado['os'], "Cliente": selecionado['cliente']}
+            pdf_bytes = gerar_pdf(pdf_data)
+            st.download_button(
+                label="📄 BAIXAR PDF DA ORDEM",
+                data=pdf_bytes,
+                file_name=f"OS_{selecionado['os']}.pdf",
+                mime="application/pdf"
+            )
     else:
-        st.warning("Nenhuma OS encontrada ou erro de conexão.")
+        st.info("Nenhuma OS encontrada para editar.")
