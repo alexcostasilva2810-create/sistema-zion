@@ -1,11 +1,10 @@
 import streamlit as st
 import requests
-from datetime import datetime
 
 # Configuração da página
 st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
-# Lendo os dados dos Secrets (Isso resolve o KeyError)
+# Carrega as chaves dos Secrets do Streamlit
 NOTION_TOKEN = st.secrets["notion"]["token"]
 DATABASE_ID = st.secrets["notion"]["database_id"]
 
@@ -19,7 +18,7 @@ st.title("🚨 Agendamento Zion")
 
 with st.form("form_agendamento", clear_on_submit=True):
     col1, col2, col3, col4 = st.columns(4)
-    with col1: os_num = st.text_input("Nº O.S")
+    with col1: os_num = st.text_input("Nº OS") # Ajustado para o nome na sua imagem
     with col2: pedido = st.text_input("PEDIDO")
     with col3: cliente = st.text_input("CLIENTE")
     with col4: tipo = st.selectbox("TIPO", ["ESCOLTA", "VIGILÂNCIA", "OUTROS"])
@@ -40,7 +39,7 @@ with st.form("form_agendamento", clear_on_submit=True):
         payload = {
             "parent": {"database_id": DATABASE_ID},
             "properties": {
-                "Nº O.S": {"title": [{"text": {"content": os_num}}]},
+                "Nº OS": {"title": [{"text": {"content": os_num}}]},
                 "PEDIDO": {"rich_text": [{"text": {"content": pedido}}]},
                 "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
                 "TIPO": {"select": {"name": tipo}},
@@ -52,6 +51,6 @@ with st.form("form_agendamento", clear_on_submit=True):
         }
         res = requests.post(url, headers=headers, json=payload)
         if res.status_code == 200:
-            st.success("Salvo com sucesso no Notion!")
+            st.success("✅ Salvo com sucesso no Notion!")
         else:
-            st.error(f"Erro ao salvar: {res.status_code}")
+            st.error(f"Erro {res.status_code}: Verifique se o ID da tabela nos Secrets está correto.")
