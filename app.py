@@ -19,7 +19,7 @@ st.markdown("""
 URL_PLANILHA = "https://docs.google.com/spreadsheets/d/1Rzm55i-k9PSlc3TUownF4wBiGkQz6laU-Lruy-dEZQM/edit?usp=sharing"
 
 # IMPORTANTE: Usando a conexão oficial que requer os Secrets configurados
-conn = st.connection("gsheets", type=GSheetsConnection)
+# conn = st.connection("gsheets", type=GSheetsConnection)
 
 def carregar_dados():
     try:
