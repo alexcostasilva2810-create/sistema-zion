@@ -64,32 +64,32 @@ if st.session_state.tela == "AGENDAMENTO":
             desc = st.text_area("DESCRIÇÃO")
             ass = st.text_input("ASSINATURA")
 
-            if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
-                dias = (fim - ini).days if (fim - ini).days > 0 else 1
-                total_val = dias * (1870.0 if tipo == "ESCOLTA" else 970.0)
-                
-                nova_os = {
-                    "O.S": os_n, "PEDIDO": ped, "CLIENTE": cli, "TIPO": tipo,
-                    "INICIO": ini.strftime('%d/%m/%Y'), "FIM": fim.strftime('%d/%m/%Y'),
-                    "STATUS": "ANDAMENTO", "DESCRIÇÃO": desc, "ASSINATURA": ass,
-                    "DIAS": dias, "TOTAL": total_val
-                }
-                
-                df_atual = carregar_dados()
-                df_novo = pd.concat([df_atual, pd.DataFrame([nova_os])], ignore_index=True)
-                conn.update(spreadsheet=URL_PLANILHA, data=df_novo)
-                
-                st.success("Salvo com sucesso!")
-                st.session_state.exibir_form = False
-                st.rerun()
+            # Trecho corrigido para evitar os erros das imagens
+if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
+    dias = (fim - ini).days if (fim - ini).days > 0 else 1
+    total_val = dias * (1870.0 if tipo == "ESCOLTA" else 970.0)
+    
+    nova_os = {
+        "O.S": os_n, "PEDIDO": ped, "CLIENTE": cli, "TIPO": tipo,
+        "INICIO": ini.strftime('%d/%m/%Y'), "FIM": fim.strftime('%d/%m/%Y'),
+        "STATUS": "ANDAMENTO", "DESCRIÇÃO": desc, "ASSINATURA": ass,
+        "DIAS": dias, "TOTAL": total_val
+    }
+    
+    # Salva na planilha e atualiza
+    df_atual = carregar_dados()
+    df_novo = pd.concat([df_atual, pd.DataFrame([nova_os])], ignore_index=True)
+    conn.update(spreadsheet=URL_PLANILHA, data=df_novo)
+    st.success("Salvo com sucesso!")
+    st.rerun()
 
-    # Visualização
-    df_nuvem = carregar_dados()
-    if not df_nuvem.empty:
-        st.dataframe(df_nuvem, use_container_width=True, hide_index=True)
-        for i, row in df_nuvem.iterrows():
-            with st.expander(f"O.S {row['O.S']}"):
-                pdf_bytes = gerar_pdf_os(row.to_dict())
-                st.download_button(f"📥 Baixar PDF {row['O.S']}", data=pdf_bytes, file_name=f"OS_{row['O.S']}.pdf", key=f"pdf_{i}")
+# Trecho do botão de download (corrigindo o SyntaxError da imagem)
+pdf_bytes = gerar_pdf_os(row.to_dict())
+st.download_button(
+    label=f"📥 IMPRIMIR PDF {row['O.S']}",
+    data=pdf_bytes,
+    file_name=f"OS_{row['O.S']}.pdf",
+    key=f"pdf_{i}"
+)
     else:
         st.info("Planilha vazia ou aguardando dados.")
