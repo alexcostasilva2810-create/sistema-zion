@@ -10,20 +10,23 @@ st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
 st.markdown("""
     <style>
+    /* Estilo para remover bordas da imagem clicável */
+    .stImage > img { cursor: pointer; transition: 0.3s; }
+    .stImage > img:hover { opacity: 0.8; transform: scale(1.02); }
+    
     div.stButton > button:first-child { background-color: #f44336; color: white; border-radius: 5px; height: 3em; font-weight: bold; }
     .st-emotion-cache-19rxjzoef { background-color: #4CAF50 !important; color: white !important; font-weight: bold !important; }
     </style>
     """, unsafe_allow_html=True)
 
 # 2. CONEXÃO COM GOOGLE SHEETS
-# Link da sua planilha (Certifique-se de que a coluna A1 na planilha é "O.S")
 URL_PLANILHA = "https://docs.google.com/spreadsheets/d/1Rzm55i-k9PSlc3TUownF4wBiGkQz6laU-Lruy-dEZQM/edit?usp=sharing"
-
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def carregar_dados():
     try:
-        return conn.read(spreadsheet=URL_PLANILHA, ttl="0")
+        df = conn.read(spreadsheet=URL_PLANILHA, ttl="0")
+        return df
     except:
         return pd.DataFrame(columns=[
             "O.S", "PEDIDO", "CLIENTE", "TIPO", "INICIO", "FIM", "HORA", "SAIDA", 
@@ -32,10 +35,8 @@ def carregar_dados():
         ])
 
 # Inicialização da sessão
-if 'db_os' not in st.session_state:
-    st.session_state.db_os = carregar_dados()
 if 'tela' not in st.session_state: 
-    st.session_state.tela = "AGENDAMENTO"
+    st.session_state.tela = "HOME"
 if 'exibir_form' not in st.session_state: 
     st.session_state.exibir_form = False
 
@@ -52,18 +53,49 @@ def gerar_pdf_os(dados):
         pdf.cell(0, 8, f"{str(v)}", border=1, ln=True)
     return pdf.output(dest='S').encode('latin-1', 'ignore')
 
-# 4. TELA DE AGENDAMENTO
-if st.session_state.tela == "AGENDAMENTO":
+# --- NAVEGAÇÃO ---
+
+# TELA HOME (LOGO CLICÁVEL)
+if st.session_state.tela == "HOME":
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write("") # Espaçamento superior
+        if os.path.exists("LOGO.PNG"):
+            # Criando o container clicável para a logo
+            if st.button("CLIQUE NA LOGO PARA ENTRAR", use_container_width=True, type="secondary"):
+                st.session_state.tela = "AGENDAMENTO"
+                st.rerun()
+            
+            # A imagem abaixo serve como o grande botão visual
+            st.image("LOGO.PNG", use_container_width=True)
+            
+            # Instrução visual para o usuário
+            st.markdown("<p style='text-align: center; color: gray;'>Sistema de Gestão Zion</p>", unsafe_allow_html=True)
+        else:
+            st.error("Arquivo LOGO.PNG não encontrado no servidor.")
+            if st.button("ENTRAR MESMO ASSIM"):
+                st.session_state.tela = "AGENDAMENTO"
+                st.rerun()
+
+# TELA DE AGENDAMENTO
+elif st.session_state.tela == "AGENDAMENTO":
+    with st.sidebar:
+        if os.path.exists("LOGO.PNG"): 
+            st.image("LOGO.PNG", use_container_width=True)
+        st.divider()
+        if st.button("🏠 SAIR DO SISTEMA", use_container_width=True):
+            st.session_state.tela = "HOME"
+            st.rerun()
+
     st.title("⏳ Agendamento Zion")
     
-    col_nav = st.columns([1, 4])
-    if col_nav[0].button("🔴 NOVO CADASTRO"):
+    if st.button("🔴 NOVO CADASTRO"):
         st.session_state.exibir_form = not st.session_state.exibir_form
         st.rerun()
 
     if st.session_state.exibir_form:
         with st.form("f_cadastro", clear_on_submit=True):
-            st.subheader("📝 Preencher Dados")
+            st.subheader("📝 Preencher Dados da Operação")
             c1, c2, c3, c4 = st.columns(4)
             os_n = c1.text_input("Nº O.S")
             ped = c2.text_input("PEDIDO")
@@ -71,8 +103,8 @@ if st.session_state.tela == "AGENDAMENTO":
             tipo = c4.selectbox("TIPO", ["ESCOLTA", "VIGILANTE"])
             
             c5, c6, c7, c8 = st.columns(4)
-            ini = c5.date_input("INÍCIO")
-            fim = c6.date_input("FIM")
+            ini = c5.date_input("INÍCIO", format="DD/MM/YYYY")
+            fim = c6.date_input("FIM", format="DD/MM/YYYY")
             h_emb = c7.text_input("HORA EMBARQUE")
             sai = c8.text_input("SAÍDA")
             
@@ -98,23 +130,23 @@ if st.session_state.tela == "AGENDAMENTO":
                 
                 nova_os = {
                     "O.S": os_n, "PEDIDO": ped, "CLIENTE": cli, "TIPO": tipo,
-                    "INICIO": ini.strftime('%d/%m/%Y'), "FIM": fim.strftime('%d/%m/%Y'),
+                    "INICIO": ini.strftime('%d/%m/%Y'),
+                    "FIM": fim.strftime('%d/%m/%Y'),
                     "HORA": h_emb, "SAIDA": sai, "EMPURRADOR": emp, "CMT": cmt,
                     "ESCOLTA1": esc1, "ESCOLTA2": esc2, "LOCAL": loc, "DESTINO": dst,
                     "BALSA": bal, "STATUS": stt, "DESCRIÇÃO": desc, "ASSINATURA": ass,
-                    "DIAS": dias, "TOTAL": total_val
+                    "DIAS": dias, "TOTAL": f"R$ {total_val:,.2f}"
                 }
                 
-                # Salva na Planilha
                 df_atual = carregar_dados()
                 df_novo = pd.concat([df_atual, pd.DataFrame([nova_os])], ignore_index=True)
                 conn.update(spreadsheet=URL_PLANILHA, data=df_novo)
                 
-                st.success("Dados salvos no Google Sheets!")
+                st.success("Operação registrada na Planilha!")
                 st.session_state.exibir_form = False
                 st.rerun()
 
-    # 5. EXIBIÇÃO DA TABELA E PDF
+    # EXIBIÇÃO DA TABELA
     df_visualizar = carregar_dados()
     if not df_visualizar.empty:
         st.dataframe(df_visualizar, use_container_width=True, hide_index=True)
@@ -129,4 +161,4 @@ if st.session_state.tela == "AGENDAMENTO":
                     key=f"btn_{idx}"
                 )
     else:
-        st.info("Aguardando o primeiro cadastro para exibir os dados.")
+        st.info("Aguardando sincronização com a Planilha...")
