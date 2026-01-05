@@ -3,10 +3,9 @@ import requests
 
 st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
-# LIMPANDO O ERRO DE ASPAS AUTOMATICAMENTE
-# Mesmo que o Segredo tenha salvo com aspas ou barras, esse código limpa tudo:
-TOKEN = st.secrets["notion"]["token"].strip().replace('"', '').replace('\\', '')
-DATABASE = st.secrets["notion"]["database_id"].strip().replace('"', '').replace('\\', '')
+# LIMPANDO OS DADOS AUTOMATICAMENTE
+TOKEN = st.secrets["notion"]["token"].replace('"', '').replace('\\', '').strip()
+DATABASE = st.secrets["notion"]["database_id"].replace('"', '').replace('\\', '').strip()
 
 headers = {
     "Authorization": f"Bearer {TOKEN}",
@@ -17,28 +16,36 @@ headers = {
 st.title("🚨 Agendamento Zion")
 
 with st.form("form_final"):
-    os_num = st.text_input("Nº OS")
-    cliente = st.text_input("CLIENTE")
-    data = st.date_input("DATA")
+    col1, col2 = st.columns(2)
+    with col1:
+        os = st.text_input("Nº OS")
+        pedido = st.text_input("PEDIDO")
+        cliente = st.text_input("CLIENTE")
+    with col2:
+        data = st.date_input("DATA INÍCIO")
+        tipo = st.selectbox("TIPO", ["ESCOLTA", "VIGILÂNCIA", "OUTROS"])
+        ass = st.text_input("ASSINATURA")
+
+    desc = st.text_area("DESCRIÇÃO")
     
-    btn = st.form_submit_button("✅ SALVAR AGORA")
-    
-    if btn:
+    submit = st.form_submit_button("✅ SALVAR OPERAÇÃO")
+
+    if submit:
         payload = {
             "parent": {"database_id": DATABASE},
             "properties": {
-                "Nº OS": {"title": [{"text": {"content": os_num}}]},
+                "Nº OS": {"title": [{"text": {"content": os}}]},
+                "PEDIDO": {"rich_text": [{"text": {"content": pedido}}]},
                 "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
-                "INÍCIO": {"rich_text": [{"text": {"content": str(data)}}]}
+                "TIPO": {"select": {"name": tipo}},
+                "INÍCIO": {"rich_text": [{"text": {"content": str(data)}}]},
+                "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]},
+                "ASSINATURA": {"rich_text": [{"text": {"content": ass}}]}
             }
         }
-        
-        # Fazendo a chamada para o Notion
         res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
         
         if res.status_code == 200:
-            st.success("🎉 FINALMENTE! SALVO COM SUCESSO NO NOTION.")
+            st.success("🎯 FINALMENTE! Dados salvos na tabela Zion.")
         else:
-            # Se ainda der erro, o código vai mostrar exatamente o que o Notion recebeu
             st.error(f"Erro {res.status_code}: {res.text}")
-            st.info(f"ID utilizado (limpo): {DATABASE}")
