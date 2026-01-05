@@ -5,42 +5,34 @@ import os
 from datetime import datetime
 from streamlit_gsheets import GSheetsConnection
 
-# 1. CONFIGURAÇÃO INICIAL E ESTILO
+# 1. CONFIGURAÇÃO INICIAL
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="wide")
 
-st.markdown("""
-    <style>
-    /* Estilo para remover bordas da imagem clicável */
-    .stImage > img { cursor: pointer; transition: 0.3s; }
-    .stImage > img:hover { opacity: 0.8; transform: scale(1.02); }
-    
-    div.stButton > button:first-child { background-color: #f44336; color: white; border-radius: 5px; height: 3em; font-weight: bold; }
-    .st-emotion-cache-19rxjzoef { background-color: #4CAF50 !important; color: white !important; font-weight: bold !important; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# 2. CONEXÃO COM GOOGLE SHEETS
+# Link da sua planilha (Necessário estar como EDITOR no botão Compartilhar)
 URL_PLANILHA = "https://docs.google.com/spreadsheets/d/1Rzm55i-k9PSlc3TUownF4wBiGkQz6laU-Lruy-dEZQM/edit?usp=sharing"
-conn = st.connection("gsheets", type=GSheetsConnection)
+
+# 2. CONEXÃO COM GOOGLE SHEETS (Usando Secrets para permitir gravação)
+try:
+    conn = st.connection("gsheets", type=GSheetsConnection, secrets=st.secrets["connections"]["gsheets"])
+except Exception:
+    # Caso os secrets ainda não estejam configurados no painel do Streamlit
+    conn = st.connection("gsheets", type=GSheetsConnection)
 
 def carregar_dados():
     try:
-        df = conn.read(spreadsheet=URL_PLANILHA, ttl="0")
-        return df
-    except:
+        return conn.read(spreadsheet=URL_PLANILHA, ttl="0")
+    except Exception:
         return pd.DataFrame(columns=[
             "O.S", "PEDIDO", "CLIENTE", "TIPO", "INICIO", "FIM", "HORA", "SAIDA", 
             "EMPURRADOR", "CMT", "ESCOLTA1", "ESCOLTA2", "LOCAL", "DESTINO", 
             "BALSA", "STATUS", "DESCRIÇÃO", "ASSINATURA", "DIAS", "TOTAL"
         ])
 
-# Inicialização da sessão
-if 'tela' not in st.session_state: 
-    st.session_state.tela = "HOME"
-if 'exibir_form' not in st.session_state: 
-    st.session_state.exibir_form = False
+# Inicialização de estados
+if 'tela' not in st.session_state: st.session_state.tela = "HOME"
+if 'exibir_form' not in st.session_state: st.session_state.exibir_form = False
 
-# 3. FUNÇÃO PARA GERAR PDF
+# 3. FUNÇÃO PDF
 def gerar_pdf_os(dados):
     pdf = FPDF()
     pdf.add_page()
@@ -59,31 +51,23 @@ def gerar_pdf_os(dados):
 if st.session_state.tela == "HOME":
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.write("") # Espaçamento superior
+        st.write("###")
         if os.path.exists("LOGO.PNG"):
-            # Criando o container clicável para a logo
-            if st.button("CLIQUE NA LOGO PARA ENTRAR", use_container_width=True, type="secondary"):
+            # Botão invisível sobre a logo para navegação
+            if st.button("SISTEMA ZION - CLIQUE PARA ENTRAR", use_container_width=True):
                 st.session_state.tela = "AGENDAMENTO"
                 st.rerun()
-            
-            # A imagem abaixo serve como o grande botão visual
             st.image("LOGO.PNG", use_container_width=True)
-            
-            # Instrução visual para o usuário
-            st.markdown("<p style='text-align: center; color: gray;'>Sistema de Gestão Zion</p>", unsafe_allow_html=True)
         else:
-            st.error("Arquivo LOGO.PNG não encontrado no servidor.")
-            if st.button("ENTRAR MESMO ASSIM"):
+            if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                 st.session_state.tela = "AGENDAMENTO"
                 st.rerun()
 
 # TELA DE AGENDAMENTO
 elif st.session_state.tela == "AGENDAMENTO":
     with st.sidebar:
-        if os.path.exists("LOGO.PNG"): 
-            st.image("LOGO.PNG", use_container_width=True)
-        st.divider()
-        if st.button("🏠 SAIR DO SISTEMA", use_container_width=True):
+        if os.path.exists("LOGO.PNG"): st.image("LOGO.PNG", use_container_width=True)
+        if st.button("🏠 VOLTAR AO INÍCIO", use_container_width=True):
             st.session_state.tela = "HOME"
             st.rerun()
 
@@ -95,7 +79,7 @@ elif st.session_state.tela == "AGENDAMENTO":
 
     if st.session_state.exibir_form:
         with st.form("f_cadastro", clear_on_submit=True):
-            st.subheader("📝 Preencher Dados da Operação")
+            st.subheader("📝 Detalhes da Operação")
             c1, c2, c3, c4 = st.columns(4)
             os_n = c1.text_input("Nº O.S")
             ped = c2.text_input("PEDIDO")
@@ -140,25 +124,25 @@ elif st.session_state.tela == "AGENDAMENTO":
                 
                 df_atual = carregar_dados()
                 df_novo = pd.concat([df_atual, pd.DataFrame([nova_os])], ignore_index=True)
-                conn.update(spreadsheet=URL_PLANILHA, data=df_novo)
                 
-                st.success("Operação registrada na Planilha!")
-                st.session_state.exibir_form = False
-                st.rerun()
+                try:
+                    conn.update(spreadsheet=URL_PLANILHA, data=df_novo)
+                    st.success("Dados enviados com sucesso para a Planilha!")
+                    st.session_state.exibir_form = False
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erro de permissão: Configure os Secrets no Streamlit. Detalhe: {e}")
 
-    # EXIBIÇÃO DA TABELA
+    # EXIBIÇÃO
     df_visualizar = carregar_dados()
     if not df_visualizar.empty:
         st.dataframe(df_visualizar, use_container_width=True, hide_index=True)
-        
         for idx, row in df_visualizar.iterrows():
-            with st.expander(f"Gerenciar O.S {row['O.S']}"):
+            with st.expander(f"Opções O.S {row['O.S']}"):
                 pdf_data = gerar_pdf_os(row.to_dict())
                 st.download_button(
-                    label=f"📥 Baixar PDF O.S {row['O.S']}",
+                    label=f"📥 Baixar PDF {row['O.S']}",
                     data=pdf_data,
                     file_name=f"OS_{row['O.S']}.pdf",
                     key=f"btn_{idx}"
                 )
-    else:
-        st.info("Aguardando sincronização com a Planilha...")
