@@ -17,10 +17,9 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- CSS PARA GRADE E DESIGN ---
+# --- CSS PARA GRADE E DESIGN (PROTEGIDO CONTRA SYNTAXERROR) ---
 st.markdown("""
     <style>
-    /* Estilo para a Tabela com Bordas Pretas e Visíveis */
     .grade-zion {
         width: 100%;
         border-collapse: collapse;
@@ -37,7 +36,6 @@ st.markdown("""
         border: 2px solid #000000 !important;
         padding: 10px;
     }
-    /* Estilo dos Botões */
     .stButton>button {
         width: 100%;
         border-radius: 8px;
@@ -76,16 +74,12 @@ def logo_central():
             """,
             unsafe_allow_html=True
         )
-    else:
-        st.markdown("<h1 style='text-align: center;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
 
 # --- NAVEGAÇÃO DE TELAS ---
 
-# TELA 1: HOME
 if st.session_state.pagina == "🏠 HOME":
     logo_central()
     
-    # Botão para abrir os ícones
     if not st.session_state.mostrar_icones:
         if st.button("🔓 ACESSAR ÍCONES OPERACIONAIS"):
             st.session_state.mostrar_icones = True
@@ -103,7 +97,7 @@ if st.session_state.pagina == "🏠 HOME":
     st.markdown("---")
     st.subheader("📅 Grade de Agendamentos")
     
-    # GRADE COM COLUNAS BEM VISÍVEIS (HTML)
+    # AJUSTE NA GRADE: "DT SAÍDA"
     st.markdown("""
         <table class="grade-zion">
             <thead>
@@ -111,20 +105,20 @@ if st.session_state.pagina == "🏠 HOME":
                     <th>HORÁRIO</th>
                     <th>CLIENTE</th>
                     <th>SERVIÇO</th>
+                    <th>DT SAÍDA</th>
                     <th>STATUS</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td colspan="4" style="text-align:center; padding: 30px; color: gray;">
-                        Nenhum dado para exibir. Colunas prontas para novos registros.
+                    <td colspan="5" style="text-align:center; padding: 30px; color: gray;">
+                        Nenhum dado para exibir.
                     </td>
                 </tr>
             </tbody>
         </table>
         """, unsafe_allow_html=True)
 
-# TELA 2: FORMULÁRIO (CADASTRO)
 elif st.session_state.pagina == "📋 AGENDAMENTO":
     if st.button("⬅️ VOLTAR"):
         st.session_state.mostrar_icones = True
@@ -140,7 +134,8 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
         local = c1.text_input("LOCAL")
         empurrador = c1.text_input("EMPURRADOR")
         
-        saida = c2.text_input("SAÍDA")
+        # AJUSTE NO INPUT: "DT SAÍDA"
+        dt_saida = c2.text_input("DT SAÍDA")
         fim_m = c2.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
         esc1 = c2.text_input("ESCOLTA 1")
         esc2 = c2.text_input("ESCOLTA 2")
@@ -158,7 +153,6 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
         if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
             valor_fin = 1870.0 if servico == "Escolta" else 970.0
             
-            # ATENÇÃO: Verifique no Notion se a propriedade é "VALOR" ou "valor"
             payload = {
                 "parent": {"database_id": DATABASE},
                 "properties": {
@@ -167,7 +161,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
                     "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
                     "FIM DA MISSÃO": {"date": {"start": str(fim_m)}},
                     "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": h_emb}}]},
-                    "SAÍDA": {"rich_text": [{"text": {"content": saida}}]},
+                    "DT SAÍDA": {"rich_text": [{"text": {"content": dt_saida}}]}, # AJUSTE AQUI
                     "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
                     "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
                     "LOCAL": {"rich_text": [{"text": {"content": local}}]},
@@ -187,10 +181,8 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
                 st.success("🎯 Salvo com sucesso!")
                 navegar("🏠 HOME")
             else:
-                st.error(f"Erro no Banco de Dados: {res.text}")
+                st.error(f"Erro: {res.text}")
 
-# TELA 3: AGENDAMENTOS CADASTRADOS (Placeholder)
 elif st.session_state.pagina == "📊 VER AGENDAMENTOS":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     st.title("📊 Agendamentos Registrados")
-    st.write("Aqui será carregada a tabela vinda do Notion.")
