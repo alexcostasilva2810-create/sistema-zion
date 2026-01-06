@@ -1,101 +1,73 @@
 import streamlit as st
 
-# 1. Configuração da Página
-st.set_page_config(layout="wide")
+# 1. Configuração inicial da página
+st.set_page_config(page_title="Zion Tecnologia", layout="centered")
 
-# 2. CSS para Logo Clicável e Tabela com Colunas Visíveis
+# 2. Lógica de navegação simples
+if 'pagina' not in st.session_state:
+    st.session_state.pagina = 'inicio'
+
+def mudar_pagina(nome):
+    st.session_state.pagina = nome
+
+# 3. CSS SEGURO (Onde estava o erro)
+# Agora envolvido corretamente para o Python não travar
 st.markdown("""
     <style>
-    /* Estilo da Logo Clicável */
-    .logo-container {
-        display: flex;
-        justify-content: center;
-        cursor: pointer;
-        padding: 20px;
-        transition: 0.3s;
-    }
-    .logo-container:hover { transform: scale(1.02); }
-    
-    /* Estilo da Tabela com Bordas Pretas (Grade Visível) */
-    .tabela-zion {
+    .stButton>button {
         width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
+        border-radius: 5px;
+        height: 3em;
+        background-color: white;
+        border: 1px solid #ddd;
     }
-    .tabela-zion th, .tabela-zion td {
-        border: 2px solid #000000 !important;
-        padding: 12px;
-        text-align: left;
-    }
-    .tabela-zion th {
-        background-color: #f0f2f6;
+    [data-testid="stVerticalBlock"] > div:first-child {
+        cursor: pointer;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Lógica de Navegação
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = 'tabela'
+# --- INTERFACE ---
 
-def navegar(nome_pagina):
-    st.session_state.pagina = nome_pagina
-
-# --- BOTÃO AUXILIAR NO TOPO ---
-col_logo, col_btn = st.columns([4, 1])
-
+# Botão Auxiliar de Topo (Opcional, conforme solicitado)
+col_vazia, col_btn = st.columns([3, 1])
 with col_btn:
-    if st.button("☰ ÍCONES OPERACIONAIS", use_container_width=True):
-        navegar('menu')
+    if st.button("☰ ÍCONES OPERACIONAIS"):
+        mudar_pagina('menu')
 
-# --- TELA DE ÍCONES (MENU) ---
+# TELA DE MENU (Ícones Operacionais)
 if st.session_state.pagina == 'menu':
     st.title("⚙️ Operacional")
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        if st.button("📅 NOVO LANÇAMENTO", use_container_width=True, height=100):
-            st.info("Abrindo Novo Lançamento...")
+        if st.button("📋 NOVO LANÇAMENTO"):
+            st.success("Acessando Novo Lançamento...")
     with col2:
-        if st.button("📊 VER AGENDAMENTOS", use_container_width=True, height=100):
-            navegar('tabela')
+        if st.button("📊 VER AGENDAMENTO"):
+            mudar_pagina('inicio')
     with col3:
-        if st.button("💰 FINANCEIRO", use_container_width=True, height=100):
-            st.info("Abrindo Financeiro...")
+        if st.button("💰 FINANCEIRO"):
+            st.success("Acessando Financeiro...")
             
-    if st.button("← Voltar para Início"):
-        navegar('tabela')
+    if st.button("← VOLTAR"):
+        mudar_pagina('inicio')
 
-# --- TELA DA TABELA (PRINCIPAL) ---
+# TELA DE INÍCIO (A que você gosta com a Logo)
 else:
-    # LOGO CLICÁVEL (A imagem do seu sistema)
-    # Substitua o link abaixo pelo caminho da sua imagem ou URL
-    logo_url = "https://raw.githubusercontent.com/SeuUsuario/SeuRepo/main/logo.png" 
+    # Mostra a logo centralizada
+    # Certifique-se de que o arquivo 'logo.png' está na mesma pasta do app.py
+    try:
+        st.image("logo.png", use_container_width=True)
+    except:
+        st.info("ZION TECNOLOGIA (Clique na logo para acessar)")
+
+    # Se você clicar na logo (ou quiser o botão de acesso abaixo)
+    if st.button("ACESSAR SISTEMA"):
+        mudar_pagina('menu')
+
+    st.divider()
     
-    st.markdown(f"""
-        <div class="logo-container" onclick="window.location.href='#menu'">
-            <img src="{logo_url}" width="400">
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.subheader("📋 Grade de Agendamentos")
-    
-    # Renderização da Tabela Manual para garantir as colunas
-    st.markdown("""
-        <table class="tabela-zion">
-            <thead>
-                <tr>
-                    <th>HORÁRIO</th>
-                    <th>CLIENTE</th>
-                    <th>SERVIÇO</th>
-                    <th>STATUS</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td colspan="4" style="text-align:center; padding: 30px; color: gray;">
-                        Nenhum agendamento encontrado. As colunas estão ativas.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        """, unsafe_allow_html=True)
+    # Tabela simples e limpa para evitar novos erros
+    st.subheader("📋 Agendamentos")
+    st.write("Nenhum agendamento para hoje.")
