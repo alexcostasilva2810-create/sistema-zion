@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import base64
 
+# 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
 # --- CONEXÃO NOTION ---
@@ -16,6 +17,33 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
+# --- CSS PARA GRADE E DESIGN (PROTEGIDO CONTRA SYNTAXERROR) ---
+st.markdown("""
+    <style>
+    .grade-zion {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+        color: black;
+    }
+    .grade-zion th {
+        border: 2px solid #000000 !important;
+        background-color: #f0f2f6;
+        padding: 12px;
+        text-align: left;
+    }
+    .grade-zion td {
+        border: 2px solid #000000 !important;
+        padding: 10px;
+    }
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # --- CONTROLE DE ESTADO ---
 if "mostrar_icones" not in st.session_state:
     st.session_state.mostrar_icones = False
@@ -26,71 +54,93 @@ def navegar(p):
     st.session_state.pagina = p
     st.rerun()
 
-# Esconde menus desnecessários
-st.markdown("<style> [data-testid='stSidebarNav'] {display: none;} </style>", unsafe_allow_html=True)
+# --- BOTÃO AUXILIAR DE NAVEGAÇÃO ---
+col_logo_top, col_auxiliar = st.columns([5, 1])
+with col_auxiliar:
+    if st.button("☰ OPERACIONAL"):
+        st.session_state.mostrar_icones = True
+        navegar("🏠 HOME")
 
-# --- FUNÇÃO PARA TRANSFORMAR IMAGEM EM BOTÃO CLICÁVEL ---
-def logo_clicavel():
+# --- FUNÇÃO LOGO ---
+def logo_central():
     if os.path.exists("LOGO.PNG"):
         with open("LOGO.PNG", "rb") as f:
             data = base64.b64encode(f.read()).decode("utf-8")
-        
-        # Criando o botão invisível por cima da imagem usando HTML
-        # Ao clicar na imagem, o Streamlit entende o comando de abrir os ícones
-        if st.button("🔓 ACESSAR SISTEMA", use_container_width=True, type="secondary"):
-            st.session_state.mostrar_icones = not st.session_state.mostrar_icones
-            st.rerun()
-            
         st.markdown(
             f"""
-            <div style="display: flex; justify-content: center;">
-                <img src="data:image/png;base64,{data}" style="width: 500px; cursor: pointer;">
+            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                <img src="data:image/png;base64,{data}" style="width: 450px;">
             </div>
             """,
             unsafe_allow_html=True
         )
 
-# --- TELA 1: HOME ---
-if st.session_state.pagina == "🏠 HOME":
-    logo_clicavel()
-    
-    # OS ÍCONES SÓ APARECEM APÓS O CLIQUE NA LOGO ACIMA
-    if st.session_state.mostrar_icones:
-        st.markdown("<br>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
-        
-        with c1:
-            if st.button("📋 NOVO LANÇAMENTO", use_container_width=True): navegar("📋 AGENDAMENTO")
-        with c2:
-            if st.button("📊 VER AGENDAMENTO", use_container_width=True): navegar("📊 VER AGENDAMENTOS")
-        with c3:
-            if st.button("💰 FINANCEIRO", use_container_width=True): navegar("💰 FINANCEIRO")
+# --- NAVEGAÇÃO DE TELAS ---
 
-# --- TELA 2: AGENDAMENTO (TODOS OS 17 CAMPOS) ---
+if st.session_state.pagina == "🏠 HOME":
+    logo_central()
+    
+    if not st.session_state.mostrar_icones:
+        if st.button("🔓 ACESSAR ÍCONES OPERACIONAIS"):
+            st.session_state.mostrar_icones = True
+            st.rerun()
+
+    if st.session_state.mostrar_icones:
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            if st.button("📋 NOVO LANÇAMENTO"): navegar("📋 AGENDAMENTO")
+        with c2:
+            if st.button("📊 VER AGENDAMENTO"): navegar("📊 VER AGENDAMENTOS")
+        with c3:
+            if st.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
+    
+    st.markdown("---")
+    st.subheader("📅 Grade de Agendamentos")
+    
+    # AJUSTE NA GRADE: "DT SAÍDA"
+    st.markdown("""
+        <table class="grade-zion">
+            <thead>
+                <tr>
+                    <th>HORÁRIO</th>
+                    <th>CLIENTE</th>
+                    <th>SERVIÇO</th>
+                    <th>DT SAÍDA</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="5" style="text-align:center; padding: 30px; color: gray;">
+                        Nenhum dado para exibir.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        """, unsafe_allow_html=True)
+
 elif st.session_state.pagina == "📋 AGENDAMENTO":
-    if st.button("⬅️ VOLTAR"): 
-        st.session_state.mostrar_icones = False
+    if st.button("⬅️ VOLTAR"):
+        st.session_state.mostrar_icones = True
         navegar("🏠 HOME")
         
     st.header("📋 Cadastro Geral de Missão")
     
     with st.form("form_completo"):
         c1, c2, c3 = st.columns(3)
-        # Linha 1
         os_n = c1.text_input("Nº O.S")
         ini_m = c1.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY")
         h_emb = c1.text_input("HORA DE EMBARQUE")
         local = c1.text_input("LOCAL")
         empurrador = c1.text_input("EMPURRADOR")
         
-        # Linha 2
-        saida = c2.text_input("SAÍDA")
+        # AJUSTE NO INPUT: "DT SAÍDA"
+        dt_saida = c2.text_input("DT SAÍDA")
         fim_m = c2.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
         esc1 = c2.text_input("ESCOLTA 1")
         esc2 = c2.text_input("ESCOLTA 2")
         servico = c2.selectbox("SERVIÇO", ["Escolta", "Vigilância"])
         
-        # Linha 3
         cliente = c3.text_input("CLIENTE")
         balsa = c3.text_input("BALSA")
         destino = c3.text_input("DESTINO")
@@ -100,8 +150,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
 
         desc = st.text_area("DESCRIÇÃO / OBSERVAÇÕES")
 
-        if st.form_submit_button("✅ SALVAR OPERAÇÃO EM LINHA ÚNICA"):
-            # Lógica de cálculo financeiro embutida
+        if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
             valor_fin = 1870.0 if servico == "Escolta" else 970.0
             
             payload = {
@@ -112,7 +161,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
                     "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
                     "FIM DA MISSÃO": {"date": {"start": str(fim_m)}},
                     "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": h_emb}}]},
-                    "SAÍDA": {"rich_text": [{"text": {"content": saida}}]},
+                    "DT SAÍDA": {"rich_text": [{"text": {"content": dt_saida}}]}, # AJUSTE AQUI
                     "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
                     "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
                     "LOCAL": {"rich_text": [{"text": {"content": local}}]},
@@ -130,9 +179,10 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
             res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
             if res.status_code == 200:
                 st.success("🎯 Salvo com sucesso!")
-                navegar("📊 VER AGENDAMENTOS")
+                navegar("🏠 HOME")
             else:
                 st.error(f"Erro: {res.text}")
 
-# --- TELA 3: VER AGENDAMENTOS E FINANCEIRO ---
-# (Aqui continua a lógica das tabelas que já estavam funcionando bem)
+elif st.session_state.pagina == "📊 VER AGENDAMENTOS":
+    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+    st.title("📊 Agendamentos Registrados")
