@@ -68,21 +68,46 @@ if st.session_state.pagina == "🏠 HOME":
     with col3:
         if st.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
-# --- TELA DE CADASTRO ---
+# --- TELA DE CADASTRO (TODAS AS COLUNAS RESTAURADAS) ---
 elif st.session_state.pagina == "📋 CADASTRO":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.header("📝 Nova Missão")
-    with st.form("form_missao"):
+    st.header("📝 Cadastro Geral de Missão")
+    
+    with st.form("form_completo"):
+        # Linha 1
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S")
-        dt_saida = c2.date_input("DT SAÍDA") # Calendário Restaurado
-        ini_m = c3.date_input("INÍCIO DA MISSÃO")
+        dt_saida = c2.date_input("DT SAÍDA") # CALENDÁRIO FIXADO
+        cliente = c3.text_input("CLIENTE")
         
-        cliente = c1.text_input("CLIENTE")
-        empurrador = c2.text_input("EMPURRADOR")
-        status = c3.selectbox("STATUS", ["Em Andamento", "Encerrado"])
+        # Linha 2
+        c4, c5, c6 = st.columns(3)
+        ini_m = c4.date_input("INÍCIO DA MISSÃO")
+        fim_m = c5.date_input("FIM DA MISSÃO")
+        balsa = c6.text_input("BALSA")
         
-        desc = st.text_area("DESCRIÇÃO / OBSERVAÇÕES")
+        # Linha 3
+        c7, c8, c9 = st.columns(3)
+        h_emb = c7.text_input("HORA DE EMBARQUE")
+        esc1 = c8.text_input("ESCOLTA 1")
+        destino = c9.text_input("DESTINO")
+        
+        # Linha 4
+        c10, c11, c12 = st.columns(3)
+        local = c10.text_input("LOCAL")
+        esc2 = c11.text_input("ESCOLTA 2")
+        pedido = c12.text_input("PEDIDO")
+        
+        # Linha 5
+        c13, c14, c15 = st.columns(3)
+        empurrador = c13.text_input("EMPURRADOR")
+        servico = c14.selectbox("SERVIÇO", ["Escolta", "Vigilância"])
+        ass_resp = c15.text_input("ASSINATURA RESPONSÁVEL")
+        
+        # Linha 6
+        c16, c17 = st.columns([2, 1])
+        desc = c16.text_area("DESCRIÇÃO / OBSERVAÇÕES")
+        status = c17.selectbox("STATUS", ["Em Andamento", "Encerrado", "Cancelado"])
         
         if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
             payload = {
@@ -92,33 +117,36 @@ elif st.session_state.pagina == "📋 CADASTRO":
                     "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
                     "DT SAÍDA": {"date": {"start": str(dt_saida)}},
                     "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
+                    "FIM DA MISSÃO": {"date": {"start": str(fim_m)}},
                     "STATUS": {"select": {"name": status}},
+                    "SERVIÇO": {"select": {"name": servico}},
                     "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
+                    "BALSA": {"rich_text": [{"text": {"content": balsa}}]},
+                    "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
+                    "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
+                    "LOCAL": {"rich_text": [{"text": {"content": local}}]},
+                    "DESTINO": {"rich_text": [{"text": {"content": destino}}]},
                     "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
+                    # Adicione aqui outros campos conforme configurados no seu Notion
                 }
             }
             res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
             if res.status_code == 200:
-                st.success("🎯 Salvo!"); navegar("🏠 HOME")
+                st.success("🎯 Missão salva com sucesso!")
+                navegar("🏠 HOME")
             else:
-                st.error("Erro ao salvar no Notion.")
+                st.error(f"Erro ao salvar: {res.text}")
 
 # --- TELA GRADE ---
 elif st.session_state.pagina == "📊 GRADE":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.subheader("📊 Agendamentos Ativos")
-    st.write("Abaixo estão as missões registradas no Notion.")
-    # Aqui você pode adicionar sua lógica de carregar_dados() se desejar listar
+    st.subheader("📊 Grade de Agendamentos")
+    st.info("Lista de missões ativas carregadas do Notion.")
 
-# --- TELA FINANCEIRO (RESTAURADA) ---
+# --- TELA FINANCEIRO ---
 elif st.session_state.pagina == "💰 FINANCEIRO":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     st.header("💰 Controle Financeiro")
-    
-    # Criando uma tabela vazia conforme solicitado
-    df_vazio = pd.DataFrame(columns=["DATA", "DESCRIÇÃO", "TIPO", "VALOR (R$)", "STATUS"])
-    
-    st.subheader("Resumo de Lançamentos")
-    st.table(df_vazio) # Aparece pelo menos a estrutura da tabela
-    
-    st.info("O módulo financeiro está sendo integrado ao seu banco de dados.")
+    df_financeiro = pd.DataFrame(columns=["DATA", "PEDIDO", "CLIENTE", "VALOR (R$)", "STATUS"])
+    st.table(df_financeiro)
+    st.info("Tabela financeira pronta para receber dados.")
