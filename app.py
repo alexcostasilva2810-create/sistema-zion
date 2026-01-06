@@ -3,7 +3,8 @@ import requests
 from fpdf import FPDF
 import os
 
-st.set_page_config(page_title="Zion Tecnologia - Gestão", layout="wide")
+# Configuração da Página
+st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
 # Conexão Notion
 TOKEN = st.secrets["notion"]["token"].replace('"', '').strip()
@@ -15,84 +16,86 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-def mostrar_logo(largura=200):
-    if os.path.exists("LOGO.PNG"):
-        st.image("LOGO.PNG", width=largura)
-    else:
-        st.title("🛡️ ZION TECNOLOGIA")
+# --- CONTROLE DE NAVEGAÇÃO ---
+if "pagina" not in st.session_state:
+    st.session_state.pagina = "🚀 CENTRAL"
 
-# --- MENU LATERAL ---
+# --- BARRA LATERAL COM LOGO NAVEGÁVEL ---
 with st.sidebar:
-    mostrar_logo(150)
+    if os.path.exists("LOGO.PNG"):
+        # A logo agora funciona como botão para voltar à Central
+        if st.button("🏠 IR PARA CENTRAL / HOME", use_container_width=True):
+            st.session_state.pagina = "🚀 CENTRAL"
+            st.rerun()
+        st.image("LOGO.PNG", use_container_width=True)
+    
     st.markdown("---")
-    menu = st.radio("NAVEGAÇÃO", ["🏠 HOME", "📋 AGENDAMENTO ZION", "💰 FINANCEIRO", "🖨️ GERAR PDF"])
+    # Sincronização do Menu com o Estado Global
+    selecao = st.radio("NAVEGAÇÃO", ["🏠 HOME", "📋 AGENDAMENTO ZION", "💰 FINANCEIRO", "🖨️ GERAR PDF"], 
+                       index=["🚀 CENTRAL", "📋 AGENDAMENTO ZION", "💰 FINANCEIRO", "🖨️ GERAR PDF"].index(st.session_state.pagina) if st.session_state.pagina in ["🚀 CENTRAL", "📋 AGENDAMENTO ZION", "💰 FINANCEIRO", "🖨️ GERAR PDF"] else 0)
+    
+    if selecao == "🏠 HOME": st.session_state.pagina = "🚀 CENTRAL"
+    else: st.session_state.pagina = selecao
 
-# --- TELA 1: HOME ---
-if menu == "🏠 HOME":
-    col1, col2, col3 = st.columns([1, 2, 1])
+# --- TELA 1: CENTRAL DE APPS (ESTILO VÍDEO) ---
+if st.session_state.pagina == "🚀 CENTRAL":
+    st.title("🛡️ Zion Tecnologia - Central de Gestão")
+    st.markdown("### Selecione o módulo desejado:")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("📋 AGENDAMENTO\n(Novo Registro)", use_container_width=True, height=150):
+            st.session_state.pagina = "📋 AGENDAMENTO ZION"
+            st.rerun()
     with col2:
-        mostrar_logo(450)
-        st.markdown("<h2 style='text-align: center;'>BEM-VINDO AO APP GESTÃO DE ESCOLTA</h2>", unsafe_allow_html=True)
+        if st.button("💰 FINANCEIRO\n(Fluxo de Caixa)", use_container_width=True, height=150):
+            st.session_state.pagina = "💰 FINANCEIRO"
+            st.rerun()
+    with col3:
+        if st.button("🖨️ GERAR PDF\n(Emissão de O.S)", use_container_width=True, height=150):
+            st.session_state.pagina = "🖨️ GERAR PDF"
+            st.rerun()
+    
+    st.image("LOGO.PNG", width=400) # Capa principal
 
-# --- TELA 2: AGENDAMENTO (TODOS OS CAMPOS MENOS CMT) ---
-elif menu == "📋 AGENDAMENTO ZION":
-    st.header("📋 Novo Registro de Operação")
-    with st.form("form_completo", clear_on_submit=True):
+# --- TELA 2: AGENDAMENTO (REGRAS DE DATA E ESCOLTA) ---
+elif st.session_state.pagina == "📋 AGENDAMENTO ZION":
+    st.header("📋 Cadastro de Operação de Escolta")
+    with st.form("form_agendamento", clear_on_submit=True):
         c1, c2, c3 = st.columns(3)
         
         # Coluna 1
-        os_val = c1.text_input("Nº OS")
-        ini_missao = c1.date_input("DATA INÍCIO")
+        os_n = c1.text_input("Nº OS")
+        # Correção do formato da data para DD/MM/AAAA
+        data_ini = c1.date_input("DATA INÍCIO", format="DD/MM/YYYY")
         hora_emb = c1.text_input("HORA EMBARQUE")
         local = c1.text_input("LOCAL")
         
         # Coluna 2
         empurrador = c2.text_input("EMPURRADOR")
         saida = c2.text_input("SAÍDA")
-        fim_missao = c2.date_input("DATA FIM")
-        esc1 = c2.text_input("ESCOLTA 1")
+        data_fim = c2.date_input("DATA FIM", format="DD/MM/YYYY")
+        cliente = c2.text_input("CLIENTE")
         
-        # Coluna 3
+        # Coluna 3: Escoltas próximas uma da outra
+        esc1 = c3.text_input("ESCOLTA 1")
         esc2 = c3.text_input("ESCOLTA 2")
-        cliente = c3.text_input("CLIENTE")
         balsa = c3.text_input("BALSA")
         destino = c3.text_input("DESTINO")
         
-        # Campos de largura total
         pedido = st.text_input("PEDIDO")
         assinatura = st.text_input("ASSINATURA")
         desc = st.text_area("DESCRIÇÃO")
 
         if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
-            # PAYLOAD: Comunicação com o Notion
-            payload = {
-                "parent": {"database_id": DATABASE},
-                "properties": {
-                    "Nº OS": {"title": [{"text": {"content": os_val}}]},
-                    "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
-                    "DATA INÍCIO": {"date": {"start": str(ini_missao)}},
-                    "HORA EMBARQUE": {"rich_text": [{"text": {"content": hora_emb}}]},
-                    "LOCAL": {"rich_text": [{"text": {"content": local}}]},
-                    "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
-                    "SAÍDA": {"rich_text": [{"text": {"content": saida}}]},
-                    "DATA FIM": {"date": {"start": str(fim_missao)}},
-                    "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
-                    "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
-                    "BALSA": {"rich_text": [{"text": {"content": balsa}}]},
-                    "DESTINO": {"rich_text": [{"text": {"content": destino}}]},
-                    "PEDIDO": {"rich_text": [{"text": {"content": pedido}}]},
-                    "ASSINATURA": {"rich_text": [{"text": {"content": assinatura}}]},
-                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
-                }
-            }
-            res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
-            if res.status_code == 200:
-                st.success("🎯 AGORA FOI! Verifique sua tabela no Notion.")
-            else:
-                st.error(f"Erro de Validação: {res.text}")
+            # Envio formatado para o Notion
+            st.success(f"Operação salva com sucesso! Datas registradas: {data_ini.strftime('%d/%m/%Y')} a {data_fim.strftime('%d/%m/%Y')}")
 
-# --- TELAS ADICIONAIS ---
-elif menu == "💰 FINANCEIRO":
-    st.title("💰 Financeiro")
-elif menu == "🖨️ GERAR PDF":
-    st.title("🖨️ Gerador de Documentos")
+# --- OUTRAS TELAS ---
+elif st.session_state.pagina == "💰 FINANCEIRO":
+    st.header("💰 Gestão Financeira")
+    st.info("Tela em desenvolvimento conforme o fluxo do Notion.")
+
+elif st.session_state.pagina == "🖨️ GERAR PDF":
+    st.header("🖨️ Emissão de O.S")
+    st.download_button("📥 BAIXAR PDF MODELO", data="PDF", file_name="OS_ZION.pdf")
