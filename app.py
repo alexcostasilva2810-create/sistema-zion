@@ -21,7 +21,7 @@ headers = {
 # --- ESTILO CSS (BOTÃO VERDE E DESIGN) ---
 st.markdown("""
     <style>
-    div.stButton > button:first-child[kind="primary"] { background-color: #28a745; color: white; border: none; }
+    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; color: white !important; }
     .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; height: 3.5em; }
     </style>
     """, unsafe_allow_html=True)
@@ -37,16 +37,17 @@ def gerar_pdf_transdourada(d):
     pdf.cell(0, 10, "Solicitação de Escolta", ln=True, align="C")
     pdf.cell(0, 7, f"O.S: {d.get('Nº OS', '---')}", ln=True, align="C")
     pdf.ln(5)
+    pdf.set_font("Arial", "B", 11)
     pdf.cell(0, 10, f"SOLICITANTE ( {d.get('CLIENTE', '---').upper()} )", border=1, ln=True, align="C")
     pdf.ln(5)
     pdf.set_font("Arial", "", 10)
-    pdf.multi_cell(0, 6, f"DESCRIÇÃO: {d.get('DESCRIÇÃO', '---')}")
+    pdf.multi_cell(0, 6, f"EMPURRADOR: {d.get('EMPURRADOR', '---')}\nBALSA: {d.get('BALSA', '---')}\nLOCAL: {d.get('LOCAL', '---')}\nDESTINO: {d.get('DESTINO', '---')}\nDESCRIÇÃO: {d.get('DESCRIÇÃO', '---')}")
     pdf.set_y(-35)
     pdf.set_font("Arial", "B", 7)
     pdf.cell(0, 5, "TRANSDOURADA NAVEGAÇÃO LTDA - ANANINDEUA/PA", ln=True, align="C")
     return pdf.output(dest="S").encode("latin-1")
 
-# --- FUNÇÃO PUXAR DADOS DO NOTION ---
+# --- FUNÇÃO PUXAR DADOS DO NOTION (CORRIGIDA) ---
 def carregar_dados_notion():
     try:
         url = f"https://api.notion.com/v1/databases/{DATABASE}/query"
@@ -56,27 +57,29 @@ def carregar_dados_notion():
             lista = []
             for r in results:
                 p = r["properties"]
-                # Convertendo datas do Notion para formato BR na visualização
-                def fmt_data(campo):
-                    dt = p.get(campo, {}).get("date", {}).get("start")
+                # Extração segura de texto e data
+                def get_t(prop): return p[prop]["rich_text"][0]["plain_text"] if prop in p and p[prop]["rich_text"] else "---"
+                def get_title(prop): return p[prop]["title"][0]["plain_text"] if prop in p and p[prop]["title"] else "---"
+                def get_d(prop): 
+                    dt = p[prop]["date"]["start"] if prop in p and p[prop]["date"] else None
                     return datetime.strptime(dt, '%Y-%m-%d').strftime('%d/%m/%Y') if dt else "---"
-
+                
                 lista.append({
                     "ID_NOTION": r["id"],
-                    "Nº OS": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
-                    "CLIENTE": p["CLIENTE"]["rich_text"][0]["plain_text"] if p["CLIENTE"]["rich_text"] else "---",
-                    "DT SAÍDA": fmt_data("DT SAÍDA"),
-                    "INÍCIO": fmt_data("INÍCIO DA MISSÃO"),
-                    "FIM": fmt_data("FIM DA MISSÃO"),
-                    "EMPURRADOR": p["EMPURRADOR"]["rich_text"][0]["plain_text"] if p["EMPURRADOR"]["rich_text"] else "---",
-                    "STATUS": p["STATUS"]["select"]["name"] if p["STATUS"]["select"] else "---",
-                    "BALSA": p["BALSA"]["rich_text"][0]["plain_text"] if p["BALSA"]["rich_text"] else "---",
-                    "DESCRIÇÃO": p["DESCRIÇÃO"]["rich_text"][0]["plain_text"] if p["DESCRIÇÃO"]["rich_text"] else "---",
-                    "SERVIÇO": p["SERVIÇO"]["select"]["name"] if p["SERVIÇO"]["select"] else "---"
+                    "Nº OS": get_title("Nº OS"),
+                    "CLIENTE": get_t("CLIENTE"),
+                    "DT SAÍDA": get_d("DT SAÍDA"),
+                    "INÍCIO": get_d("INÍCIO DA MISSÃO"),
+                    "EMPURRADOR": get_t("EMPURRADOR"),
+                    "BALSA": get_t("BALSA"),
+                    "LOCAL": get_t("LOCAL"),
+                    "DESTINO": get_t("DESTINO"),
+                    "DESCRIÇÃO": get_t("DESCRIÇÃO"),
+                    "STATUS": p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"]["select"] else "---"
                 })
             return lista
+        return []
     except: return []
-    return []
 
 # --- NAVEGAÇÃO ---
 if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
@@ -99,17 +102,15 @@ if st.session_state.pagina == "🏠 HOME":
     with c3: 
         if st.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
-# --- TELA DE CADASTRO (17 CAMPOS COM DATA BR) ---
+# --- TELA DE CADASTRO (17 CAMPOS CONGELADOS) ---
 elif st.session_state.pagina == "📋 CADASTRO":
     edit = st.session_state.dados_edicao
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.header("📝 Cadastro de Missão")
-    
+    st.header("📝 Cadastro / Edição de Missão")
     with st.form("form_missao"):
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S", value=edit["Nº OS"] if edit else "")
-        # FORMATO BR NO CALENDÁRIO
-        dt_saida = c2.date_input("DT SAÍDA", format="DD/MM/YYYY") 
+        dt_saida = c2.date_input("DT SAÍDA", format="DD/MM/YYYY")
         cliente = c3.text_input("CLIENTE", value=edit["CLIENTE"] if edit else "")
         
         c4, c5, c6 = st.columns(3)
@@ -120,10 +121,10 @@ elif st.session_state.pagina == "📋 CADASTRO":
         c7, c8, c9 = st.columns(3)
         h_emb = c7.text_input("HORA DE EMBARQUE")
         esc1 = c8.text_input("ESCOLTA 1")
-        destino = c9.text_input("DESTINO")
+        destino = c9.text_input("DESTINO", value=edit["DESTINO"] if edit else "")
         
         c10, c11, c12 = st.columns(3)
-        local = c10.text_input("LOCAL")
+        local = c10.text_input("LOCAL", value=edit["LOCAL"] if edit else "")
         esc2 = c11.text_input("ESCOLTA 2")
         pedido = c12.text_input("PEDIDO")
         
@@ -136,41 +137,45 @@ elif st.session_state.pagina == "📋 CADASTRO":
         status = st.selectbox("STATUS", ["Em Andamento", "Encerrado"])
         
         if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
-            # Envio para o Notion (O Notion exige YYYY-MM-DD internamente)
             payload = {
-                "parent": {"database_id": DATABASE} if not edit else None,
                 "properties": {
                     "Nº OS": {"title": [{"text": {"content": os_n}}]},
                     "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
                     "DT SAÍDA": {"date": {"start": dt_saida.strftime('%Y-%m-%d')}},
                     "INÍCIO DA MISSÃO": {"date": {"start": ini_m.strftime('%Y-%m-%d')}},
-                    "STATUS": {"select": {"name": status}},
                     "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
-                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
+                    "BALSA": {"rich_text": [{"text": {"content": balsa}}]},
+                    "LOCAL": {"rich_text": [{"text": {"content": local}}]},
+                    "DESTINO": {"rich_text": [{"text": {"content": destino}}]},
+                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]},
+                    "STATUS": {"select": {"name": status}}
                 }
             }
-            url = f"https://api.notion.com/v1/pages/{edit['ID_NOTION']}" if edit else "https://api.notion.com/v1/pages"
-            res = requests.patch(url, headers=headers, json={"properties": payload["properties"]}) if edit else requests.post(url, headers=headers, json=payload)
+            if edit:
+                res = requests.patch(f"https://api.notion.com/v1/pages/{edit['ID_NOTION']}", headers=headers, json=payload)
+            else:
+                payload["parent"] = {"database_id": DATABASE}
+                res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
             
-            if res.status_code == 200:
-                st.success("🎯 Sucesso!"); navegar("🏠 HOME")
-            else: st.error(f"Erro no Notion: {res.text}")
+            if res.status_code == 200: st.success("Salvo!"); navegar("🏠 HOME")
+            else: st.error(f"Erro: {res.text}")
 
-# --- TELA GRADE ---
+# --- TELA GRADE (RESTAURADA) ---
 elif st.session_state.pagina == "📊 GRADE":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.subheader("📊 Agendamentos")
+    st.subheader("📊 Agendamentos Ativos")
     dados = carregar_dados_notion()
     if dados:
         for d in dados:
-            with st.expander(f"O.S: {d['Nº OS']} - {d['CLIENTE']} ({d['DT SAÍDA']})"):
-                c_a, c_b = st.columns([3, 1])
-                c_a.write(f"**Empurrador:** {d['EMPURRADOR']} | **Status:** {d['STATUS']}")
-                if c_b.button("✏️ Editar", key=f"ed_{d['ID_NOTION']}"):
+            with st.expander(f"O.S: {d['Nº OS']} - {d['CLIENTE']} | Saída: {d['DT SAÍDA']}"):
+                c1, c2 = st.columns([4, 1])
+                c1.write(f"**Empurrador:** {d['EMPURRADOR']} | **Balsa:** {d['BALSA']} | **Status:** {d['STATUS']}")
+                if c2.button("✏️ Editar", key=f"ed_{d['ID_NOTION']}"):
                     st.session_state.dados_edicao = d
                     navegar("📋 CADASTRO")
                 pdf_b = gerar_pdf_transdourada(d)
-                c_b.download_button("📄 PDF", pdf_b, f"OS_{d['Nº OS']}.pdf", key=f"pdf_{d['ID_NOTION']}")
+                c2.download_button("📄 PDF", pdf_b, f"OS_{d['Nº OS']}.pdf", key=f"pdf_{d['ID_NOTION']}")
+    else: st.info("Buscando dados no Notion... Se não aparecer nada, verifique a conexão.")
 
 # --- TELA FINANCEIRO ---
 elif st.session_state.pagina == "💰 FINANCEIRO":
