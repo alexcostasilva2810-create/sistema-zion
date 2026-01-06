@@ -146,4 +146,41 @@ elif st.session_state.pagina == "📋 CADASTRO":
                 "DESTINO": {"rich_text": [{"text": {"content": dest}}]},
                 "HORA de EMBARQUE": {"rich_text": [{"text": {"content": h_emb}}]},
                 "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
-                "ESCOLTA 2
+                "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
+                "DESCRIÇÃO": {"rich_text": [{"text": {"content": obs}}]},
+                "STATUS": {"select": {"name": sts}}
+            }}
+            
+            url = f"https://api.notion.com/v1/pages/{edit['ID']}" if edit else "https://api.notion.com/v1/pages"
+            if not edit: payload["parent"] = {"database_id": DATABASE}
+            res = requests.patch(url, headers=headers, json=payload) if edit else requests.post(url, headers=headers, json=payload)
+            
+            if res.status_code == 200:
+                st.success("🎯 GRAVADO!")
+                # REDIRECIONAMENTO DIRETO PARA A TELA DE AGENDAMENTOS
+                navegar("📊 GRADE")
+            else:
+                st.error("Erro no Notion. Verifique os nomes das colunas.")
+
+elif st.session_state.pagina == "📊 GRADE":
+    if st.button("⬅️ VOLTAR PARA HOME"): navegar("🏠 HOME")
+    st.subheader("📊 Agendamentos Ativos")
+    dados = carregar_dados_notion()
+    if dados:
+        df = pd.DataFrame(dados)
+        st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "STATUS"]], use_container_width=True)
+        for d in dados:
+            with st.expander(f"⚙️ O.S {d['Nº OS']} - {d['CLIENTE']}"):
+                c1, c2 = st.columns(2)
+                if c1.button("✏️ Editar", key=f"ed_{d['ID']}"):
+                    st.session_state.dados_edicao = d; navegar("📋 CADASTRO")
+                pdf_b = gerar_pdf_transdourada(d)
+                c2.download_button("📄 Imprimir PDF", pdf_b, f"OS_{d['Nº OS']}.pdf", key=f"pdf_{d['ID']}")
+
+elif st.session_state.pagina == "💰 FINANCEIRO":
+    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+    st.header("💰 Financeiro")
+    dados = carregar_dados_notion()
+    if dados:
+        df = pd.DataFrame(dados)
+        st.table(df[["Nº OS", "CLIENTE", "STATUS", "DT SAÍDA"]])
