@@ -3,7 +3,6 @@ import requests
 from fpdf import FPDF
 import os
 
-# Configuração da Página Profissional
 st.set_page_config(page_title="Zion Tecnologia - Gestão", layout="wide")
 
 # Conexão Notion
@@ -16,59 +15,84 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- FUNÇÃO PARA CARREGAR A LOGO COM O NOME NOVO ---
 def mostrar_logo(largura=200):
-    # Ajustado para o nome exato que está no seu GitHub: LOGO.PNG
     if os.path.exists("LOGO.PNG"):
         st.image("LOGO.PNG", width=largura)
     else:
-        # Se por acaso a imagem sumir, o sistema mostra o nome em texto e não trava
         st.title("🛡️ ZION TECNOLOGIA")
 
-# --- MENU LATERAL (CAPA NAVEGÁVEL) ---
+# --- MENU LATERAL ---
 with st.sidebar:
     mostrar_logo(150)
     st.markdown("---")
-    menu = st.radio("MENU PRINCIPAL", ["🏠 CAPA / HOME", "📋 CADASTRO E AGENDAMENTO", "💰 FINANCEIRO", "🖨️ PDF / GESTÃO"])
-    st.markdown("---")
-    st.caption("Versão 2.0 - Sistema Integrado")
+    menu = st.radio("NAVEGAÇÃO", ["🏠 HOME", "📋 AGENDAMENTO ZION", "💰 FINANCEIRO", "🖨️ GERAR PDF"])
 
-# --- TELA 1: CAPA ---
-if menu == "🏠 CAPA / HOME":
+# --- TELA 1: HOME ---
+if menu == "🏠 HOME":
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        mostrar_logo(400)
-        st.markdown("<h2 style='text-align: center;'>BEM-VINDO AO SISTEMA ZION</h2>", unsafe_allow_html=True)
-        st.info("Utilize o menu lateral para navegar entre as telas de Cadastro, Financeiro e Geração de PDF.")
+        mostrar_logo(450)
+        st.markdown("<h2 style='text-align: center;'>BEM-VINDO AO APP GESTÃO DE ESCOLTA</h2>", unsafe_allow_html=True)
 
-# --- TELA 2: CADASTRO ---
-elif menu == "📋 CADASTRO E AGENDAMENTO":
-    st.header("📋 Novo Agendamento de Escolta")
-    with st.form("form_cadastro", clear_on_submit=True):
-        c1, c2 = st.columns(2)
-        os_n = c1.text_input("Nº OS")
-        cli_n = c1.text_input("CLIENTE")
-        data_n = c2.date_input("INÍCIO DA MISSÃO")
-        tipo_n = c2.selectbox("TIPO", ["ESCOLTA", "VIGILÂNCIA", "OUTROS"])
-        desc_n = st.text_area("DETALHAMENTO DA MISSÃO")
+# --- TELA 2: AGENDAMENTO (TODOS OS CAMPOS MENOS CMT) ---
+elif menu == "📋 AGENDAMENTO ZION":
+    st.header("📋 Novo Registro de Operação")
+    with st.form("form_completo", clear_on_submit=True):
+        c1, c2, c3 = st.columns(3)
         
+        # Coluna 1
+        os_val = c1.text_input("Nº OS")
+        ini_missao = c1.date_input("DATA INÍCIO")
+        hora_emb = c1.text_input("HORA EMBARQUE")
+        local = c1.text_input("LOCAL")
+        
+        # Coluna 2
+        empurrador = c2.text_input("EMPURRADOR")
+        saida = c2.text_input("SAÍDA")
+        fim_missao = c2.date_input("DATA FIM")
+        esc1 = c2.text_input("ESCOLTA 1")
+        
+        # Coluna 3
+        esc2 = c3.text_input("ESCOLTA 2")
+        cliente = c3.text_input("CLIENTE")
+        balsa = c3.text_input("BALSA")
+        destino = c3.text_input("DESTINO")
+        
+        # Campos de largura total
+        pedido = st.text_input("PEDIDO")
+        assinatura = st.text_input("ASSINATURA")
+        desc = st.text_area("DESCRIÇÃO")
+
         if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
-            # Lógica de salvamento que já testamos e funcionou
-            st.success("🎯 Operação salva com sucesso no Notion!")
+            # PAYLOAD: Comunicação com o Notion
+            payload = {
+                "parent": {"database_id": DATABASE},
+                "properties": {
+                    "Nº OS": {"title": [{"text": {"content": os_val}}]},
+                    "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
+                    "DATA INÍCIO": {"date": {"start": str(ini_missao)}},
+                    "HORA EMBARQUE": {"rich_text": [{"text": {"content": hora_emb}}]},
+                    "LOCAL": {"rich_text": [{"text": {"content": local}}]},
+                    "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
+                    "SAÍDA": {"rich_text": [{"text": {"content": saida}}]},
+                    "DATA FIM": {"date": {"start": str(fim_missao)}},
+                    "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
+                    "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
+                    "BALSA": {"rich_text": [{"text": {"content": balsa}}]},
+                    "DESTINO": {"rich_text": [{"text": {"content": destino}}]},
+                    "PEDIDO": {"rich_text": [{"text": {"content": pedido}}]},
+                    "ASSINATURA": {"rich_text": [{"text": {"content": assinatura}}]},
+                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
+                }
+            }
+            res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
+            if res.status_code == 200:
+                st.success("🎯 AGORA FOI! Verifique sua tabela no Notion.")
+            else:
+                st.error(f"Erro de Validação: {res.text}")
 
-# --- TELA 3: FINANCEIRO ---
+# --- TELAS ADICIONAIS ---
 elif menu == "💰 FINANCEIRO":
-    st.header("💰 Gestão Financeira Zion")
-    with st.form("form_financeiro"):
-        os_ref = st.text_input("Vincular ao Nº OS")
-        vlr = st.number_input("Valor da Operação (R$)", min_value=0.0)
-        status = st.selectbox("Pagamento", ["Pendente", "Recebido", "Faturado"])
-        if st.form_submit_button("💰 REGISTRAR NO FINANCEIRO"):
-            st.success(f"Financeiro da OS {os_ref} atualizado!")
-
-# --- TELA 4: PDF / GESTÃO ---
-elif menu == "🖨️ PDF / GESTÃO":
-    st.header("🖨️ Emissão de Documentos")
-    st.write("Layout profissional para Ordem de Serviço.")
-    # Botão de PDF fora de formulários para evitar o erro de Traceback anterior
-    st.download_button("📄 GERAR E BAIXAR PDF", data="Conteúdo do PDF", file_name="OS_ZION.pdf")
+    st.title("💰 Financeiro")
+elif menu == "🖨️ GERAR PDF":
+    st.title("🖨️ Gerador de Documentos")
