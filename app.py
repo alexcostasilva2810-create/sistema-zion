@@ -2,167 +2,132 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zion v8.1 - Sistema de Agendamentos</title>
+    <title>Zion v8.3 - Colunas Visíveis</title>
     <style>
-        :root {
-            --primary: #2563eb;
-            --bg: #f8fafc;
-            --text: #1e293b;
-        }
-
-        body { font-family: sans-serif; background: var(--bg); margin: 0; color: var(--text); }
-
-        /* HEADER E LOGO CLICÁVEL */
-        .header {
-            background: white;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .logo-container {
-            cursor: pointer;
-            transition: transform 0.2s;
-            display: flex;
-            align-items: center;
-        }
-
-        .logo-container:hover { transform: scale(1.05); }
-
-        .logo-img {
-            width: 120px; /* Ajuste o tamanho da sua logo aqui */
-            height: auto;
-        }
-
-        /* CONTEÚDO */
-        .container { padding: 20px; max-width: 1000px; margin: auto; }
-
-        /* TABELA ZION */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-
-        th { background: var(--primary); color: white; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        /* Estilos de Estrutura */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; }
         
-        .empty-row {
-            text-align: center;
-            color: #64748b;
-            font-style: italic;
-            padding: 40px !important;
+        /* Logo Clicável */
+        .header-zion { background: #1a1a1a; padding: 15px; display: flex; align-items: center; }
+        .logo-btn { cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .logo-btn:hover { border-bottom: 2px solid #007bff; transform: translateY(-2px); }
+
+        .container { padding: 30px; }
+        
+        /* TABELA COM COLUNAS FORTES */
+        .tabela-zion { 
+            width: 100%; 
+            border-collapse: collapse; /* Une as bordas */
+            background: white; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        /* TELA DE ÍCONES (ESCONDIDA POR PADRÃO) */
-        #tela-icones {
-            display: none;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 20px;
-            padding: 20px;
+        /* Forçando a visualização das colunas */
+        .tabela-zion th { 
+            background-color: #007bff; 
+            color: white; 
+            padding: 15px;
+            border: 1px solid #0056b3; /* Borda da coluna no topo */
+            text-align: left;
+            text-transform: uppercase;
+            font-size: 14px;
         }
 
-        .icon-card {
-            background: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        .tabela-zion td { 
+            padding: 12px; 
+            border: 1px solid #dee2e6; /* BORDA CINZA CLARA EM TODAS AS COLUNAS */
+            color: #333;
         }
+
+        /* Efeito de listras para facilitar a leitura */
+        .tabela-zion tr:nth-child(even) { background-color: #f8f9fa; }
+        .tabela-zion tr:hover { background-color: #e9ecef; }
+
+        .vazio-msg { text-align: center; font-weight: bold; color: #dc3545; padding: 30px !important; }
+        .hidden { display: none; }
+        
+        /* Menu de Ícones */
+        .grid-icones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .card { background: white; padding: 30px; border-radius: 10px; text-align: center; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
-    <header class="header">
-        <div class="logo-container" onclick="alternarTela()">
-            <img src="https://via.placeholder.com/120x40?text=ZION+LOGOTIPO" alt="Zion Logo" class="logo-img">
+    <header class="header-zion">
+        <div class="logo-btn" onclick="trocarTela()">
+            <img src="https://via.placeholder.com/150x50?text=ZION+LOGO" alt="Logo Zion" id="main-logo">
         </div>
-        <span style="margin-left: 15px; font-weight: bold;">Painel Administrativo</span>
+        <h2 style="color: white; margin-left: 20px;">Sistema de Gestão</h2>
     </header>
 
     <div class="container">
-        <div id="area-agendamentos">
-            <h2>Agendamentos do Dia</h2>
-            <div id="tabela-placeholder"></div>
+        <div id="tela-tabela">
+            <h3>📋 Grade de Agendamentos</h3>
+            <div id="render-alvo"></div>
         </div>
 
-        <div id="tela-icones">
-            <div class="icon-card">📅 Agenda</div>
-            <div class="icon-card">👥 Clientes</div>
-            <div class="icon-card">💰 Financeiro</div>
-            <div class="icon-card">⚙️ Ajustes</div>
+        <div id="tela-menu" class="hidden">
+            <h3>📱 Menu Principal</h3>
+            <div class="grid-icones">
+                <div class="card">📅 Agenda</div>
+                <div class="card">👥 Clientes</div>
+                <div class="card">📊 Relatórios</div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Dados simulados (vazio para testar o ajuste que você pediu)
-        const agendamentosZion = []; 
+        // Mesmo sem dados, as colunas vão aparecer
+        const listaAgendamentos = []; 
 
-        function renderizarTabela() {
-            const placeholder = document.getElementById('tabela-placeholder');
+        function carregarTabela() {
+            const alvo = document.getElementById('render-alvo');
             
-            // A estrutura da tabela sempre será renderizada
-            let html = `
-                <table>
+            let tabelaHTML = `
+                <table class="tabela-zion">
                     <thead>
                         <tr>
                             <th>Horário</th>
-                            <th>Cliente</th>
-                            <th>Serviço</th>
-                            <th>Status</th>
+                            <th>Nome do Cliente</th>
+                            <th>Serviço Solicitado</th>
+                            <th>Status da Reserva</th>
                         </tr>
                     </thead>
-                    <tbody>
-            `;
+                    <tbody>`;
 
-            if (agendamentosZion.length === 0) {
-                // Se estiver vazio, mostra a linha de aviso em vez de sumir com tudo
-                html += `
+            if (listaAgendamentos.length === 0) {
+                // Se estiver vazio, ele preenche as colunas com a mensagem de vazio
+                tabelaHTML += `
                     <tr>
-                        <td colspan="4" class="empty-row">
-                            Nenhum agendamento para exibir no momento.
+                        <td colspan="4" class="vazio-msg">
+                            Atenção: Não existem dados lançados para as colunas acima.
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
             } else {
-                agendamentosZion.forEach(item => {
-                    html += `
+                listaAgendamentos.forEach(item => {
+                    tabelaHTML += `
                         <tr>
                             <td>${item.hora}</td>
                             <td>${item.cliente}</td>
                             <td>${item.servico}</td>
                             <td>${item.status}</td>
-                        </tr>
-                    `;
+                        </tr>`;
                 });
             }
 
-            html += `</tbody></table>`;
-            placeholder.innerHTML = html;
+            tabelaHTML += `</tbody></table>`;
+            alvo.innerHTML = tabelaHTML;
         }
 
-        // Função para a Logo levar aos ícones
-        function alternarTela() {
-            const tab = document.getElementById('area-agendamentos');
-            const ico = document.getElementById('tela-icones');
-
-            if (ico.style.display === 'none' || ico.style.display === '') {
-                ico.style.display = 'grid';
-                tab.style.display = 'none';
-            } else {
-                ico.style.display = 'none';
-                tab.style.display = 'block';
-            }
+        function trocarTela() {
+            const t1 = document.getElementById('tela-tabela');
+            const t2 = document.getElementById('tela-menu');
+            t1.classList.toggle('hidden');
+            t2.classList.toggle('hidden');
         }
 
-        // Inicia a tabela ao carregar a página
-        window.onload = renderizarTabela;
+        // Inicia a tabela visualmente
+        window.onload = carregarTabela;
     </script>
-
 </body>
 </html>
