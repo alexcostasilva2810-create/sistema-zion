@@ -1,138 +1,168 @@
-import streamlit as st
-import requests
-import pandas as pd
-import os
-import base64
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zion v8.1 - Sistema de Agendamentos</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --text: #1e293b;
+        }
 
-st.set_page_config(page_title="Zion Tecnologia", layout="wide")
+        body { font-family: sans-serif; background: var(--bg); margin: 0; color: var(--text); }
 
-# --- CONEXÃO NOTION ---
-TOKEN = st.secrets["notion"]["token"].replace('"', '').strip()
-DATABASE = st.secrets["notion"]["database_id"].replace('"', '').strip()
+        /* HEADER E LOGO CLICÁVEL */
+        .header {
+            background: white;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
 
-headers = {
-    "Authorization": f"Bearer {TOKEN}",
-    "Content-Type": "application/json",
-    "Notion-Version": "2022-06-28"
-}
+        .logo-container {
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+        }
 
-# --- CONTROLE DE ESTADO ---
-if "mostrar_icones" not in st.session_state:
-    st.session_state.mostrar_icones = False
-if "pagina" not in st.session_state:
-    st.session_state.pagina = "🏠 HOME"
+        .logo-container:hover { transform: scale(1.05); }
 
-def navegar(p):
-    st.session_state.pagina = p
-    st.rerun()
+        .logo-img {
+            width: 120px; /* Ajuste o tamanho da sua logo aqui */
+            height: auto;
+        }
 
-# Esconde menus desnecessários
-st.markdown("<style> [data-testid='stSidebarNav'] {display: none;} </style>", unsafe_allow_html=True)
+        /* CONTEÚDO */
+        .container { padding: 20px; max-width: 1000px; margin: auto; }
 
-# --- FUNÇÃO PARA TRANSFORMAR IMAGEM EM BOTÃO CLICÁVEL ---
-def logo_clicavel():
-    if os.path.exists("LOGO.PNG"):
-        with open("LOGO.PNG", "rb") as f:
-            data = base64.b64encode(f.read()).decode("utf-8")
+        /* TABELA ZION */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        th { background: var(--primary); color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
         
-        # Criando o botão invisível por cima da imagem usando HTML
-        # Ao clicar na imagem, o Streamlit entende o comando de abrir os ícones
-        if st.button("🔓 ACESSAR SISTEMA", use_container_width=True, type="secondary"):
-            st.session_state.mostrar_icones = not st.session_state.mostrar_icones
-            st.rerun()
+        .empty-row {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            padding: 40px !important;
+        }
+
+        /* TELA DE ÍCONES (ESCONDIDA POR PADRÃO) */
+        #tela-icones {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .icon-card {
+            background: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo-container" onclick="alternarTela()">
+            <img src="https://via.placeholder.com/120x40?text=ZION+LOGOTIPO" alt="Zion Logo" class="logo-img">
+        </div>
+        <span style="margin-left: 15px; font-weight: bold;">Painel Administrativo</span>
+    </header>
+
+    <div class="container">
+        <div id="area-agendamentos">
+            <h2>Agendamentos do Dia</h2>
+            <div id="tabela-placeholder"></div>
+        </div>
+
+        <div id="tela-icones">
+            <div class="icon-card">📅 Agenda</div>
+            <div class="icon-card">👥 Clientes</div>
+            <div class="icon-card">💰 Financeiro</div>
+            <div class="icon-card">⚙️ Ajustes</div>
+        </div>
+    </div>
+
+    <script>
+        // Dados simulados (vazio para testar o ajuste que você pediu)
+        const agendamentosZion = []; 
+
+        function renderizarTabela() {
+            const placeholder = document.getElementById('tabela-placeholder');
             
-        st.markdown(
-            f"""
-            <div style="display: flex; justify-content: center;">
-                <img src="data:image/png;base64,{data}" style="width: 500px; cursor: pointer;">
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+            // A estrutura da tabela sempre será renderizada
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Horário</th>
+                            <th>Cliente</th>
+                            <th>Serviço</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-# --- TELA 1: HOME ---
-if st.session_state.pagina == "🏠 HOME":
-    logo_clicavel()
-    
-    # OS ÍCONES SÓ APARECEM APÓS O CLIQUE NA LOGO ACIMA
-    if st.session_state.mostrar_icones:
-        st.markdown("<br>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
-        
-        with c1:
-            if st.button("📋 NOVO LANÇAMENTO", use_container_width=True): navegar("📋 AGENDAMENTO")
-        with c2:
-            if st.button("📊 VER AGENDAMENTO", use_container_width=True): navegar("📊 VER AGENDAMENTOS")
-        with c3:
-            if st.button("💰 FINANCEIRO", use_container_width=True): navegar("💰 FINANCEIRO")
-
-# --- TELA 2: AGENDAMENTO (TODOS OS 17 CAMPOS) ---
-elif st.session_state.pagina == "📋 AGENDAMENTO":
-    if st.button("⬅️ VOLTAR"): 
-        st.session_state.mostrar_icones = False
-        navegar("🏠 HOME")
-        
-    st.header("📋 Cadastro Geral de Missão")
-    
-    with st.form("form_completo"):
-        c1, c2, c3 = st.columns(3)
-        # Linha 1
-        os_n = c1.text_input("Nº O.S")
-        ini_m = c1.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY")
-        h_emb = c1.text_input("HORA DE EMBARQUE")
-        local = c1.text_input("LOCAL")
-        empurrador = c1.text_input("EMPURRADOR")
-        
-        # Linha 2
-        saida = c2.text_input("SAÍDA")
-        fim_m = c2.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
-        esc1 = c2.text_input("ESCOLTA 1")
-        esc2 = c2.text_input("ESCOLTA 2")
-        servico = c2.selectbox("SERVIÇO", ["Escolta", "Vigilância"])
-        
-        # Linha 3
-        cliente = c3.text_input("CLIENTE")
-        balsa = c3.text_input("BALSA")
-        destino = c3.text_input("DESTINO")
-        pedido = c3.text_input("PEDIDO")
-        assinatura = c3.text_input("ASSINATURA RESPONSÁVEL")
-        status = c3.selectbox("STATUS", ["Em Andamento", "Encerrado"])
-
-        desc = st.text_area("DESCRIÇÃO / OBSERVAÇÕES")
-
-        if st.form_submit_button("✅ SALVAR OPERAÇÃO EM LINHA ÚNICA"):
-            # Lógica de cálculo financeiro embutida
-            valor_fin = 1870.0 if servico == "Escolta" else 970.0
-            
-            payload = {
-                "parent": {"database_id": DATABASE},
-                "properties": {
-                    "Nº OS": {"title": [{"text": {"content": os_n}}]},
-                    "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
-                    "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
-                    "FIM DA MISSÃO": {"date": {"start": str(fim_m)}},
-                    "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": h_emb}}]},
-                    "SAÍDA": {"rich_text": [{"text": {"content": saida}}]},
-                    "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
-                    "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
-                    "LOCAL": {"rich_text": [{"text": {"content": local}}]},
-                    "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
-                    "BALSA": {"rich_text": [{"text": {"content": balsa}}]},
-                    "DESTINO": {"rich_text": [{"text": {"content": destino}}]},
-                    "PEDIDO": {"rich_text": [{"text": {"content": pedido}}]},
-                    "ASSINATURA": {"rich_text": [{"text": {"content": assinatura}}]},
-                    "STATUS": {"select": {"name": status}},
-                    "SERVIÇO": {"select": {"name": servico}},
-                    "VALOR": {"number": valor_fin},
-                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
-                }
+            if (agendamentosZion.length === 0) {
+                // Se estiver vazio, mostra a linha de aviso em vez de sumir com tudo
+                html += `
+                    <tr>
+                        <td colspan="4" class="empty-row">
+                            Nenhum agendamento para exibir no momento.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                agendamentosZion.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item.hora}</td>
+                            <td>${item.cliente}</td>
+                            <td>${item.servico}</td>
+                            <td>${item.status}</td>
+                        </tr>
+                    `;
+                });
             }
-            res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
-            if res.status_code == 200:
-                st.success("🎯 Salvo com sucesso!")
-                navegar("📊 VER AGENDAMENTOS")
-            else:
-                st.error(f"Erro: {res.text}")
 
-# --- TELA 3: VER AGENDAMENTOS E FINANCEIRO ---
-# (Aqui continua a lógica das tabelas que já estavam funcionando bem)
+            html += `</tbody></table>`;
+            placeholder.innerHTML = html;
+        }
+
+        // Função para a Logo levar aos ícones
+        function alternarTela() {
+            const tab = document.getElementById('area-agendamentos');
+            const ico = document.getElementById('tela-icones');
+
+            if (ico.style.display === 'none' || ico.style.display === '') {
+                ico.style.display = 'grid';
+                tab.style.display = 'none';
+            } else {
+                ico.style.display = 'none';
+                tab.style.display = 'block';
+            }
+        }
+
+        // Inicia a tabela ao carregar a página
+        window.onload = renderizarTabela;
+    </script>
+
+</body>
+</html>
