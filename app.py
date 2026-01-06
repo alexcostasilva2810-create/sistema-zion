@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import os
 from fpdf import FPDF
 from datetime import datetime
 
@@ -17,48 +18,62 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
+# --- ESTILO CSS ---
+st.markdown("""
+    <style>
+    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; height: 3.5em; background-color: #0047AB; color: white; }
+    .stDownloadButton>button { width: 100%; background-color: #28a745; color: white; }
+    </style>
+    """, unsafe_allow_html=True)
+
 # --- FUNÇÃO PARA PUXAR DADOS DO NOTION ---
 def carregar_dados_notion():
-    url = f"https://api.notion.com/v1/databases/{DATABASE}/query"
-    res = requests.post(url, headers=headers)
-    if res.status_code == 200:
-        dados = res.json().get("results", [])
-        lista_final = []
-        for item in dados:
-            p = item.get("properties", {})
-            # Extração segura de cada campo
-            linha = {
-                "Nº OS": p.get("Nº OS", {}).get("title", [{}])[0].get("plain_text", "---"),
-                "CLIENTE": p.get("CLIENTE", {}).get("rich_text", [{}])[0].get("plain_text", "---"),
-                "DT SAÍDA": p.get("DT SAÍDA", {}).get("date", {}).get("start", "---"),
-                "EMPURRADOR": p.get("EMPURRADOR", {}).get("rich_text", [{}])[0].get("plain_text", "---"),
-                "STATUS": p.get("STATUS", {}).get("select", {}).get("name", "---"),
-                "ID": item.get("id")
-            }
-            lista_final.append(linha)
-        return pd.DataFrame(lista_final)
-    else:
-        st.error(f"Erro ao conectar com Notion: {res.status_code}")
-        return pd.DataFrame()
+    try:
+        url = f"https://api.notion.com/v1/databases/{DATABASE}/query"
+        res = requests.post(url, headers=headers)
+        if res.status_code == 200:
+            results = res.json().get("results", [])
+            lista = []
+            for r in results:
+                p = r["properties"]
+                lista.append({
+                    "Nº OS": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
+                    "CLIENTE": p["CLIENTE"]["rich_text"][0]["plain_text"] if p["CLIENTE"]["rich_text"] else "---",
+                    "DT SAÍDA": p["DT SAÍDA"]["date"]["start"] if p["DT SAÍDA"]["date"] else "---",
+                    "EMPURRADOR": p["EMPURRADOR"]["rich_text"][0]["plain_text"] if p["EMPURRADOR"]["rich_text"] else "---",
+                    "STATUS": p["STATUS"]["select"]["name"] if p["STATUS"]["select"] else "---",
+                    "SERVIÇO": p["SERVIÇO"]["select"]["name"] if p["SERVIÇO"]["select"] else "---",
+                    "DESCRIÇÃO": p["DESCRIÇÃO"]["rich_text"][0]["plain_text"] if p["DESCRIÇÃO"]["rich_text"] else ""
+                })
+            return lista
+    except: return []
+    return []
 
-# --- NAVEGAÇÃO E HOME (Igual às anteriores) ---
+# --- NAVEGAÇÃO ---
 if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
 def navegar(p): st.session_state.pagina = p; st.rerun()
 
+# --- TELA HOME (LOGO RESTAURADA) ---
 if st.session_state.pagina == "🏠 HOME":
-    st.title("🛡️ Painel de Controle Zion")
+    if os.path.exists("LOGO.PNG"):
+        st.image("LOGO.PNG", width=300)
+    else:
+        st.title("🛡️ Zion Tecnologia")
+        
+    st.markdown("---")
     col1, col2, col3 = st.columns(3)
-    with col1: 
+    with col1:
         if st.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
-    with col2: 
+    with col2:
         if st.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
-    with col3: 
+    with col3:
         if st.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
-# --- TELA DE CADASTRO (17 CAMPOS) ---
+# --- TELA DE CADASTRO (17 CAMPOS COMPLETOS) ---
 elif st.session_state.pagina == "📋 CADASTRO":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.header("📝 Cadastro de Missão")
+    st.header("📝 Cadastro Geral de Missão")
+    
     with st.form("form_completo"):
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S")
@@ -70,35 +85,57 @@ elif st.session_state.pagina == "📋 CADASTRO":
         fim_m = c5.date_input("FIM DA MISSÃO")
         balsa = c6.text_input("BALSA")
         
-        empurrador = st.text_input("EMPURRADOR")
-        status = st.selectbox("STATUS", ["Em Andamento", "Encerrado"])
-        desc = st.text_area("DESCRIÇÃO")
+        c7, c8, c9 = st.columns(3)
+        h_emb = c7.text_input("HORA DE EMBARQUE")
+        esc1 = c8.text_input("ESCOLTA 1")
+        destino = c9.text_input("DESTINO")
         
-        if st.form_submit_button("✅ SALVAR"):
-            # Lógica de salvamento enviando para o Notion...
-            st.success("Salvo!")
+        c10, c11, c12 = st.columns(3)
+        local = c10.text_input("LOCAL")
+        esc2 = c11.text_input("ESCOLTA 2")
+        pedido = c12.text_input("PEDIDO")
+        
+        c13, c14, c15 = st.columns(3)
+        empurrador = c13.text_input("EMPURRADOR")
+        servico = c14.selectbox("SERVIÇO", ["Escolta", "Vigilância"])
+        ass_resp = c15.text_input("ASSINATURA RESPONSÁVEL")
+        
+        desc = st.text_area("DESCRIÇÃO / OBSERVAÇÕES")
+        status = st.selectbox("STATUS", ["Em Andamento", "Encerrado"])
+        
+        if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
+            payload = {
+                "parent": {"database_id": DATABASE},
+                "properties": {
+                    "Nº OS": {"title": [{"text": {"content": os_n}}]},
+                    "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
+                    "DT SAÍDA": {"date": {"start": str(dt_saida)}},
+                    "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
+                    "STATUS": {"select": {"name": status}},
+                    "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
+                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
+                }
+            }
+            res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
+            if res.status_code == 200:
+                st.success("🎯 Salvo!"); navegar("🏠 HOME")
+            else: st.error("Erro ao salvar.")
 
-# --- TELA GRADE (PUXANDO DADOS REAIS) ---
+# --- TELA GRADE (PUXANDO DO NOTION) ---
 elif st.session_state.pagina == "📊 GRADE":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.subheader("📊 Agendamentos Ativos no Notion")
+    st.subheader("📋 Grade de Agendamentos (Notion Real)")
     
-    df = carregar_dados_notion()
-    
-    if not df.empty:
-        # Exibe a tabela com os dados reais
+    dados = carregar_dados_notion()
+    if dados:
+        df = pd.DataFrame(dados)
         st.dataframe(df, use_container_width=True, hide_index=True)
-        
-        # Opção para baixar PDF de uma linha específica
-        st.divider()
-        selecionado = st.selectbox("Selecione uma O.S para gerar PDF:", df["Nº OS"].tolist())
-        if st.button("📄 Gerar Relatório PDF"):
-            st.success(f"PDF da O.S {selecionado} preparado!")
     else:
-        st.warning("Nenhum dado encontrado ou erro na conexão.")
+        st.warning("Nenhum dado encontrado no Notion ou erro de conexão.")
 
 # --- TELA FINANCEIRO ---
 elif st.session_state.pagina == "💰 FINANCEIRO":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.header("💰 Financeiro")
-    st.table(pd.DataFrame(columns=["DATA", "DESCRIÇÃO", "VALOR"]))
+    st.header("💰 Controle Financeiro")
+    df_financeiro = pd.DataFrame(columns=["DATA", "PEDIDO", "CLIENTE", "VALOR", "STATUS"])
+    st.table(df_financeiro)
