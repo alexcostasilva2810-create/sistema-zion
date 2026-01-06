@@ -17,7 +17,7 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- CSS PARA GRADE E DESIGN ---
+# --- CSS PROTEGIDO (Resolve o SyntaxError das imagens) ---
 st.markdown("""
     <style>
     .grade-zion {
@@ -67,6 +67,8 @@ def logo_central():
             """,
             unsafe_allow_html=True
         )
+    else:
+        st.markdown("<h1 style='text-align: center;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
 
 # --- NAVEGAÇÃO DE TELAS ---
 
@@ -119,13 +121,12 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
         
         # Coluna 1
         os_n = c1.text_input("Nº O.S")
-        ini_m = c1.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY") # Calendário aqui
+        ini_m = c1.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY")
         h_emb = c1.text_input("HORA DE EMBARQUE")
         local = c1.text_input("LOCAL")
         empurrador = c1.text_input("EMPURRADOR")
         
-        # Coluna 2
-        # AJUSTE: Transformado em date_input para aparecer o calendário
+        # Coluna 2 (CALENDÁRIO AJUSTADO)
         dt_saida = c2.date_input("DT SAÍDA", format="DD/MM/YYYY") 
         fim_m = c2.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
         esc1 = c2.text_input("ESCOLTA 1")
@@ -143,8 +144,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
         desc = st.text_area("DESCRIÇÃO / OBSERVAÇÕES")
 
         if st.form_submit_button("✅ SALVAR OPERAÇÃO EM LINHA ÚNICA"):
-            valor_fin = 1870.0 if servico == "Escolta" else 970.0
-            
+            # Removi o campo "VALOR" que estava dando erro de validação
             payload = {
                 "parent": {"database_id": DATABASE},
                 "properties": {
@@ -153,7 +153,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
                     "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
                     "FIM DA MISSÃO": {"date": {"start": str(fim_m)}},
                     "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": h_emb}}]},
-                    "DT SAÍDA": {"date": {"start": str(dt_saida)}}, # Enviando como data para o Notion
+                    "DT SAÍDA": {"date": {"start": str(dt_saida)}},
                     "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
                     "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
                     "LOCAL": {"rich_text": [{"text": {"content": local}}]},
@@ -164,13 +164,12 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
                     "ASSINATURA": {"rich_text": [{"text": {"content": assinatura}}]},
                     "STATUS": {"select": {"name": status}},
                     "SERVIÇO": {"select": {"name": servico}},
-                    "VALOR": {"number": valor_fin},
                     "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
                 }
             }
             res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
             if res.status_code == 200:
-                st.success("🎯 Missão salva com sucesso!")
+                st.success("🎯 Salvo com sucesso no Notion!")
                 navegar("🏠 HOME")
             else:
                 st.error(f"Erro ao salvar: {res.text}")
