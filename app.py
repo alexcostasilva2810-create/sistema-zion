@@ -17,7 +17,7 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- CSS PARA GRADE E DESIGN (PROTEGIDO CONTRA SYNTAXERROR) ---
+# --- CSS PARA GRADE E DESIGN (PROTEGIDO) ---
 st.markdown("""
     <style>
     .grade-zion {
@@ -31,6 +31,7 @@ st.markdown("""
         background-color: #f0f2f6;
         padding: 12px;
         text-align: left;
+        font-weight: bold;
     }
     .grade-zion td {
         border: 2px solid #000000 !important;
@@ -54,7 +55,7 @@ def navegar(p):
     st.session_state.pagina = p
     st.rerun()
 
-# --- BOTÃO AUXILIAR DE NAVEGAÇÃO ---
+# --- BOTÃO AUXILIAR NO TOPO ---
 col_logo_top, col_auxiliar = st.columns([5, 1])
 with col_auxiliar:
     if st.button("☰ OPERACIONAL"):
@@ -97,7 +98,7 @@ if st.session_state.pagina == "🏠 HOME":
     st.markdown("---")
     st.subheader("📅 Grade de Agendamentos")
     
-    # AJUSTE NA GRADE: "DT SAÍDA"
+    # GRADE ATUALIZADA COM COLUNA "DT SAÍDA"
     st.markdown("""
         <table class="grade-zion">
             <thead>
@@ -112,7 +113,7 @@ if st.session_state.pagina == "🏠 HOME":
             <tbody>
                 <tr>
                     <td colspan="5" style="text-align:center; padding: 30px; color: gray;">
-                        Nenhum dado para exibir.
+                        Aguardando integração de dados... (Coluna DT SAÍDA ativa)
                     </td>
                 </tr>
             </tbody>
@@ -128,19 +129,21 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
     
     with st.form("form_completo"):
         c1, c2, c3 = st.columns(3)
+        # Coluna 1
         os_n = c1.text_input("Nº O.S")
         ini_m = c1.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY")
         h_emb = c1.text_input("HORA DE EMBARQUE")
         local = c1.text_input("LOCAL")
         empurrador = c1.text_input("EMPURRADOR")
         
-        # AJUSTE NO INPUT: "DT SAÍDA"
-        dt_saida = c2.text_input("DT SAÍDA")
+        # Coluna 2 (Ajustada)
+        dt_saida_val = c2.text_input("DT SAÍDA") # Nome ajustado aqui
         fim_m = c2.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
         esc1 = c2.text_input("ESCOLTA 1")
         esc2 = c2.text_input("ESCOLTA 2")
         servico = c2.selectbox("SERVIÇO", ["Escolta", "Vigilância"])
         
+        # Coluna 3
         cliente = c3.text_input("CLIENTE")
         balsa = c3.text_input("BALSA")
         destino = c3.text_input("DESTINO")
@@ -150,7 +153,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
 
         desc = st.text_area("DESCRIÇÃO / OBSERVAÇÕES")
 
-        if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
+        if st.form_submit_button("✅ SALVAR OPERAÇÃO EM LINHA ÚNICA"):
             valor_fin = 1870.0 if servico == "Escolta" else 970.0
             
             payload = {
@@ -161,7 +164,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
                     "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
                     "FIM DA MISSÃO": {"date": {"start": str(fim_m)}},
                     "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": h_emb}}]},
-                    "DT SAÍDA": {"rich_text": [{"text": {"content": dt_saida}}]}, # AJUSTE AQUI
+                    "DT SAÍDA": {"rich_text": [{"text": {"content": dt_saida_val}}]}, # PROPRIEDADE AJUSTADA
                     "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
                     "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
                     "LOCAL": {"rich_text": [{"text": {"content": local}}]},
@@ -178,11 +181,12 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
             }
             res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
             if res.status_code == 200:
-                st.success("🎯 Salvo com sucesso!")
+                st.success("🎯 Salvo com sucesso no Notion!")
                 navegar("🏠 HOME")
             else:
-                st.error(f"Erro: {res.text}")
+                st.error(f"Erro de Propriedade: Verifique se no Notion a coluna se chama exatamente 'DT SAÍDA'.")
+                st.code(res.text)
 
 elif st.session_state.pagina == "📊 VER AGENDAMENTOS":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.title("📊 Agendamentos Registrados")
+    st.title("📊 Relatório de Agendamentos")
