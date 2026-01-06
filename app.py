@@ -17,7 +17,7 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- CSS PARA GRADE E DESIGN (PROTEGIDO CONTRA SYNTAXERROR) ---
+# --- CSS PARA GRADE E DESIGN ---
 st.markdown("""
     <style>
     .grade-zion {
@@ -53,13 +53,6 @@ if "pagina" not in st.session_state:
 def navegar(p):
     st.session_state.pagina = p
     st.rerun()
-
-# --- BOTÃO AUXILIAR DE NAVEGAÇÃO ---
-col_logo_top, col_auxiliar = st.columns([5, 1])
-with col_auxiliar:
-    if st.button("☰ OPERACIONAL"):
-        st.session_state.mostrar_icones = True
-        navegar("🏠 HOME")
 
 # --- FUNÇÃO LOGO ---
 def logo_central():
@@ -97,7 +90,6 @@ if st.session_state.pagina == "🏠 HOME":
     st.markdown("---")
     st.subheader("📅 Grade de Agendamentos")
     
-    # AJUSTE NA GRADE: "DT SAÍDA"
     st.markdown("""
         <table class="grade-zion">
             <thead>
@@ -110,11 +102,7 @@ if st.session_state.pagina == "🏠 HOME":
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td colspan="5" style="text-align:center; padding: 30px; color: gray;">
-                        Nenhum dado para exibir.
-                    </td>
-                </tr>
+                <tr><td colspan="5" style="text-align:center; padding: 20px; color: gray;">Aguardando dados...</td></tr>
             </tbody>
         </table>
         """, unsafe_allow_html=True)
@@ -128,19 +116,23 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
     
     with st.form("form_completo"):
         c1, c2, c3 = st.columns(3)
+        
+        # Coluna 1
         os_n = c1.text_input("Nº O.S")
-        ini_m = c1.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY")
+        ini_m = c1.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY") # Calendário aqui
         h_emb = c1.text_input("HORA DE EMBARQUE")
         local = c1.text_input("LOCAL")
         empurrador = c1.text_input("EMPURRADOR")
         
-        # AJUSTE NO INPUT: "DT SAÍDA"
-        dt_saida = c2.text_input("DT SAÍDA")
+        # Coluna 2
+        # AJUSTE: Transformado em date_input para aparecer o calendário
+        dt_saida = c2.date_input("DT SAÍDA", format="DD/MM/YYYY") 
         fim_m = c2.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
         esc1 = c2.text_input("ESCOLTA 1")
         esc2 = c2.text_input("ESCOLTA 2")
         servico = c2.selectbox("SERVIÇO", ["Escolta", "Vigilância"])
         
+        # Coluna 3
         cliente = c3.text_input("CLIENTE")
         balsa = c3.text_input("BALSA")
         destino = c3.text_input("DESTINO")
@@ -150,7 +142,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
 
         desc = st.text_area("DESCRIÇÃO / OBSERVAÇÕES")
 
-        if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
+        if st.form_submit_button("✅ SALVAR OPERAÇÃO EM LINHA ÚNICA"):
             valor_fin = 1870.0 if servico == "Escolta" else 970.0
             
             payload = {
@@ -161,7 +153,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
                     "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
                     "FIM DA MISSÃO": {"date": {"start": str(fim_m)}},
                     "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": h_emb}}]},
-                    "DT SAÍDA": {"rich_text": [{"text": {"content": dt_saida}}]}, # AJUSTE AQUI
+                    "DT SAÍDA": {"date": {"start": str(dt_saida)}}, # Enviando como data para o Notion
                     "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
                     "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
                     "LOCAL": {"rich_text": [{"text": {"content": local}}]},
@@ -178,11 +170,7 @@ elif st.session_state.pagina == "📋 AGENDAMENTO":
             }
             res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
             if res.status_code == 200:
-                st.success("🎯 Salvo com sucesso!")
+                st.success("🎯 Missão salva com sucesso!")
                 navegar("🏠 HOME")
             else:
-                st.error(f"Erro: {res.text}")
-
-elif st.session_state.pagina == "📊 VER AGENDAMENTOS":
-    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.title("📊 Agendamentos Registrados")
+                st.error(f"Erro ao salvar: {res.text}")
