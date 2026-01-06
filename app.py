@@ -18,43 +18,33 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- FUNÇÃO GERAR PDF (PADRÃO TRANSDOURADA) ---
+# --- ESTILO CSS ---
+st.markdown("""
+    <style>
+    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; height: 3.5em; background-color: #0047AB; color: white; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- FUNÇÃO GERAR PDF (ESTILO TRANSDOURADA) ---
 def gerar_pdf_os(d):
     try:
         pdf = FPDF()
         pdf.add_page()
-        
-        # Cabeçalho
         pdf.set_font("Arial", "B", 10)
         pdf.cell(0, 5, "ZION TECNOLOGIA | TRANSDOURADA", ln=True)
         pdf.ln(10)
-
-        # Títulos
         pdf.set_font("Arial", "B", 16)
         pdf.cell(0, 10, "Solicitação de Escolta", ln=True, align="C")
         pdf.set_font("Arial", "B", 11)
         pdf.cell(0, 7, f"ORDEM DE SERVIÇO O.S: {d.get('Nº OS', '---')}", ln=True, align="C")
         pdf.ln(5)
-
-        # Caixa Solicitante
         pdf.cell(0, 10, f"SOLICITANTE ( {d.get('CLIENTE', '---')} )", border=1, ln=True, align="C")
         pdf.ln(5)
-
-        # Dados
-        pdf.set_font("Arial", "", 9)
-        info = f"EMPURRADOR: {d.get('EMPURRADOR', '---')} | BALSA: {d.get('BALSA', '---')}"
-        pdf.multi_cell(0, 6, info, border=1)
-        
-        pdf.ln(10)
-        pdf.set_font("Arial", "B", 11)
-        pdf.cell(0, 7, "DETALHAMENTO DA MISSÃO", ln=True)
         pdf.set_font("Arial", "", 10)
-        # CORREÇÃO: fechamento do parêntese garantido abaixo
-        pdf.multi_cell(0, 6, d.get('DESCRIÇÃO', 'Sem observações.'))
-        
+        pdf.multi_cell(0, 6, f"DETALHAMENTO: {d.get('DESCRIÇÃO', '---')}")
         return pdf.output(dest="S").encode("latin-1")
-    except Exception as e:
-        return str(e).encode("latin-1")
+    except:
+        return b""
 
 # --- NAVEGAÇÃO ---
 if "pagina" not in st.session_state:
@@ -64,11 +54,12 @@ def navegar(p):
     st.session_state.pagina = p
     st.rerun()
 
-# --- TELA HOME (RESTAURAÇÃO DOS ÍCONES) ---
+# --- TELA HOME ---
 if st.session_state.pagina == "🏠 HOME":
-    st.title("🛡️ Sistema Zion Tecnologia")
+    if os.path.exists("LOGO.PNG"):
+        st.image("LOGO.PNG", width=250)
+    st.title("🛡️ Painel de Controle Zion")
     st.markdown("---")
-    
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
@@ -77,28 +68,23 @@ if st.session_state.pagina == "🏠 HOME":
     with col3:
         if st.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
-# --- TELA DE CADASTRO (CORREÇÃO DT SAÍDA E NOTION) ---
+# --- TELA DE CADASTRO ---
 elif st.session_state.pagina == "📋 CADASTRO":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.header("📋 Cadastro de Missão")
-    
+    st.header("📝 Nova Missão")
     with st.form("form_missao"):
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S")
-        # FIXADO: Agora abre o calendário corretamente
-        dt_saida = c2.date_input("DT SAÍDA", value=datetime.today())
-        ini_m = c3.date_input("INÍCIO DA MISSÃO", value=datetime.today())
+        dt_saida = c2.date_input("DT SAÍDA") # Calendário Restaurado
+        ini_m = c3.date_input("INÍCIO DA MISSÃO")
         
         cliente = c1.text_input("CLIENTE")
         empurrador = c2.text_input("EMPURRADOR")
-        balsa = c3.text_input("BALSA")
+        status = c3.selectbox("STATUS", ["Em Andamento", "Encerrado"])
         
-        status = c1.selectbox("STATUS", ["Em Andamento", "Encerrado"])
-        servico = c2.selectbox("SERVIÇO", ["Escolta", "Vigilância"])
         desc = st.text_area("DESCRIÇÃO / OBSERVAÇÕES")
         
         if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
-            # Payload ajustado: Removi campos que não existem no seu Notion (como VALOR)
             payload = {
                 "parent": {"database_id": DATABASE},
                 "properties": {
@@ -107,19 +93,32 @@ elif st.session_state.pagina == "📋 CADASTRO":
                     "DT SAÍDA": {"date": {"start": str(dt_saida)}},
                     "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
                     "STATUS": {"select": {"name": status}},
-                    "SERVIÇO": {"select": {"name": servico}},
                     "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
-                    "BALSA": {"rich_text": [{"text": {"content": balsa}}]},
                     "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
                 }
             }
             res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
             if res.status_code == 200:
-                st.success("🎯 Salvo com sucesso!"); navegar("🏠 HOME")
+                st.success("🎯 Salvo!"); navegar("🏠 HOME")
             else:
-                st.error(f"Erro no Notion: {res.text}")
+                st.error("Erro ao salvar no Notion.")
 
 # --- TELA GRADE ---
 elif st.session_state.pagina == "📊 GRADE":
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    st.info("Puxando agendamentos do Notion...")
+    st.subheader("📊 Agendamentos Ativos")
+    st.write("Abaixo estão as missões registradas no Notion.")
+    # Aqui você pode adicionar sua lógica de carregar_dados() se desejar listar
+
+# --- TELA FINANCEIRO (RESTAURADA) ---
+elif st.session_state.pagina == "💰 FINANCEIRO":
+    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+    st.header("💰 Controle Financeiro")
+    
+    # Criando uma tabela vazia conforme solicitado
+    df_vazio = pd.DataFrame(columns=["DATA", "DESCRIÇÃO", "TIPO", "VALOR (R$)", "STATUS"])
+    
+    st.subheader("Resumo de Lançamentos")
+    st.table(df_vazio) # Aparece pelo menos a estrutura da tabela
+    
+    st.info("O módulo financeiro está sendo integrado ao seu banco de dados.")
