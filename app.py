@@ -3,12 +3,11 @@ import requests
 import pandas as pd
 import os
 import base64
-from fpdf import FPDF # Certifique-se de ter instalado: pip install fpdf
 
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
-# --- CONEXÃO NOTION (Mantida) ---
+# --- CONEXÃO NOTION ---
 TOKEN = st.secrets["notion"]["token"].replace('"', '').strip()
 DATABASE = st.secrets["notion"]["database_id"].replace('"', '').strip()
 
@@ -18,76 +17,180 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- FUNÇÃO PARA CRIAR O PDF ---
-def gerar_pdf_os(dados_os):
-    pdf = FPDF()
-    pdf.add_page()
-    
-    # Cabeçalho
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(200, 10, "ZION TECNOLOGIA - ORDEM DE SERVIÇO", ln=True, align="C")
-    pdf.ln(10)
-    
-    # Detalhes da O.S.
-    pdf.set_font("Arial", "B", 12)
-    pdf.set_fill_color(240, 242, 246)
-    pdf.cell(190, 10, f" O.S Nº: {dados_os['os_n']}", border=1, ln=True, fill=True)
-    
-    pdf.set_font("Arial", "", 11)
-    pdf.cell(95, 10, f" Cliente: {dados_os['cliente']}", border=1)
-    pdf.cell(95, 10, f" Status: {dados_os['status']}", border=1, ln=True)
-    
-    pdf.cell(95, 10, f" Início Missão: {dados_os['ini_m']}", border=1)
-    pdf.cell(95, 10, f" DT Saída: {dados_os['dt_saida']}", border=1, ln=True)
-    
-    pdf.cell(190, 10, f" Serviço: {dados_os['servico']}", border=1, ln=True)
-    pdf.cell(190, 10, f" Local: {dados_os['local']}", border=1, ln=True)
-    
-    pdf.ln(5)
-    pdf.set_font("Arial", "B", 11)
-    pdf.cell(190, 10, " Equipe e Equipamento:", ln=True)
-    pdf.set_font("Arial", "", 11)
-    pdf.cell(63, 10, f" Escolta 1: {dados_os['esc1']}", border=1)
-    pdf.cell(63, 10, f" Escolta 2: {dados_os['esc2']}", border=1)
-    pdf.cell(64, 10, f" Balsa: {dados_os['balsa']}", border=1, ln=True)
-    
-    pdf.ln(10)
-    pdf.set_font("Arial", "I", 10)
-    pdf.multi_cell(190, 10, f"Descrição: {dados_os['desc']}", border=1)
-    
-    pdf.ln(20)
-    pdf.cell(190, 10, "________________________________________", ln=True, align="C")
-    pdf.cell(190, 10, "Assinatura do Responsável", ln=True, align="C")
-    
-    return pdf.output(dest="S").encode("latin-1")
+# --- CSS PARA GRADE E DESIGN ---
+st.markdown("""
+    <style>
+    /* Estilo para a Tabela com Bordas Pretas e Visíveis */
+    .grade-zion {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+        color: black;
+    }
+    .grade-zion th {
+        border: 2px solid #000000 !important;
+        background-color: #f0f2f6;
+        padding: 12px;
+        text-align: left;
+    }
+    .grade-zion td {
+        border: 2px solid #000000 !important;
+        padding: 10px;
+    }
+    /* Estilo dos Botões */
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-# --- (O RESTANTE DO SEU CÓDIGO DE NAVEGAÇÃO E LOGO CONTINUA IGUAL) ---
-# ... (Função navegar, logo_central, etc.)
+# --- CONTROLE DE ESTADO ---
+if "mostrar_icones" not in st.session_state:
+    st.session_state.mostrar_icones = False
+if "pagina" not in st.session_state:
+    st.session_state.pagina = "🏠 HOME"
 
-# --- TELA DE RELATÓRIO (ONDE O PDF É GERADO) ---
-if st.session_state.pagina == "📊 VER AGENDAMENTOS":
-    if st.button("⬅️ VOLTAR"): st.session_state.pagina = "🏠 HOME"; st.rerun()
-    st.header("📊 Gerenciamento de O.S")
-    
-    # Aqui simulamos a busca de um registro para gerar o PDF
-    # Na prática, você selecionaria uma linha da tabela para imprimir
-    st.write("Selecione uma O.S para gerar o documento PDF:")
-    
-    # Exemplo de botão para gerar o PDF do último cadastro (usando dados locais para teste)
-    # No futuro, puxaremos os dados do Notion aqui.
-    if st.button("📄 Gerar PDF da última O.S"):
-        # Dados de exemplo (devem vir do seu formulário ou Notion)
-        exemplo_dados = {
-            "os_n": "12345", "cliente": "Exemplo Ltda", "status": "Em Andamento",
-            "ini_m": "01/01/2026", "dt_saida": "02/01/2026", "servico": "Escolta",
-            "local": "Porto", "esc1": "João", "esc2": "Maria", "balsa": "B-01",
-            "desc": "Missão de escolta padrão."
-        }
-        
-        pdf_bytes = gerar_pdf_os(exemplo_dados)
-        st.download_button(
-            label="📥 Baixar Ordem de Serviço em PDF",
-            data=pdf_bytes,
-            file_name=f"OS_{exemplo_dados['os_n']}.pdf",
-            mime="application/pdf"
+def navegar(p):
+    st.session_state.pagina = p
+    st.rerun()
+
+# --- BOTÃO AUXILIAR DE NAVEGAÇÃO ---
+col_logo_top, col_auxiliar = st.columns([5, 1])
+with col_auxiliar:
+    if st.button("☰ OPERACIONAL"):
+        st.session_state.mostrar_icones = True
+        navegar("🏠 HOME")
+
+# --- FUNÇÃO LOGO ---
+def logo_central():
+    if os.path.exists("LOGO.PNG"):
+        with open("LOGO.PNG", "rb") as f:
+            data = base64.b64encode(f.read()).decode("utf-8")
+        st.markdown(
+            f"""
+            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                <img src="data:image/png;base64,{data}" style="width: 450px;">
+            </div>
+            """,
+            unsafe_allow_html=True
         )
+    else:
+        st.markdown("<h1 style='text-align: center;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
+
+# --- NAVEGAÇÃO DE TELAS ---
+
+# TELA 1: HOME
+if st.session_state.pagina == "🏠 HOME":
+    logo_central()
+    
+    # Botão para abrir os ícones
+    if not st.session_state.mostrar_icones:
+        if st.button("🔓 ACESSAR ÍCONES OPERACIONAIS"):
+            st.session_state.mostrar_icones = True
+            st.rerun()
+
+    if st.session_state.mostrar_icones:
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            if st.button("📋 NOVO LANÇAMENTO"): navegar("📋 AGENDAMENTO")
+        with c2:
+            if st.button("📊 VER AGENDAMENTO"): navegar("📊 VER AGENDAMENTOS")
+        with c3:
+            if st.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
+    
+    st.markdown("---")
+    st.subheader("📅 Grade de Agendamentos")
+    
+    # GRADE COM COLUNAS BEM VISÍVEIS (HTML)
+    st.markdown("""
+        <table class="grade-zion">
+            <thead>
+                <tr>
+                    <th>HORÁRIO</th>
+                    <th>CLIENTE</th>
+                    <th>SERVIÇO</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="4" style="text-align:center; padding: 30px; color: gray;">
+                        Nenhum dado para exibir. Colunas prontas para novos registros.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        """, unsafe_allow_html=True)
+
+# TELA 2: FORMULÁRIO (CADASTRO)
+elif st.session_state.pagina == "📋 AGENDAMENTO":
+    if st.button("⬅️ VOLTAR"):
+        st.session_state.mostrar_icones = True
+        navegar("🏠 HOME")
+        
+    st.header("📋 Cadastro Geral de Missão")
+    
+    with st.form("form_completo"):
+        c1, c2, c3 = st.columns(3)
+        os_n = c1.text_input("Nº O.S")
+        ini_m = c1.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY")
+        h_emb = c1.text_input("HORA DE EMBARQUE")
+        local = c1.text_input("LOCAL")
+        empurrador = c1.text_input("EMPURRADOR")
+        
+        saida = c2.text_input("SAÍDA")
+        fim_m = c2.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
+        esc1 = c2.text_input("ESCOLTA 1")
+        esc2 = c2.text_input("ESCOLTA 2")
+        servico = c2.selectbox("SERVIÇO", ["Escolta", "Vigilância"])
+        
+        cliente = c3.text_input("CLIENTE")
+        balsa = c3.text_input("BALSA")
+        destino = c3.text_input("DESTINO")
+        pedido = c3.text_input("PEDIDO")
+        assinatura = c3.text_input("ASSINATURA RESPONSÁVEL")
+        status = c3.selectbox("STATUS", ["Em Andamento", "Encerrado"])
+
+        desc = st.text_area("DESCRIÇÃO / OBSERVAÇÕES")
+
+        if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
+            valor_fin = 1870.0 if servico == "Escolta" else 970.0
+            
+            # ATENÇÃO: Verifique no Notion se a propriedade é "VALOR" ou "valor"
+            payload = {
+                "parent": {"database_id": DATABASE},
+                "properties": {
+                    "Nº OS": {"title": [{"text": {"content": os_n}}]},
+                    "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
+                    "INÍCIO DA MISSÃO": {"date": {"start": str(ini_m)}},
+                    "FIM DA MISSÃO": {"date": {"start": str(fim_m)}},
+                    "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": h_emb}}]},
+                    "SAÍDA": {"rich_text": [{"text": {"content": saida}}]},
+                    "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
+                    "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
+                    "LOCAL": {"rich_text": [{"text": {"content": local}}]},
+                    "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
+                    "BALSA": {"rich_text": [{"text": {"content": balsa}}]},
+                    "DESTINO": {"rich_text": [{"text": {"content": destino}}]},
+                    "PEDIDO": {"rich_text": [{"text": {"content": pedido}}]},
+                    "ASSINATURA": {"rich_text": [{"text": {"content": assinatura}}]},
+                    "STATUS": {"select": {"name": status}},
+                    "SERVIÇO": {"select": {"name": servico}},
+                    "VALOR": {"number": valor_fin},
+                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
+                }
+            }
+            res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
+            if res.status_code == 200:
+                st.success("🎯 Salvo com sucesso!")
+                navegar("🏠 HOME")
+            else:
+                st.error(f"Erro no Banco de Dados: {res.text}")
+
+# TELA 3: AGENDAMENTOS CADASTRADOS (Placeholder)
+elif st.session_state.pagina == "📊 VER AGENDAMENTOS":
+    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+    st.title("📊 Agendamentos Registrados")
+    st.write("Aqui será carregada a tabela vinda do Notion.")
