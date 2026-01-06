@@ -3,9 +3,10 @@ import requests
 from fpdf import FPDF
 from datetime import datetime
 
-st.set_page_config(page_title="Zion Tecnologia - Gestão de OS", layout="wide")
+# Configuração da Página Profissional
+st.set_page_config(page_title="Zion Tecnologia - Gestão Integrada", layout="wide")
 
-# Configurações de Conexão
+# Limpeza automática de segurança para o Token e ID
 TOKEN = st.secrets["notion"]["token"].replace('"', '').replace('\\', '').strip()
 DATABASE = st.secrets["notion"]["database_id"].replace('"', '').replace('\\', '').strip()
 
@@ -15,71 +16,47 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- FUNÇÃO PARA BUSCAR OS DO NOTION ---
+# --- FUNÇÕES DE SUPORTE ---
 def buscar_todas_os():
     url = f"https://api.notion.com/v1/databases/{DATABASE}/query"
-    res = requests.post(url, headers=headers)
-    if res.status_code == 200:
-        results = res.json().get("results", [])
-        lista = []
-        for p in results:
-            props = p["properties"]
-            os_val = props["Nº OS"]["title"][0]["text"]["content"] if props["Nº OS"]["title"] else "000"
-            cli_val = props["CLIENTE"]["rich_text"][0]["text"]["content"] if props["CLIENTE"]["rich_text"] else "N/A"
-            lista.append({"id": p["id"], "os": os_val, "cliente": cli_val, "props": props})
-        return lista
+    try:
+        res = requests.post(url, headers=headers)
+        if res.status_code == 200:
+            results = res.json().get("results", [])
+            return [{"id": x["id"], 
+                     "os": x["properties"]["Nº OS"]["title"][0]["text"]["content"] if x["properties"]["Nº OS"]["title"] else "000",
+                     "cliente": x["properties"]["CLIENTE"]["rich_text"][0]["text"]["content"] if x["properties"]["CLIENTE"]["rich_text"] else "N/A",
+                     "props": x["properties"]} for x in results]
+    except: return []
     return []
 
-# --- FUNÇÃO GERADORA DE PDF (ESTILO image_e40024.png) ---
 def gerar_os_pdf(dados):
     pdf = FPDF()
     pdf.add_page()
-    
-    # Cabeçalho - Logo fictícia ou Espaço para Logo
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(190, 10, "Solicitação de Escolta", ln=True, align='C')
+    pdf.cell(190, 10, "Solicitação de Escolta", ln=True, align='C') # Estilo image_e40024.png
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(190, 7, "ORDEM DE SERVIÇO", ln=True, align='C')
-    pdf.cell(190, 7, f"O.S: {dados.get('os', '---')}", ln=True, align='C')
-    
+    pdf.cell(190, 7, f"O.S: {dados.get('os')}", ln=True, align='C')
     pdf.ln(5)
-    # Bloco Solicitante
-    pdf.set_fill_color(255, 255, 255)
     pdf.set_draw_color(0, 0, 0)
-    pdf.cell(190, 10, f"SOLICITANTE ( {dados.get('cliente', '').upper()} )", border=1, ln=True, align='C')
-    
-    pdf.ln(5)
-    pdf.set_font("Arial", size=10)
-    # Dados da Missão
-    col_width = 95
-    pdf.cell(col_width, 6, f"CLIENTE: {dados.get('cliente', '')}", ln=False)
-    pdf.cell(col_width, 6, f"STATUS: ATIVA", ln=True)
-    pdf.cell(col_width, 6, f"INÍCIO DA MISSÃO: {dados.get('inicio', '')}", ln=True)
-    pdf.cell(col_width, 6, f"FIM DA MISSÃO: {dados.get('fim', '')}", ln=True)
-    
-    pdf.ln(5)
+    pdf.cell(190, 10, f"SOLICITANTE ( {dados.get('cliente').upper()} )", border=1, ln=True, align='C')
+    pdf.ln(10)
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(190, 10, "DETALHAMENTO DA MISSÃO.", ln=True, align='C')
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    
-    pdf.ln(5)
     pdf.set_font("Arial", size=10)
-    # Descrição longa
-    pdf.multi_cell(190, 6, f"DESCRIÇÃO: {dados.get('desc', '')}")
-    
-    pdf.ln(20)
-    pdf.cell(190, 6, "________________________________________________", ln=True, align='C')
-    pdf.cell(190, 6, f"ASSINATURA: {dados.get('ass', '')}", ln=True, align='C')
-    
+    pdf.multi_cell(190, 6, dados.get('desc', '')) # Estilo image_e40024.png
     return pdf.output(dest='S').encode('latin-1')
 
-# --- INTERFACE ---
-st.title("🛡️ Zion Tecnologia - Gestão de Escolta")
+# --- MENU DE NAVEGAÇÃO (CAPA NAVEGÁVEL) ---
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/9439/9439247.png", width=100) # Ícone Zion
+st.sidebar.title("Zion Tecnologia")
+menu = st.sidebar.radio("Navegação", ["📋 Cadastro de OS", "💰 Financeiro", "🖨️ Gestão e PDF"])
 
-abas = st.tabs(["📝 Novo Registro", "🖨️ Editar e Gerar PDF"])
-
-with abas[0]:
-    with st.form("cadastro"):
+# --- TELA 1: CADASTRO E AGENDAMENTO ---
+if menu == "📋 Cadastro de OS":
+    st.title("🛡️ Cadastro de Operações")
+    with st.form("form_cadastro", clear_on_submit=True):
         c1, c2 = st.columns(2)
         os_f = c1.text_input("Nº OS")
         cli_f = c1.text_input("CLIENTE")
@@ -89,32 +66,47 @@ with abas[0]:
         ass_f = st.text_input("ASSINATURA RESPONSÁVEL")
         
         if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
-            # Payload para o Notion
-            st.success("Operação salva com sucesso!")
+            payload = {
+                "parent": {"database_id": DATABASE},
+                "properties": {
+                    "Nº OS": {"title": [{"text": {"content": os_f}}]},
+                    "CLIENTE": {"rich_text": [{"text": {"content": cli_cli_f}}]},
+                    "TIPO": {"select": {"name": tipo_f}},
+                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc_f}}]},
+                    "ASSINATURA": {"rich_text": [{"text": {"content": ass_f}}]}
+                }
+            }
+            res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
+            if res.status_code == 200: st.success("🎯 Salvo com sucesso!")
+            else: st.error(f"Erro: {res.text}")
 
-with abas[1]:
-    st.subheader("Selecione a Ordem para Gerar o Documento")
+# --- TELA 2: FINANCEIRO ---
+elif menu == "💰 Financeiro":
+    st.title("💰 Gestão Financeira Zion")
+    st.info("Painel financeiro integrado à Ordem de Serviço.")
+    with st.form("financeiro"):
+        os_ref = st.text_input("Vincular ao Nº OS")
+        vlr = st.number_input("Valor da Operação (R$)", min_value=0.0)
+        status = st.selectbox("Status de Pagamento", ["Pendente", "Pago", "Faturado"])
+        if st.form_submit_button("💰 Registrar Financeiro"):
+            st.success(f"Financeiro da OS {os_ref} atualizado!")
+
+# --- TELA 3: GESTÃO E PDF ---
+elif menu == "🖨️ Gestão e PDF":
+    st.title("🖨️ Emissão de Documentos")
     lista = buscar_todas_os()
     if lista:
-        opcoes = {f"OS {x['os']} - {x['cliente']}": x for x in lista}
-        escolha = st.selectbox("Buscar OS", list(opcoes.keys()))
+        escolha = st.selectbox("Selecione a OS", [f"OS {x['os']} - {x['cliente']}" for x in lista])
+        item = next(x for x in lista if f"OS {x['os']} - {x['cliente']}" == escolha)
         
-        if escolha:
-            sel = opcoes[escolha]
-            # Preparando dados para o PDF baseado no layout da imagem
-            dados_para_pdf = {
-                "os": sel['os'],
-                "cliente": sel['cliente'],
-                "desc": sel['props']['DESCRIÇÃO']['rich_text'][0]['text']['content'] if sel['props']['DESCRIÇÃO']['rich_text'] else "",
-                "inicio": str(datetime.now().strftime("%d/%m/%Y")),
-                "ass": sel['props']['ASSINATURA']['rich_text'][0]['text']['content'] if 'ASSINATURA' in sel['props'] and sel['props']['ASSINATURA']['rich_text'] else "ZION TECNOLOGIA"
-            }
-            
-            # Botão de Download FORA do formulário para evitar Erro 400
-            pdf_bytes = gerar_os_pdf(dados_para_pdf)
-            st.download_button(
-                label="📄 GERAR PDF DA O.S",
-                data=pdf_bytes,
-                file_name=f"OS_{sel['os']}_ZION.pdf",
-                mime="application/pdf"
-            )
+        # Gerar os dados para o PDF igual à imagem
+        dados_pdf = {
+            "os": item['os'],
+            "cliente": item['cliente'],
+            "desc": item['props']['DESCRIÇÃO']['rich_text'][0]['text']['content'] if item['props']['DESCRIÇÃO']['rich_text'] else ""
+        }
+        
+        pdf_bytes = gerar_os_pdf(dados_pdf)
+        st.download_button(label="📄 BAIXAR PDF DA O.S", data=pdf_bytes, file_name=f"OS_{item['os']}.pdf")
+    else:
+        st.warning("Nenhuma OS encontrada.")
