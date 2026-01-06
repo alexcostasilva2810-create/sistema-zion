@@ -1,8 +1,9 @@
 import streamlit as st
 import requests
-import os
 import pandas as pd
+from datetime import datetime
 
+# Configurações iniciais
 st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
 # Conexão Notion
@@ -15,7 +16,7 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- BUSCA DE DADOS (TODAS AS COLUNAS) ---
+# --- FUNÇÕES DE APOIO ---
 def buscar_dados():
     url = f"https://api.notion.com/v1/databases/{DATABASE}/query"
     res = requests.post(url, headers=headers)
@@ -25,87 +26,117 @@ def buscar_dados():
         for pg in dados:
             p = pg["properties"]
             try:
+                # Cálculo financeiro baseado no tipo de serviço (Escolta ou Vigilância)
+                tipo = p.get("SERVIÇO", {}).get("select", {}).get("name", "Escolta")
+                valor = 1870.0 if tipo == "Escolta" else 970.0
+                
                 lista.append({
+                    "ID": pg["id"],
                     "Nº OS": p.get("Nº OS", {}).get("title", [{}])[0].get("text", {}).get("content", ""),
-                    "INÍCIO": p.get("INÍCIO DA MISSÃO", {}).get("date", {}).get("start", "") if p.get("INÍCIO DA MISSÃO") else "",
-                    "FIM": p.get("FIM DA MISSÃO", {}).get("date", {}).get("start", "") if p.get("FIM DA MISSÃO") else "",
                     "CLIENTE": p.get("CLIENTE", {}).get("rich_text", [{}])[0].get("text", {}).get("content", ""),
-                    "ESCOLTA 1": p.get("ESCOLTA 1", {}).get("rich_text", [{}])[0].get("text", {}).get("content", ""),
-                    "ESCOLTA 2": p.get("ESCOLTA 2", {}).get("rich_text", [{}])[0].get("text", {}).get("content", ""),
-                    "LOCAL": p.get("LOCAL", {}).get("rich_text", [{}])[0].get("text", {}).get("content", ""),
-                    "DESTINO": p.get("DESTINO", {}).get("rich_text", [{}])[0].get("text", {}).get("content", "")
+                    "INÍCIO": p.get("INÍCIO DA MISSÃO", {}).get("date", {}).get("start", ""),
+                    "STATUS": p.get("STATUS", {}).get("select", {}).get("name", "Em Andamento"),
+                    "VALOR": valor
                 })
             except: continue
         return pd.DataFrame(lista)
     return pd.DataFrame()
 
-# --- MENU LATERAL ---
-with st.sidebar:
-    if os.path.exists("LOGO.PNG"):
-        st.image("LOGO.PNG", use_container_width=True)
-    st.markdown("---")
-    menu = st.radio("NAVEGAÇÃO", ["🏠 HOME", "📋 AGENDAMENTO ZION", "📊 VER AGENDAMENTOS", "💰 FINANCEIRO", "🖨️ GERAR PDF"])
+# --- NAVEGAÇÃO ---
+if "pagina" not in st.session_state:
+    st.session_state.pagina = "🏠 HOME"
 
-# --- TELA DE CADASTRO (TODOS OS CAMPOS RESTAURADOS) ---
-if menu == "📋 AGENDAMENTO ZION":
+def mudar_pagina(nome):
+    st.session_state.pagina = nome
+    st.rerun()
+
+# --- INTERFACE ---
+with st.sidebar:
+    st.image("LOGO.PNG", use_container_width=True)
+    if st.button("🏠 VOLTAR AO INÍCIO", use_container_width=True):
+        mudar_pagina("🏠 HOME")
+    st.markdown("---")
+    menu = ["🏠 HOME", "📋 AGENDAMENTO ZION", "📊 VER AGENDAMENTOS", "💰 FINANCEIRO"]
+    escolha = st.radio("NAVEGAÇÃO", menu)
+    st.session_state.pagina = escolha
+
+# --- TELA 1: HOME (ÍCONE CLICÁVEL) ---
+if st.session_state.pagina == "🏠 HOME":
+    st.title("🛡️ Zion Tecnologia - Central de Gestão")
+    st.write("Clique no ícone abaixo para acessar os módulos")
+    if st.button("🔵 ACESSAR SISTEMA ZION", use_container_width=True):
+        mudar_pagina("📋 AGENDAMENTO ZION")
+    st.image("LOGO.PNG", width=500)
+
+# --- TELA 2: AGENDAMENTO (LINHA ÚNICA) ---
+elif st.session_state.pagina == "📋 AGENDAMENTO ZION":
     st.header("📋 Novo Registro de Missão")
-    with st.form("form_zion", clear_on_submit=True):
+    if st.button("⬅️ VOLTAR"): mudar_pagina("🏠 HOME")
+    
+    with st.form("form_unico", clear_on_submit=True):
         c1, c2, c3 = st.columns(3)
+        os_v = c1.text_input("Nº OS")
+        servico = c1.selectbox("TIPO DE SERVIÇO", ["Escolta", "Vigilância"])
+        dt_ini = c1.date_input("INÍCIO DA MISSÃO")
         
-        # Coluna 1
-        os_val = c1.text_input("Nº OS")
-        ini_missao = c1.date_input("INÍCIO DA MISSÃO", format="DD/MM/YYYY")
-        hora_emb = c1.text_input("HORA DE EMBARQUE")
-        local = c1.text_input("LOCAL")
-        empurrador = c1.text_input("EMPURRADOR")
-        
-        # Coluna 2
-        saida = c2.text_input("SAÍDA")
-        fim_missao = c2.date_input("FIM DA MISSÃO", format="DD/MM/YYYY")
+        cli = c2.text_input("CLIENTE")
         esc1 = c2.text_input("ESCOLTA 1")
         esc2 = c2.text_input("ESCOLTA 2")
         
-        # Coluna 3
-        cliente = c3.text_input("CLIENTE")
+        status = c3.selectbox("STATUS INICIAL", ["Em Andamento", "Encerrado"])
         balsa = c3.text_input("BALSA")
         destino = c3.text_input("DESTINO")
-        pedido = c3.text_input("PEDIDO")
-        assinatura = c3.text_input("ASSINATURA")
 
-        desc = st.text_area("DESCRIÇÃO / DETALHAMENTO")
-
-        if st.form_submit_button("✅ SALVAR NO NOTION"):
+        if st.form_submit_button("✅ SALVAR EM LINHA ÚNICA"):
             payload = {
                 "parent": {"database_id": DATABASE},
                 "properties": {
-                    "Nº OS": {"title": [{"text": {"content": os_val}}]},
-                    "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
-                    "INÍCIO DA MISSÃO": {"date": {"start": str(ini_missao)}},
-                    "FIM DA MISSÃO": {"date": {"start": str(fim_missao)}},
+                    "Nº OS": {"title": [{"text": {"content": os_v}}]},
+                    "CLIENTE": {"rich_text": [{"text": {"content": cli}}]},
+                    "SERVIÇO": {"select": {"name": servico}},
+                    "STATUS": {"select": {"name": status}},
+                    "INÍCIO DA MISSÃO": {"date": {"start": str(dt_ini)}},
                     "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
                     "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
-                    "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": hora_emb}}]},
-                    "LOCAL": {"rich_text": [{"text": {"content": local}}]},
-                    "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
-                    "SAÍDA": {"rich_text": [{"text": {"content": saida}}]},
                     "BALSA": {"rich_text": [{"text": {"content": balsa}}]},
-                    "DESTINO": {"rich_text": [{"text": {"content": destino}}]},
-                    "PEDIDO": {"rich_text": [{"text": {"content": pedido}}]},
-                    "ASSINATURA": {"rich_text": [{"text": {"content": assinatura}}]},
-                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
+                    "DESTINO": {"rich_text": [{"text": {"content": destino}}]}
                 }
             }
             res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
             if res.status_code == 200:
-                st.success("🎯 OPERAÇÃO SALVA COM SUCESSO!")
+                st.success("🎯 Salvo! Redirecionando...")
+                mudar_pagina("📊 VER AGENDAMENTOS") # Remessa automática após salvar
             else:
-                st.error(f"Erro ao salvar: {res.text}")
+                st.error(f"Erro: {res.text}")
 
-elif menu == "📊 VER AGENDAMENTOS":
-    st.header("📊 Operações Realizadas")
+# --- TELA 3: VER AGENDAMENTOS (TABELA COM EDIÇÃO E PDF) ---
+elif st.session_state.pagina == "📊 VER AGENDAMENTOS":
+    st.header("📊 Gestão de Operações")
+    if st.button("⬅️ VOLTAR"): mudar_pagina("🏠 HOME")
+    
     df = buscar_dados()
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    if not df.empty:
+        # Exibição da Tabela igual ao vídeo
+        for index, row in df.iterrows():
+            col_os, col_cli, col_status, col_btn = st.columns([1, 2, 1, 2])
+            col_os.write(row["Nº OS"])
+            col_cli.write(row["CLIENTE"])
+            col_status.write(row["STATUS"])
+            with col_btn:
+                if st.button(f"📄 PDF/EDITAR {row['Nº OS']}", key=row["ID"]):
+                    st.info(f"Gerando relatório para O.S {row['Nº OS']}...")
+        st.divider()
+        st.dataframe(df.drop(columns=["ID"]), use_container_width=True)
+    else:
+        st.warning("Nenhum dado encontrado.")
 
-elif menu == "🏠 HOME":
-    st.image("LOGO.PNG", width=400)
-    st.title("🛡️ Zion Tecnologia - Gestão de Escolta")
+# --- TELA 4: FINANCEIRO ---
+elif st.session_state.pagina == "💰 FINANCEIRO":
+    st.header("💰 Controle Financeiro por Pedido")
+    if st.button("⬅️ VOLTAR"): mudar_pagina("🏠 HOME")
+    
+    df = buscar_dados()
+    if not df.empty:
+        df["TOTAL"] = df["VALOR"]
+        st.table(df[["Nº OS", "CLIENTE", "STATUS", "VALOR"]])
+        st.metric("VALOR TOTAL GERAL", f"R$ {df['VALOR'].sum():,.2f}")
