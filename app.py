@@ -3,7 +3,6 @@ import requests
 import os
 import pandas as pd
 
-# Configuração da Página
 st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
 # Conexão Notion
@@ -16,7 +15,7 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
-# --- FUNÇÃO PARA BUSCAR DADOS DO NOTION ---
+# --- FUNÇÃO DE BUSCA COM PROTEÇÃO (EVITA KEYERROR) ---
 def buscar_dados():
     url = f"https://api.notion.com/v1/databases/{DATABASE}/query"
     res = requests.post(url, headers=headers)
@@ -25,100 +24,64 @@ def buscar_dados():
         lista = []
         for pg in dados:
             p = pg["properties"]
-            # Extração segura de dados para a tabela
+            # O uso de .get() evita que o app trave se a coluna não existir
             lista.append({
-                "Nº OS": p["Nº OS"]["title"][0]["text"]["content"] if p["Nº OS"]["title"] else "",
-                "DATA INÍCIO": p["DATA INÍCIO"]["date"]["start"] if p["DATA INÍCIO"]["date"] else "",
-                "CLIENTE": p["CLIENTE"]["rich_text"][0]["text"]["content"] if p["CLIENTE"]["rich_text"] else "",
-                "ESCOLTA 1": p["ESCOLTA 1"]["rich_text"][0]["text"]["content"] if p["ESCOLTA 1"]["rich_text"] else "",
-                "ESCOLTA 2": p["ESCOLTA 2"]["rich_text"][0]["text"]["content"] if p["ESCOLTA 2"]["rich_text"] else "",
-                "STATUS": "FINALIZADO" # Exemplo de status fixo como no vídeo
+                "Nº OS": p.get("Nº OS", {}).get("title", [{}])[0].get("text", {}).get("content", ""),
+                "DATA INÍCIO": p.get("DATA INÍCIO", {}).get("date", {}).get("start", "") if p.get("DATA INÍCIO") else "",
+                "CLIENTE": p.get("CLIENTE", {}).get("rich_text", [{}])[0].get("text", {}).get("content", ""),
+                "ESCOLTA 1": p.get("ESCOLTA 1", {}).get("rich_text", [{}])[0].get("text", {}).get("content", ""),
+                "ESCOLTA 2": p.get("ESCOLTA 2", {}).get("rich_text", [{}])[0].get("text", {}).get("content", ""),
+                "DESTINO": p.get("DESTINO", {}).get("rich_text", [{}])[0].get("text", {}).get("content", "")
             })
         return pd.DataFrame(lista)
     return pd.DataFrame()
 
-# --- ESTADO DE NAVEGAÇÃO ---
+# --- NAVEGAÇÃO ---
 if "pagina" not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
-# --- BARRA LATERAL ---
 with st.sidebar:
     if os.path.exists("LOGO.PNG"):
-        if st.button("🏠 VOLTAR À CENTRAL", use_container_width=True):
-            st.session_state.pagina = "🏠 HOME"
-            st.rerun()
+        if st.button("🏠 VOLTAR AO CENTRAL", use_container_width=True):
+            st.session_state.pagina = "🏠 HOME"; st.rerun()
         st.image("LOGO.PNG", use_container_width=True)
-    
-    st.markdown("---")
-    menu_opcoes = ["🏠 HOME", "📋 AGENDAMENTO ZION", "📊 VER AGENDAMENTOS", "💰 FINANCEIRO", "🖨️ GERAR PDF"]
-    st.session_state.pagina = st.radio("NAVEGAÇÃO", menu_opcoes, index=menu_opcoes.index(st.session_state.pagina))
+    menu = st.radio("MENU", ["🏠 HOME", "📋 AGENDAMENTO ZION", "📊 VER AGENDAMENTOS"])
+    st.session_state.pagina = menu
 
-# --- TELA 1: HOME ---
-if st.session_state.pagina == "🏠 HOME":
-    st.title("🛡️ Zion Tecnologia - Central de Gestão")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("📋 NOVO AGENDAMENTO", use_container_width=True):
-            st.session_state.pagina = "📋 AGENDAMENTO ZION"; st.rerun()
-    with col2:
-        if st.button("📊 VER REGISTROS", use_container_width=True):
-            st.session_state.pagina = "📊 VER AGENDAMENTOS"; st.rerun()
-    with col3:
-        if st.button("💰 FINANCEIRO", use_container_width=True):
-            st.session_state.pagina = "💰 FINANCEIRO"; st.rerun()
-    st.image("LOGO.PNG", width=400)
+# --- TELA DE CONSULTA (TABELA DO VÍDEO) ---
+if st.session_state.pagina == "📊 VER AGENDAMENTOS":
+    st.header("📊 Operações Realizadas")
+    df = buscar_dados()
+    if not df.empty:
+        # Formata a data para padrão Brasil na visualização
+        if "DATA INÍCIO" in df.columns:
+            df["DATA INÍCIO"] = pd.to_datetime(df["DATA INÍCIO"]).dt.strftime('%d/%m/%Y')
+        st.dataframe(df, use_container_width=True, hide_index=True)
+    else:
+        st.warning("Verifique se as colunas no Notion estão com os nomes corretos.")
 
-# --- TELA 2: AGENDAMENTO (SALVAMENTO CORRIGIDO) ---
+# --- TELA DE AGENDAMENTO (SALVAMENTO) ---
 elif st.session_state.pagina == "📋 AGENDAMENTO ZION":
     st.header("📋 Cadastro de Operação")
-    with st.form("form_zion", clear_on_submit=True):
-        c1, c2, c3 = st.columns(3)
+    with st.form("form_cadastro"):
+        c1, c2 = st.columns(2)
         os_n = c1.text_input("Nº OS")
-        data_ini = c2.date_input("DATA INÍCIO", format="DD/MM/YYYY")
-        data_fim = c3.date_input("DATA FIM", format="DD/MM/YYYY")
+        dt_ini = c1.date_input("DATA INÍCIO", format="DD/MM/YYYY")
+        cli = c2.text_input("CLIENTE")
+        esc1 = c2.text_input("ESCOLTA 1")
+        esc2 = st.text_input("ESCOLTA 2")
         
-        c4, c5, c6 = st.columns(3)
-        esc1 = c4.text_input("ESCOLTA 1")
-        esc2 = c5.text_input("ESCOLTA 2")
-        hora_emb = c6.text_input("HORA EMBARQUE")
-        
-        c7, c8, c9 = st.columns(3)
-        local = c7.text_input("LOCAL")
-        empurrador = c8.text_input("EMPURRADOR")
-        saida = c9.text_input("SAÍDA")
-        
-        cliente = st.text_input("CLIENTE")
-        desc = st.text_area("DESCRIÇÃO")
-
-        if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
+        if st.form_submit_button("✅ SALVAR"):
             payload = {
                 "parent": {"database_id": DATABASE},
                 "properties": {
                     "Nº OS": {"title": [{"text": {"content": os_n}}]},
-                    "CLIENTE": {"rich_text": [{"text": {"content": cliente}}]},
-                    "DATA INÍCIO": {"date": {"start": str(data_ini)}},
-                    "DATA FIM": {"date": {"start": str(data_fim)}},
+                    "DATA INÍCIO": {"date": {"start": str(dt_ini)}},
+                    "CLIENTE": {"rich_text": [{"text": {"content": cli}}]},
                     "ESCOLTA 1": {"rich_text": [{"text": {"content": esc1}}]},
-                    "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]},
-                    "HORA EMBARQUE": {"rich_text": [{"text": {"content": hora_emb}}]},
-                    "LOCAL": {"rich_text": [{"text": {"content": local}}]},
-                    "EMPURRADOR": {"rich_text": [{"text": {"content": empurrador}}]},
-                    "SAÍDA": {"rich_text": [{"text": {"content": saida}}]},
-                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": desc}}]}
+                    "ESCOLTA 2": {"rich_text": [{"text": {"content": esc2}}]}
                 }
             }
             res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
-            if res.status_code == 200:
-                st.success("🎯 AGORA FOI! Verifique sua tabela.")
-            else:
-                st.error(f"Erro: {res.text}")
-
-# --- TELA 3: CONSULTA (A TELA QUE FALTAVA) ---
-elif st.session_state.pagina == "📊 VER AGENDAMENTOS":
-    st.header("📊 Operações Realizadas")
-    df = buscar_dados()
-    if not df.empty:
-        # Mostra a tabela igual ao vídeo
-        st.dataframe(df, use_container_width=True, hide_index=True)
-    else:
-        st.info("Nenhum registro encontrado.")
+            if res.status_code == 200: st.success("🎯 Salvo!")
+            else: st.error(f"Erro no Notion: {res.text}")
