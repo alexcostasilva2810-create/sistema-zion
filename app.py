@@ -18,28 +18,37 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# --- ESTILO CSS FUTURISTA ---
+# --- ESTILO CSS COM IMAGEM DE FUNDO (EMPURRADOR) E EFEITO FUTURISTA ---
+# Nota: Usei uma URL de imagem de empurrador profissional. Você pode trocar o link se tiver uma foto específica.
 st.markdown("""
     <style>
     .stApp {
-        background: radial-gradient(circle, #0a0f1e 0%, #02050a 100%);
+        background: linear-gradient(rgba(2, 5, 10, 0.85), rgba(2, 5, 10, 0.85)), 
+                    url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=2070&auto=format&fit=crop");
+        background-size: cover;
+        background-position: center;
         background-attachment: fixed;
     }
+    
     h1, h2, h3, label { 
         color: #00ff41 !important; 
-        text-shadow: 0 0 10px #00ff41;
+        text-shadow: 2px 2px 4px #000;
         text-align: center; 
     }
+
+    /* Estilo dos Cards e Inputs */
     .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
-        background-color: #0f172a !important;
-        color: #e2e8f0 !important;
-        border: 1px solid #1e293b !important;
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        color: #ffffff !important;
+        border: 1px solid #00ff41 !important;
     }
+
     div.stButton > button:first-child[kind="primary"] { 
         background-color: #28a745 !important; 
         box-shadow: 0 0 15px #28a745;
         border: none;
     }
+    
     [data-testid="stMetricValue"] { color: #00ff41 !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -82,53 +91,48 @@ def carregar_dados():
             return lista
     except: return []
 
-# --- FUNÇÃO PDF O.S PERSONALIZADA ---
+# --- FUNÇÃO PDF O.S COM LOGO ---
 def gerar_pdf_os_zion(d):
     pdf = FPDF()
     pdf.add_page()
     
-    # Cabeçalho
-    pdf.set_fill_color(10, 15, 30)
-    pdf.rect(0, 0, 210, 40, 'F')
-    pdf.set_text_color(255, 255, 255)
+    # Adicionando a LOGO no Cabeçalho do PDF
+    if os.path.exists("LOGO.PNG"):
+        pdf.image("LOGO.PNG", x=85, y=8, w=40)
+        pdf.ln(25) # Espaço para a logo
+    
+    # Título
     pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 15, "ZION TECNOLOGIA - ORDEM DE SERVICO", ln=True, align="C")
+    pdf.cell(0, 10, "ZION TECNOLOGIA - ORDEM DE SERVICO", ln=True, align="C")
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 5, f"O.S NUMERO: {d['Nº OS']}", ln=True, align="C")
     
-    pdf.set_text_color(0, 0, 0)
-    pdf.ln(15)
+    pdf.ln(10)
     
-    # Bloco 1: Dados do Cliente e Local
+    # Estilo das Tabelas no PDF
     pdf.set_font("Arial", "B", 10)
-    pdf.set_fill_color(230, 230, 230)
-    pdf.cell(0, 8, " INFORMACOES GERAIS", 1, 1, 'L', True)
+    pdf.set_fill_color(240, 240, 240)
+    
+    # Bloco 1: Geral
+    pdf.cell(0, 8, " INFORMACOES DA OPERACAO", 1, 1, 'L', True)
     pdf.set_font("Arial", "", 9)
     pdf.cell(95, 8, f"CLIENTE: {d['CLIENTE']}", 1)
     pdf.cell(95, 8, f"DATA SAIDA: {d['DT SAÍDA']}", 1, 1)
-    pdf.cell(95, 8, f"ORIGEM: {d['LOCAL']}", 1)
-    pdf.cell(95, 8, f"DESTINO: {d['DESTINO']}", 1, 1)
+    pdf.cell(95, 8, f"EMPURRADOR: {d['EMPURRADOR']}", 1)
+    pdf.cell(95, 8, f"BALSA: {d['BALSA']}", 1, 1)
     
-    # Bloco 2: Operacional
+    # Bloco 2: Equipe e Logística
     pdf.ln(5)
     pdf.set_font("Arial", "B", 10)
-    pdf.cell(0, 8, " DETALHES DA BALSA E EMBARQUE", 1, 1, 'L', True)
-    pdf.set_font("Arial", "", 9)
-    pdf.cell(63, 8, f"EMPURRADOR: {d['EMPURRADOR']}", 1)
-    pdf.cell(63, 8, f"BALSA: {d['BALSA']}", 1)
-    pdf.cell(64, 8, f"PEDIDO: {d['PEDIDO']}", 1, 1)
-    pdf.cell(95, 8, f"HORA EMBARQUE: {d['HORA_EMBARQUE']}", 1)
-    pdf.cell(95, 8, f"INICIO MISSAO: {d['INICIO_MISSAO']}", 1, 1)
-
-    # Bloco 3: Equipe
-    pdf.ln(5)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(0, 8, " EQUIPE DE ESCOLTA", 1, 1, 'L', True)
+    pdf.cell(0, 8, " LOGISTICA E EQUIPE", 1, 1, 'L', True)
     pdf.set_font("Arial", "", 9)
     pdf.cell(95, 8, f"ESCOLTA 1: {d['ESCOLTA 1']}", 1)
     pdf.cell(95, 8, f"ESCOLTA 2: {d['ESCOLTA 2']}", 1, 1)
-
-    # Descrição
+    pdf.cell(63, 8, f"PEDIDO: {d['PEDIDO']}", 1)
+    pdf.cell(63, 8, f"ORIGEM: {d['LOCAL']}", 1)
+    pdf.cell(64, 8, f"DESTINO: {d['DESTINO']}", 1, 1)
+    
+    # Bloco 3: Descrição
     pdf.ln(5)
     pdf.set_font("Arial", "B", 10)
     pdf.cell(0, 8, " DESCRICAO DOS SERVICOS", 1, 1, 'L', True)
@@ -136,11 +140,12 @@ def gerar_pdf_os_zion(d):
     pdf.multi_cell(0, 8, d['DESCRIÇÃO'], 1)
 
     # Assinatura
-    pdf.ln(20)
-    pdf.cell(95, 10, "________________________________", 0, 0, 'C')
-    pdf.cell(95, 10, "________________________________", 0, 1, 'C')
-    pdf.cell(95, 5, "ASSINATURA RESPONSAVEL", 0, 0, 'C')
-    pdf.cell(95, 5, "ZION TECNOLOGIA", 0, 1, 'C')
+    pdf.ln(15)
+    pdf.cell(0, 10, f"RESPONSAVEL: {d['ASSINATURA']}", ln=True, align="L")
+    pdf.ln(10)
+    pdf.cell(95, 0, "", "T")
+    pdf.cell(95, 0, "", 0, 1)
+    pdf.cell(95, 5, "ASSINATURA ZION TECNOLOGIA", 0, 0, 'L')
     
     return pdf.output(dest="S").encode("latin-1")
 
@@ -154,15 +159,16 @@ if st.session_state.pagina == "🏠 HOME":
     st.markdown("<br>", unsafe_allow_html=True)
     col_l, col_c, col_r = st.columns([1, 2, 1])
     with col_c:
-        if os.path.exists("LOGO.PNG"): st.image("LOGO.PNG", width=300)
-        st.markdown("<h1>SISTEMA ZION</h1><h3>OPERACIONAL & FINANCEIRO</h3>", unsafe_allow_html=True)
+        if os.path.exists("LOGO.PNG"): st.image("LOGO.PNG", width=250)
+        st.markdown("<h1>SISTEMA ZION</h1>", unsafe_allow_html=True)
+    
     st.markdown("<br><hr><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     if c1.button("📋 NOVO LANÇAMENTO"): st.session_state.dados_edicao = None; navegar("📋 CADASTRO")
     if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
     if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
-# --- TELA CADASTRO (17 CAMPOS RESTAURADOS) ---
+# --- TELA CADASTRO (17 CAMPOS GARANTIDOS) ---
 elif st.session_state.pagina == "📋 CADASTRO":
     edit = st.session_state.dados_edicao
     st.markdown(f"## {'✏️ EDITAR' if edit else '📋 NOVO'} LANÇAMENTO")
@@ -203,7 +209,7 @@ elif st.session_state.pagina == "📋 CADASTRO":
             st.success("Operação Salva!")
             navegar("📊 GRADE")
 
-# --- TELA GRADE (PDF NOVO INCLUÍDO) ---
+# --- TELA GRADE ---
 elif st.session_state.pagina == "📊 GRADE":
     st.markdown("## 📊 GRADE DE AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
@@ -212,19 +218,14 @@ elif st.session_state.pagina == "📊 GRADE":
         df = pd.DataFrame(dados)
         st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "STATUS"]], use_container_width=True)
         for d in dados:
-            with st.expander(f"OPÇÕES O.S {d['Nº OS']} - {d['CLIENTE']}"):
-                c1, c2 = st.columns(2)
-                if c1.button("✏️ EDITAR", key=f"ed_{d['ID']}", type="primary"):
-                    st.session_state.dados_edicao = d; navegar("📋 CADASTRO")
-                # PDF Personalizado Zion
+            with st.expander(f"OPÇÕES O.S {d['Nº OS']}"):
                 pdf_zion = gerar_pdf_os_zion(d)
-                c2.download_button("📄 BAIXAR O.S PERSONALIZADA", pdf_zion, f"OS_{d['Nº OS']}_ZION.pdf", key=f"p_{d['ID']}")
+                st.download_button("📄 BAIXAR O.S COM LOGO", pdf_zion, f"OS_{d['Nº OS']}.pdf", key=f"p_{d['ID']}")
 
-# --- TELA FINANCEIRO ---
+# --- TELA FINANCEIRO (ESTÁVEL) ---
 elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.markdown("## 💰 FINANCEIRO (BLOQUEADO/OK)")
+    st.markdown("## 💰 PAINEL FINANCEIRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    # Filtros e Tabela mantidos conforme você aprovou
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
