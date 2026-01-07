@@ -91,21 +91,40 @@ def carregar_dados():
         if res.status_code == 200:
             results = res.json().get("results", [])
             lista = []
-            for r in results:
-                p = r["properties"]
-                def g_t(n): return p[n]["rich_text"][0]["plain_text"] if n in p and p[n]["rich_text"] else ""
-                def g_d(n): return p[n]["date"]["start"] if n in p and p[n]["date"] else ""
-                
-                lista.append({
-                    "ID": r["id"],
-                    "os_n": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
-                    "cli": g_t("CLIENTE"), "dt_s": g_d("DT SAÍDA"), "emp": g_t("EMPURRADOR"),
-                    "bal": g_t("BALSA"), "ped": g_t("PEDIDO"), "h_e": g_t("HORA DE EMBARQUE"),
-                    "esc1": g_t("ESCOLTA 1"), "esc2": g_t("ESCOLTA 2"), "loc": g_t("LOCAL"),
-                    "dst": g_t("DESTINO"), "ass": g_t("ASSINATURA RESPONSÁVEL"),
-                    "ini_m": g_d("INÍCIO DA MISSÃO"), "fim_m": g_d("FIM DA MISSÃO"),
-                    "sts": p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"]["select"] else "Em Andamento",
-                    "obs": g_t("DESCRIÇÃO"), "v_total": p["VALOR TOTAL"]["number"] if "VALOR TOTAL" in p else 0
+           for r in results:
+            p = r["properties"]
+            # Função para pegar texto com segurança
+            def g_t(n): 
+                if n in p and p[n]["rich_text"]:
+                    return p[n]["rich_text"][0]["plain_text"]
+                return ""
+            
+            # Função para pegar data com segurança
+            def g_d(n): 
+                if n in p and p[n]["date"]:
+                    return p[n]["date"]["start"]
+                return ""
+
+            lista.append({
+                "ID": r["id"],
+                "os_n": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
+                "cli": g_t("CLIENTE"),
+                "dt_s": g_d("DT SAIDA"),  # Removido o acento para bater com o Notion
+                "emp": g_t("EMPURRADOR"),
+                "bal": g_t("BALSA"),
+                "ped": g_t("PEDIDO"),
+                "h_e": g_t("HORA DE EMBARQUE"),
+                "esc1": g_t("ESCOLTA 1"),
+                "esc2": g_t("ESCOLTA 2"),
+                "loc": g_t("LOCAL"),
+                "dst": g_t("DESTINO"),
+                "ass": g_t("ASSINATURA RESPONSÁVEL"),
+                "ini_m": g_d("INÍCIO DA MISSÃO"),
+                "fim_m": g_d("FIM DA MISSÃO"),
+                "sts": p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"]["select"] else "Em Andamento",
+                "obs": g_t("DESCRIÇÃO"),
+                "v_total": p["VALOR TOTAL"]["number"] if "VALOR TOTAL" in p else 0
+            })
                 })
             return lista
     except: return []
