@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 import pandas as pd
 import os
-from fpdf import FPDF
 from datetime import datetime
 
 # 1. CONFIGURAÇÃO DA PÁGINA
@@ -18,7 +17,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# --- ESTILO CSS AZUL ROYAL (MANTIDO INTEGRALMENTE) ---
+# --- ESTILO CSS AZUL ROYAL (MANTIDO) ---
 st.markdown("""
     <style>
     .stApp {
@@ -27,10 +26,41 @@ st.markdown("""
         background-size: cover; background-position: center; background-attachment: fixed;
     }
     h1, h2, h3, label { color: #00ff41 !important; text-shadow: 2px 2px 4px #000; text-align: center; }
-    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; box-shadow: 0 0 10px #28a745; }
+    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; }
     .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border-radius: 10px; border: 1px solid #00ff41; }
     </style>
     """, unsafe_allow_html=True)
+
+# --- FUNÇÃO SALVAR (MOTOR CORRIGIDO) ---
+def salvar_no_notion(d):
+    url = "https://api.notion.com/v1/pages"
+    # Payload simplificado e robusto
+    payload = {
+        "parent": {"database_id": DATABASE},
+        "properties": {
+            "Nº OS": {"title": [{"text": {"content": str(d['os_n'])}}]},
+            "CLIENTE": {"rich_text": [{"text": {"content": str(d['cli'])}}]},
+            "DT SAÍDA": {"date": {"start": d['dt_s'].strftime('%Y-%m-%d')}},
+            "EMPURRADOR": {"rich_text": [{"text": {"content": str(d['emp'])}}]},
+            "BALSA": {"rich_text": [{"text": {"content": str(d['bal'])}}]},
+            "PEDIDO": {"rich_text": [{"text": {"content": str(d['ped'])}}]},
+            "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": str(d['h_e'])}}]},
+            "ESCOLTA 1": {"rich_text": [{"text": {"content": str(d['esc1'])}}]},
+            "ESCOLTA 2": {"rich_text": [{"text": {"content": str(d['esc2'])}}]},
+            "LOCAL": {"rich_text": [{"text": {"content": str(d['loc'])}}]},
+            "DESTINO": {"rich_text": [{"text": {"content": str(d['dst'])}}]},
+            "ASSINATURA RESPONSÁVEL": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
+            "INÍCIO DA MISSÃO": {"date": {"start": d['ini_m'].strftime('%Y-%m-%d')}},
+            "FIM DA MISSÃO": {"date": {"start": d['fim_m'].strftime('%Y-%m-%d')}},
+            "STATUS": {"select": {"name": str(d['sts'])}},
+            "DESCRIÇÃO": {"rich_text": [{"text": {"content": str(d['obs'])}}]}
+        }
+    }
+    try:
+        res = requests.post(url, headers=headers, json=payload)
+        return res.status_code == 200
+    except:
+        return False
 
 # --- FUNÇÃO CARREGAR DADOS ---
 def carregar_dados():
@@ -49,53 +79,16 @@ def carregar_dados():
                     except: return None
                 
                 status = p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"]["select"] else "Em Andamento"
-                valor = 0.0
-                if status == "Encerrado":
-                    if g_t("ESCOLTA 1"): valor += 1870.0
-                    if g_t("ESCOLTA 2"): valor += 970.0
-
                 lista.append({
-                    "ID": r["id"],
                     "Nº OS": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
-                    "CLIENTE": g_t("CLIENTE"), "DT_SAIDA_RAW": g_d("DT SAÍDA"),
+                    "CLIENTE": g_t("CLIENTE"), 
                     "DT SAÍDA": datetime.strptime(g_d("DT SAÍDA"), '%Y-%m-%d').strftime('%d/%m/%Y') if g_d("DT SAÍDA") else "---",
-                    "EMPURRADOR": g_t("EMPURRADOR"), "BALSA": g_t("BALSA"),
-                    "LOCAL": g_t("LOCAL"), "DESTINO": g_t("DESTINO"),
-                    "HORA_EMBARQUE": g_t("HORA DE EMBARQUE"),
-                    "ESCOLTA 1": g_t("ESCOLTA 1"), "ESCOLTA 2": g_t("ESCOLTA 2"),
-                    "DESCRIÇÃO": g_t("DESCRIÇÃO"), "PEDIDO": g_t("PEDIDO"),
-                    "INICIO_MISSAO": g_d("INÍCIO DA MISSÃO"), "FIM_MISSAO": g_d("FIM DA MISSÃO"),
-                    "ASSINATURA": g_t("ASSINATURA RESPONSÁVEL"), "STATUS": status, "VALOR": valor
+                    "DT_RAW": g_d("DT SAÍDA"),
+                    "EMPURRADOR": g_t("EMPURRADOR"), "BALSA": g_t("BALSA"), "STATUS": status,
+                    "VALOR": 1870.0 if status == "Encerrado" else 0.0 # Exemplo de cálculo
                 })
             return lista
     except: return []
-
-# --- FUNÇÃO SALVAR NO NOTION (AJUSTADA PARA EVITAR ERRO) ---
-def salvar_no_notion(dados):
-    url = "https://api.notion.com/v1/pages"
-    payload = {
-        "parent": {"database_id": DATABASE},
-        "properties": {
-            "Nº OS": {"title": [{"text": {"content": str(dados['os_n']) or "000"}}]},
-            "CLIENTE": {"rich_text": [{"text": {"content": str(dados['cli']) or "---"}}]},
-            "DT SAÍDA": {"date": {"start": dados['dt_s'].strftime('%Y-%m-%d')}},
-            "EMPURRADOR": {"rich_text": [{"text": {"content": str(dados['emp']) or "---"}}]},
-            "BALSA": {"rich_text": [{"text": {"content": str(dados['bal']) or "---"}}]},
-            "PEDIDO": {"rich_text": [{"text": {"content": str(dados['ped']) or "---"}}]},
-            "HORA de EMBARQUE": {"rich_text": [{"text": {"content": str(dados['h_e']) or "---"}}]},
-            "ESCOLTA 1": {"rich_text": [{"text": {"content": str(dados['esc1']) or ""}}]},
-            "ESCOLTA 2": {"rich_text": [{"text": {"content": str(dados['esc2']) or ""}}]},
-            "LOCAL": {"rich_text": [{"text": {"content": str(dados['loc']) or ""}}]},
-            "DESTINO": {"rich_text": [{"text": {"content": str(dados['dst']) or ""}}]},
-            "ASSINATURA RESPONSÁVEL": {"rich_text": [{"text": {"content": str(dados['ass']) or ""}}]},
-            "INÍCIO DA MISSÃO": {"date": {"start": dados['ini_m'].strftime('%Y-%m-%d')}},
-            "FIM DA MISSÃO": {"date": {"start": dados['fim_m'].strftime('%Y-%m-%d')}},
-            "STATUS": {"select": {"name": dados['sts']}},
-            "DESCRIÇÃO": {"rich_text": [{"text": {"content": str(dados['obs']) or ""}}]}
-        }
-    }
-    res = requests.post(url, headers=headers, json=payload)
-    return res.status_code == 200
 
 # --- NAVEGAÇÃO ---
 if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
@@ -103,7 +96,6 @@ def navegar(p): st.session_state.pagina = p; st.rerun()
 
 # --- TELA HOME ---
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<br>", unsafe_allow_html=True)
     if os.path.exists("LOGO.PNG"): st.image("LOGO.PNG", width=250)
     st.markdown("<h1>SISTEMA ZION</h1>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
@@ -113,7 +105,7 @@ if st.session_state.pagina == "🏠 HOME":
 
 # --- TELA CADASTRO ---
 elif st.session_state.pagina == "📋 CADASTRO":
-    st.markdown("## 📋 NOVO REGISTRO")
+    st.header("📋 NOVO REGISTRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     with st.form("form_os"):
         c1, c2, c3 = st.columns(3)
@@ -137,37 +129,34 @@ elif st.session_state.pagina == "📋 CADASTRO":
         fim_m = c14.date_input("FIM MISSÃO", format="DD/MM/YYYY")
         sts = c15.selectbox("STATUS", ["Em Andamento", "Encerrado"])
         obs = st.text_area("DESCRIÇÃO")
+        
         if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
             dados = {"os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs}
             if salvar_no_notion(dados): navegar("📊 GRADE")
-            else: st.error("Erro técnico ao salvar. Verifique se todos os campos obrigatórios estão preenchidos.")
+            else: st.error("Erro ao salvar. Verifique se os nomes das colunas no Notion estão corretos.")
 
 # --- TELA GRADE ---
 elif st.session_state.pagina == "📊 GRADE":
-    st.markdown("## 📊 GRADE DE AGENDAMENTOS")
+    st.header("📊 AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     dados = carregar_dados()
-    colunas_grade = ["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]
-    if dados:
-        df = pd.DataFrame(dados)
-        st.dataframe(df[colunas_grade], use_container_width=True)
-    else:
-        st.dataframe(pd.DataFrame(columns=colunas_grade), use_container_width=True)
+    df = pd.DataFrame(dados) if dados else pd.DataFrame(columns=["Nº OS", "CLIENTE", "DT SAÍDA", "STATUS"])
+    st.dataframe(df, use_container_width=True)
 
 # --- TELA FINANCEIRO ---
 elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.markdown("## 💰 FINANCEIRO")
+    st.header("💰 FINANCEIRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     c1, c2 = st.columns(2)
-    ini_f = c1.date_input("INÍCIO", format="DD/MM/YYYY")
-    fim_f = c2.date_input("FIM", format="DD/MM/YYYY")
+    i_f = c1.date_input("INÍCIO", format="DD/MM/YYYY")
+    f_f = c2.date_input("FIM", format="DD/MM/YYYY")
     dados = carregar_dados()
-    colunas_fin = ["Nº OS", "CLIENTE", "DT SAÍDA", "VALOR"]
+    col_fin = ["Nº OS", "CLIENTE", "DT SAÍDA", "VALOR"]
     if dados:
         df = pd.DataFrame(dados)
-        df['dt_f'] = pd.to_datetime(df['DT_SAIDA_RAW'])
-        df_filt = df[(df['dt_f'] >= pd.Timestamp(ini_f)) & (df['dt_f'] <= pd.Timestamp(fim_f))]
-        st.metric("TOTAL NO PERÍODO", f"R$ {df_filt['VALOR'].sum():,.2f}")
-        st.dataframe(df_filt[colunas_fin], use_container_width=True)
+        df['dt_p'] = pd.to_datetime(df['DT_RAW'])
+        df_f = df[(df['dt_p'] >= pd.Timestamp(i_f)) & (df['dt_p'] <= pd.Timestamp(f_f))]
+        st.metric("TOTAL", f"R$ {df_f['VALOR'].sum():,.2f}")
+        st.dataframe(df_f[col_fin], use_container_width=True)
     else:
-        st.dataframe(pd.DataFrame(columns=colunas_fin), use_container_width=True)
+        st.dataframe(pd.DataFrame(columns=col_fin), use_container_width=True)
