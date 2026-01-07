@@ -53,7 +53,7 @@ def salvar_no_notion(d):
             "FIM DA MISSÃO": {"date": {"start": d['fim_m'].strftime('%Y-%m-%d')}},
             "STATUS": {"select": {"name": str(d['sts'])}},
             "DESCRIÇÃO": {"rich_text": [{"text": {"content": str(d['obs'])}}]},
-            "VALOR TOTAL": {"number": float(d['v_total']) if d['v_total'] else 0.0} # 17ª Coluna (Financeira)
+            "TOTAL": {"number": float(d['v_total']) if d['v_total'] else 0.0} # 17ª Coluna (Financeira)
         }
     }
     res = requests.post(url, headers=headers, json=payload)
