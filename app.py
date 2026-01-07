@@ -17,7 +17,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# --- ESTILO CSS AZUL ROYAL (MANTIDO) ---
+# --- ESTILO CSS AZUL ROYAL ---
 st.markdown("""
     <style>
     .stApp {
@@ -31,7 +31,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNÇÃO SALVAR (REVISADA SEM O CAMPO CONFLITANTE) ---
+# --- FUNÇÃO SALVAR (FOCO NA COLUNA PEDIDO) ---
 def salvar_no_notion(d):
     url = "https://api.notion.com/v1/pages"
     payload = {
@@ -42,7 +42,8 @@ def salvar_no_notion(d):
             "DT SAÍDA": {"date": {"start": d['dt_s'].strftime('%Y-%m-%d')}},
             "EMPURRADOR": {"rich_text": [{"text": {"content": str(d['emp'])}}]},
             "BALSA": {"rich_text": [{"text": {"content": str(d['bal'])}}]},
-            "PEDIDO": {"rich_text": [{"text": {"content": str(d['ped'])}}]}, # Removido o /REF aqui
+            # ATENÇÃO: Verifique se no Notion o nome é exatamente PEDIDO (Maiúsculo)
+            "PEDIDO": {"rich_text": [{"text": {"content": str(d['ped'])}}]},
             "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": str(d['h_e'])}}]},
             "ESCOLTA 1": {"rich_text": [{"text": {"content": str(d['esc1'])}}]},
             "ESCOLTA 2": {"rich_text": [{"text": {"content": str(d['esc2'])}}]},
@@ -56,6 +57,9 @@ def salvar_no_notion(d):
         }
     }
     res = requests.post(url, headers=headers, json=payload)
+    if res.status_code != 200:
+        # Isso vai nos mostrar no Streamlit exatamente qual o erro que o Notion está dando
+        st.error(f"Erro do Notion: {res.json().get('message', 'Erro desconhecido')}")
     return res.status_code == 200
 
 # --- FUNÇÃO CARREGAR DADOS ---
@@ -110,7 +114,7 @@ elif st.session_state.pagina == "📋 CADASTRO":
         c4, c5, c6 = st.columns(3)
         emp = c4.text_input("EMPURRADOR")
         bal = c5.text_input("BALSA")
-        ped = c6.text_input("PEDIDO") # Alterado label para "PEDIDO" apenas
+        ped = c6.text_input("PEDIDO") 
         c7, c8, c9 = st.columns(3)
         h_e = c7.text_input("HORA EMBARQUE")
         esc1 = c8.text_input("ESCOLTA 1")
@@ -127,8 +131,9 @@ elif st.session_state.pagina == "📋 CADASTRO":
         
         if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
             dados = {"os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs}
-            if salvar_no_notion(dados): navegar("📊 GRADE")
-            else: st.error("Erro! Verifique se a coluna 'PEDIDO' existe no seu Notion com este nome exato.")
+            if salvar_no_notion(dados): 
+                st.success("Salvo com sucesso!")
+                navegar("📊 GRADE")
 
 elif st.session_state.pagina == "📊 GRADE":
     st.header("📊 AGENDAMENTOS")
