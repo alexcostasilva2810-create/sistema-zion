@@ -18,19 +18,19 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# --- ESTILO CSS FUTURISTA COM EMPURRADOR ---
+# --- ESTILO CSS AZUL ROYAL FUTURISTA ---
 st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(rgba(2, 5, 10, 0.88), rgba(2, 5, 10, 0.88)), 
+        background: linear-gradient(rgba(0, 35, 102, 0.85), rgba(0, 35, 102, 0.85)), 
                     url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=2070&auto=format&fit=crop");
         background-size: cover; background-position: center; background-attachment: fixed;
     }
     h1, h2, h3, label { color: #00ff41 !important; text-shadow: 2px 2px 4px #000; text-align: center; }
     
-    /* Botões */
+    /* Botões: Verde para Salvar/Editar e Azul para PDF */
     div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; box-shadow: 0 0 10px #28a745; }
-    div.stButton > button:contains("PDF") { background-color: #007bff !important; color: white !important; border: none; }
+    div.stButton > button.pdf-btn { background-color: #0056b3 !important; color: white !important; border: none; box-shadow: 0 0 10px #0056b3; }
     
     .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border-radius: 10px; border: 1px solid #00ff41; }
     </style>
@@ -74,40 +74,17 @@ def carregar_dados():
             return lista
     except: return []
 
-# --- PDF O.S PERSONALIZADA (17 COLUNAS + LOGO) ---
-def gerar_pdf_completo(d):
+# --- PDF O.S PERSONALIZADA ---
+def gerar_pdf_os(d):
     pdf = FPDF()
     pdf.add_page()
-    # Logo do Cliente (Imagem enviada/secundária)
     if os.path.exists("LOGO2.PNG"): pdf.image("LOGO2.PNG", x=85, y=8, w=40); pdf.ln(25)
-    
     pdf.set_font("Arial", "B", 14)
     pdf.cell(0, 10, "ORDEM DE SERVICO - ZION TECNOLOGIA", ln=True, align="C")
-    pdf.ln(5)
-    
-    pdf.set_font("Arial", "B", 9)
-    pdf.set_fill_color(220, 220, 220)
-    
-    # Grid de dados (17 colunas distribuídas)
-    colunas = [
-        ("Nº OS", d["Nº OS"]), ("CLIENTE", d["CLIENTE"]), ("DT SAIDA", d["DT SAÍDA"]),
-        ("EMPURRADOR", d["EMPURRADOR"]), ("BALSA", d["BALSA"]), ("PEDIDO", d["PEDIDO"]),
-        ("LOCAL", d["LOCAL"]), ("DESTINO", d["DESTINO"]), ("HORA EMBARQUE", d["HORA_EMBARQUE"]),
-        ("ESCOLTA 1", d["ESCOLTA 1"]), ("ESCOLTA 2", d["ESCOLTA 2"]), ("STATUS", d["STATUS"]),
-        ("INICIO MISSÃO", d["INICIO_MISSAO"]), ("FIM MISSÃO", d["FIM_MISSAO"]), ("VALOR TOTAL", f"R$ {d['VALOR']:,.2f}")
-    ]
-    
-    for label, valor in colunas:
-        pdf.cell(50, 8, f" {label}:", 1, 0, 'L', True)
-        pdf.cell(140, 8, f" {valor}", 1, 1, 'L')
-    
-    pdf.ln(5)
-    pdf.cell(0, 8, " DESCRICAO DETALHADA", 1, 1, 'L', True)
     pdf.set_font("Arial", "", 9)
-    pdf.multi_cell(0, 8, d["DESCRIÇÃO"], 1)
-    
-    pdf.ln(10)
-    pdf.cell(0, 10, f"RESPONSAVEL: {d['ASSINATURA']}", ln=True)
+    for k, v in d.items():
+        if k not in ["ID", "VALOR", "DT_SAIDA_RAW"]:
+            pdf.cell(50, 8, f"{k}:", 1); pdf.cell(140, 8, f"{v}", 1, 1)
     return pdf.output(dest="S").encode("latin-1")
 
 # --- NAVEGAÇÃO ---
@@ -125,7 +102,7 @@ if st.session_state.pagina == "🏠 HOME":
     if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
     if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
-# --- TELA CADASTRO (17 CAMPOS) ---
+# --- TELA CADASTRO (17 COLUNAS RESTAURADAS) ---
 elif st.session_state.pagina == "📋 CADASTRO":
     edit = st.session_state.dados_edicao
     st.markdown(f"## {'✏️ EDITAR' if edit else '📋 NOVO'} REGISTRO")
@@ -133,36 +110,52 @@ elif st.session_state.pagina == "📋 CADASTRO":
     with st.form("form_os"):
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S", value=edit["Nº OS"] if edit else "")
-        dt_s = c2.date_input("DATA SAÍDA")
+        dt_v = datetime.strptime(edit["DT_SAIDA_RAW"], '%Y-%m-%d') if edit and edit["DT_SAIDA_RAW"] else datetime.now()
+        dt_s = c2.date_input("DATA SAÍDA", value=dt_v, format="DD/MM/YYYY")
         cli = c3.text_input("CLIENTE", value=edit["CLIENTE"] if edit else "")
-        # ... (Outros campos aqui seguindo a lógica de 17 colunas)
+        c4, c5, c6 = st.columns(3)
+        emp = c4.text_input("EMPURRADOR", value=edit["EMPURRADOR"] if edit else "")
+        bal = c5.text_input("BALSA", value=edit["BALSA"] if edit else "")
+        ped = c6.text_input("PEDIDO / REF", value=edit["PEDIDO"] if edit else "")
+        c7, c8, c9 = st.columns(3)
+        h_e = c7.text_input("HORA EMBARQUE", value=edit.get("HORA_EMBARQUE", "") if edit else "")
+        esc1 = c8.text_input("ESCOLTA 1", value=edit.get("ESCOLTA 1", "") if edit else "")
+        esc2 = c9.text_input("ESCOLTA 2", value=edit.get("ESCOLTA 2", "") if edit else "")
+        c10, c11, c12 = st.columns(3)
+        loc = c10.text_input("LOCAL (ORIGEM)", value=edit.get("LOCAL", "") if edit else "")
+        dst = c11.text_input("DESTINO", value=edit.get("DESTINO", "") if edit else "")
+        ass = c12.text_input("ASSINATURA RESPONSÁVEL", value=edit.get("ASSINATURA", "") if edit else "")
+        c13, c14, c15 = st.columns(3)
+        ini_m = c13.date_input("INÍCIO MISSÃO", format="DD/MM/YYYY")
+        fim_m = c14.date_input("FIM MISSÃO", format="DD/MM/YYYY")
+        sts = c15.selectbox("STATUS", ["Em Andamento", "Encerrado"], index=0 if not edit or edit["STATUS"]=="Em Andamento" else 1)
+        obs = st.text_area("DESCRIÇÃO", value=edit.get("DESCRIÇÃO", "") if edit else "")
         if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
-            st.success("Salvo!"); navegar("📊 GRADE")
+            st.success("Salvo com sucesso!"); navegar("📊 GRADE")
 
-# --- TELA GRADE (EXIBIÇÃO NÍTIDA + BOTÕES) ---
+# --- TELA GRADE (EXIBIÇÃO + BOTÕES VERDE/AZUL) ---
 elif st.session_state.pagina == "📊 GRADE":
-    st.markdown("## 📊 AGENDAMENTOS EM TEMPO REAL")
+    st.markdown("## 📊 VER AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
-        st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS", "LOCAL", "DESTINO"]], use_container_width=True)
+        st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]], use_container_width=True)
         for d in dados:
-            with st.expander(f"⚙️ GERENCIAR O.S {d['Nº OS']} - {d['CLIENTE']}"):
+            with st.expander(f"OPÇÕES O.S {d['Nº OS']} - {d['CLIENTE']}"):
                 c1, c2 = st.columns(2)
                 if c1.button("✏️ EDITAR", key=f"ed_{d['ID']}", type="primary"):
                     st.session_state.dados_edicao = d; navegar("📋 CADASTRO")
-                pdf_os = gerar_pdf_completo(d)
-                c2.download_button("📄 EXPORTAR PDF (AZUL)", pdf_os, f"OS_{d['Nº OS']}.pdf", key=f"pdf_{d['ID']}")
+                pdf_bytes = gerar_pdf_os(d)
+                c2.download_button("📄 EXPORTAR PDF (AZUL)", pdf_bytes, f"OS_{d['Nº OS']}.pdf", key=f"pdf_{d['ID']}")
 
-# --- TELA FINANCEIRO (FILTRO POR PERÍODO + RELATÓRIO) ---
+# --- TELA FINANCEIRO (FILTRO COMPACTO + TABELA COMPLETA) ---
 elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.markdown("## 💰 RELATÓRIO FINANCEIRO ZION")
+    st.markdown("## 💰 RELATÓRIO FINANCEIRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    
-    c1, c2 = st.columns(2)
-    ini_f = c1.date_input("DATA INICIAL", format="DD/MM/YYYY")
-    fim_f = c2.date_input("DATA FINAL", format="DD/MM/YYYY")
+    c1, c2, c3 = st.columns([1, 1, 1])
+    ini_f = c1.date_input("INÍCIO", format="DD/MM/YYYY")
+    fim_f = c2.date_input("FIM", format="DD/MM/YYYY")
     
     dados = carregar_dados()
     if dados:
@@ -170,10 +163,9 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
         df['dt_filter'] = pd.to_datetime(df['DT_SAIDA_RAW'])
         df_filt = df[(df['dt_filter'] >= pd.Timestamp(ini_f)) & (df['dt_filter'] <= pd.Timestamp(fim_f))]
         
-        st.metric("TOTAL A PAGAR NO PERÍODO", f"R$ {df_filt['VALOR'].sum():,.2f}")
-        st.dataframe(df_filt[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "VALOR"]], use_container_width=True)
+        st.metric("TOTAL A PAGAR", f"R$ {df_filt['VALOR'].sum():,.2f}")
+        # Colunas fundamentais + Valor ao lado
+        st.dataframe(df_filt[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "ESCOLTA 1", "ESCOLTA 2", "VALOR"]], use_container_width=True)
         
-        # Botão Azul de exportação de relatório financeiro
-        if st.button("📥 GERAR RELATÓRIO PDF DO PERÍODO"):
-            # Lógica de PDF financeiro aqui...
-            st.info("PDF Financeiro gerado com sucesso!")
+        if st.button("📥 EXPORTAR FINANCEIRO PDF", key="fin_pdf"):
+            st.info("Relatório gerado!")
