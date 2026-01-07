@@ -159,7 +159,7 @@ elif st.session_state.pagina == "📋 CADASTRO":
     with st.form("form_os"):
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S", value=e['os_n'] if e else "")
-        dt_s = c2.date_input("DATA SAÍDA", value=datetime.strptime(e['dt_s'], '%d-%m-%y') if e and e['dt_s'] else datetime.now(),, format="DD/MM/YYYY")
+        dt_s = c2.date_input("DATA SAÍDA", value=datetime.strptime(e['dt_s'], '%d-%m-%y') if e and e['dt_s'] else datetime.now(), format="DD/MM/YYYY")
         cli = c3.text_input("CLIENTE", value=e['cli'] if e else "")
         
         c4, c5, c6 = st.columns(3)
