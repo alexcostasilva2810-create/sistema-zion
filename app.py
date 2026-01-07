@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import os
+from fpdf import FPDF
 from datetime import datetime
 
 # 1. CONFIGURAÇÃO DA PÁGINA
@@ -21,21 +22,54 @@ headers = {
 st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(rgba(0, 35, 102, 0.88), rgba(0, 35, 102, 0.88)), 
+        background: linear-gradient(rgba(0, 35, 102, 0.9), rgba(0, 35, 102, 0.9)), 
                     url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=2070&auto=format&fit=crop");
         background-size: cover; background-position: center; background-attachment: fixed;
     }
     h1, h2, h3, label { color: #00ff41 !important; text-shadow: 2px 2px 4px #000; text-align: center; }
-    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; width: 100%; height: 50px; font-weight: bold; }
-    .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border: 1px solid #00ff41; }
+    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; font-weight: bold; width: 100%; }
+    .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border: 1px solid #00ff41; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNÇÃO SALVAR NO NOTION (AS 17 COLUNAS) ---
-def salvar_no_notion(d):
-    url = "https://api.notion.com/v1/pages"
+# --- FUNÇÕES DE APOIO ---
+def carregar_dados():
+    try:
+        res = requests.post(f"https://api.notion.com/v1/databases/{DATABASE}/query", headers=headers)
+        if res.status_code == 200:
+            results = res.json().get("results", [])
+            lista = []
+            for r in results:
+                p = r["properties"]
+                def g_t(n): 
+                    try: return p[n]["rich_text"][0]["plain_text"] if p[n]["rich_text"] else ""
+                    except: return ""
+                def g_d(n): 
+                    try: return p[n]["date"]["start"] if p[n]["date"] else None
+                    except: return None
+                
+                status = p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"]["select"] else "Em Andamento"
+                val = p["VALOR TOTAL"]["number"] if "VALOR TOTAL" in p and p["VALOR TOTAL"]["number"] else 0.0
+
+                lista.append({
+                    "ID": r["id"],
+                    "os_n": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "",
+                    "cli": g_t("CLIENTE"), 
+                    "dt_s": datetime.strptime(g_d("DT SAÍDA"), '%Y-%m-%d').date() if g_d("DT SAÍDA") else datetime.now().date(),
+                    "emp": g_t("EMPURRADOR"), "bal": g_t("BALSA"), "ped": g_t("PEDIDO"),
+                    "h_e": g_t("HORA DE EMBARQUE"), "esc1": g_t("ESCOLTA 1"), "esc2": g_t("ESCOLTA 2"),
+                    "loc": g_t("LOCAL"), "dst": g_t("DESTINO"), "ass": g_t("ASSINATURA RESPONSÁVEL"),
+                    "ini_m": datetime.strptime(g_d("INÍCIO DA MISSÃO"), '%Y-%m-%d').date() if g_d("INÍCIO DA MISSÃO") else datetime.now().date(),
+                    "fim_m": datetime.strptime(g_d("FIM DA MISSÃO"), '%Y-%m-%d').date() if g_d("FIM DA MISSÃO") else datetime.now().date(),
+                    "sts": status, "obs": g_t("DESCRIÇÃO"), "v_total": val
+                })
+            return lista
+    except: return []
+
+def salvar_no_notion(d, page_id=None):
+    url = f"https://api.notion.com/v1/pages/{page_id}" if page_id else "https://api.notion.com/v1/pages"
+    method = requests.patch if page_id else requests.post
     payload = {
-        "parent": {"database_id": DATABASE},
         "properties": {
             "Nº OS": {"title": [{"text": {"content": str(d['os_n'])}}]},
             "CLIENTE": {"rich_text": [{"text": {"content": str(d['cli'])}}]},
@@ -48,87 +82,82 @@ def salvar_no_notion(d):
             "ESCOLTA 2": {"rich_text": [{"text": {"content": str(d['esc2'])}}]},
             "LOCAL": {"rich_text": [{"text": {"content": str(d['loc'])}}]},
             "DESTINO": {"rich_text": [{"text": {"content": str(d['dst'])}}]},
-            "ASSINATURA": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
+            "ASSINATURA RESPONSÁVEL": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
             "INÍCIO DA MISSÃO": {"date": {"start": d['ini_m'].strftime('%Y-%m-%d')}},
             "FIM DA MISSÃO": {"date": {"start": d['fim_m'].strftime('%Y-%m-%d')}},
             "STATUS": {"select": {"name": str(d['sts'])}},
             "DESCRIÇÃO": {"rich_text": [{"text": {"content": str(d['obs'])}}]},
-            "VALOR": {"number": float(d['v_total']) if d['v_total'] else 0.0} # 17ª Coluna (Financeira)
+            "VALOR TOTAL": {"number": float(d['v_total'])}
         }
     }
-    res = requests.post(url, headers=headers, json=payload)
-    if res.status_code != 200:
-        st.error(f"Erro Notion: {res.json().get('message')}")
+    if not page_id: payload["parent"] = {"database_id": DATABASE}
+    res = method(url, headers=headers, json=payload)
     return res.status_code == 200
 
 # --- NAVEGAÇÃO ---
 if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
+if "edit_data" not in st.session_state: st.session_state.edit_data = None
 def navegar(p): st.session_state.pagina = p; st.rerun()
 
 # --- TELAS ---
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<h1>SISTEMA ZION - GESTÃO MARÍTIMA</h1>", unsafe_allow_html=True)
+    st.markdown("<h1>SISTEMA ZION</h1>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    if c1.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
+    if c1.button("📋 NOVO LANÇAMENTO"): st.session_state.edit_data = None; navegar("📋 CADASTRO")
     if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
     if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
 elif st.session_state.pagina == "📋 CADASTRO":
-    st.markdown("## 📋 CADASTRO COMPLETO DE O.S (17 COLUNAS)")
+    e = st.session_state.edit_data
+    st.header("📋 EDIÇÃO" if e else "📋 NOVO REGISTRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
     with st.form("form_os"):
-        # LINHA 1
         c1, c2, c3 = st.columns(3)
-        os_n = c1.text_input("1. Nº O.S")
-        dt_s = c2.date_input("2. DATA SAÍDA", format="DD/MM/YYYY")
-        cli = c3.text_input("3. CLIENTE")
+        os_n = c1.text_input("Nº O.S", value=e['os_n'] if e else "")
+        dt_s = c2.date_input("DATA SAÍDA", value=e['dt_s'] if e else datetime.now(), format="DD/MM/YYYY")
+        cli = c3.text_input("CLIENTE", value=e['cli'] if e else "")
         
-        # LINHA 2
         c4, c5, c6 = st.columns(3)
-        emp = c4.text_input("4. EMPURRADOR")
-        bal = c5.text_input("5. BALSA")
-        ped = c6.text_input("6. PEDIDO")
+        emp, bal, ped = c4.text_input("EMPURRADOR", value=e['emp'] if e else ""), c5.text_input("BALSA", value=e['bal'] if e else ""), c6.text_input("PEDIDO", value=e['ped'] if e else "")
         
-        # LINHA 3
         c7, c8, c9 = st.columns(3)
-        h_e = c7.text_input("7. HORA DE EMBARQUE")
-        esc1 = c8.text_input("8. ESCOLTA 1")
-        esc2 = c9.text_input("9. ESCOLTA 2")
+        h_e, esc1, esc2 = c7.text_input("HORA EMBARQUE", value=e['h_e'] if e else ""), c8.text_input("ESCOLTA 1", value=e['esc1'] if e else ""), c9.text_input("ESCOLTA 2", value=e['esc2'] if e else "")
         
-        # LINHA 4
         c10, c11, c12 = st.columns(3)
-        loc = c10.text_input("10. LOCAL")
-        dst = c11.text_input("11. DESTINO")
-        ass = c12.text_input("12. ASSINATURA RESPONSÁVEL")
+        loc, dst, ass = c10.text_input("LOCAL", value=e['loc'] if e else ""), c11.text_input("DESTINO", value=e['dst'] if e else ""), c12.text_input("ASSINATURA", value=e['ass'] if e else "")
         
-        # LINHA 5
         c13, c14, c15 = st.columns(3)
-        ini_m = c13.date_input("13. INÍCIO DA MISSÃO", format="DD/MM/YYYY")
-        fim_m = c14.date_input("14. FIM DA MISSÃO", format="DD/MM/YYYY")
-        sts = c15.selectbox("15. STATUS", ["Em Andamento", "Encerrado"])
+        ini_m = c13.date_input("INÍCIO MISSÃO", value=e['ini_m'] if e else datetime.now(), format="DD/MM/YYYY")
+        fim_m = c14.date_input("FIM MISSÃO", value=e['fim_m'] if e else datetime.now(), format="DD/MM/YYYY")
+        sts = c15.selectbox("STATUS", ["Em Andamento", "Encerrado"], index=0 if not e or e['sts'] == "Em Andamento" else 1)
         
-        # LINHA 6
         c16, c17 = st.columns([2, 1])
-        obs = c16.text_area("16. DESCRIÇÃO / OBSERVAÇÕES")
-        v_total = c17.text_input("17. VALOR TOTAL (R$)", value="0.00")
-        
-        if st.form_submit_button("✅ SALVAR REGISTRO COMPLETO", type="primary"):
-            dados = {
-                "os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped,
-                "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass,
-                "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs, "v_total":v_total
-            }
-            if salvar_no_notion(dados):
-                st.success("Tudo certo! Lançamento realizado.")
-                navegar("📊 GRADE")
+        obs = c16.text_area("DESCRIÇÃO", value=e['obs'] if e else "")
+        v_total = c17.text_input("VALOR TOTAL", value=str(e['v_total']) if e else "0.0")
+
+        if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
+            dados = {"os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs, "v_total":v_total}
+            if salvar_no_notion(dados, e['ID'] if e else None): navegar("📊 GRADE")
 
 elif st.session_state.pagina == "📊 GRADE":
-    st.markdown("## 📊 AGENDAMENTOS")
+    st.header("📊 GRADE DE AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    # Lógica de carregamento de dados mantida para exibir a grade...
+    dados = carregar_dados()
+    if dados:
+        df = pd.DataFrame(dados)
+        st.dataframe(df[["os_n", "cli", "emp", "bal", "sts"]].rename(columns={"os_n":"OS", "cli":"CLIENTE", "sts":"STATUS"}), use_container_width=True)
+        for d in dados:
+            with st.expander(f"⚙️ Opções O.S {d['os_n']} - {d['cli']}"):
+                if st.button(f"✏️ Editar O.S {d['os_n']}", key=f"btn_ed_{d['ID']}"):
+                    st.session_state.edit_data = d
+                    navegar("📋 CADASTRO")
 
 elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.markdown("## 💰 FINANCEIRO")
+    st.header("💰 RELATÓRIO FINANCEIRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    # Lógica financeira mantida...
+    dados = carregar_dados()
+    if dados:
+        df = pd.DataFrame(dados)
+        st.metric("FATURAMENTO TOTAL", f"R$ {df['v_total'].sum():,.2f}")
+        st.dataframe(df[["os_n", "cli", "dt_s", "esc1", "esc2", "v_total"]], use_container_width=True)
