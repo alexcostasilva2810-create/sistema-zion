@@ -159,7 +159,7 @@ elif st.session_state.pagina == "📋 CADASTRO":
     with st.form("form_os"):
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S", value=e['os_n'] if e else "")
-        dt_s = c2.date_input("DATA SAÍDA", value=datetime.strptime(e['dt_s'], '%d-%m-%y') if e and e['dt_s'] else datetime.now())
+        dt_s = c2.date_input("DATA SAÍDA", value=datetime.strptime(e['dt_s'], '%d-%m-%y') if e and e['dt_s'] else datetime.now(),, format="DD/MM/YYYY")
         cli = c3.text_input("CLIENTE", value=e['cli'] if e else "")
         
         c4, c5, c6 = st.columns(3)
@@ -172,8 +172,8 @@ elif st.session_state.pagina == "📋 CADASTRO":
         loc, dst, ass = c10.text_input("LOCAL (ORIGEM)", value=e['loc'] if e else ""), c11.text_input("DESTINO", value=e['dst'] if e else ""), c12.text_input("ASSINATURA RESP.", value=e['ass'] if e else "")
         
         c13, c14, c15 = st.columns(3)
-        ini_m = c13.date_input("INÍCIO MISSÃO", value=datetime.strptime(e['ini_m'], '%d-%m-%Y') if e and e['ini_m'] else datetime.now())
-        fim_m = c14.date_input("FIM MISSÃO", value=datetime.strptime(e['fim_m'], '%d-%m-%Y') if e and e['fim_m'] else datetime.now())
+        ini_m = c13.date_input("INÍCIO MISSÃO", value=datetime.strptime(e['ini_m'], '%d-%m-%Y') if e and e['ini_m'] else datetime.now(), format="DD/MM/YYYY")
+        fim_m = c14.date_input("FIM MISSÃO", value=datetime.strptime(e['fim_m'], '%d-%m-%Y') if e and e['fim_m'] else datetime.now(), format="DD/MM/YYYY")
         sts = c15.selectbox("STATUS", ["Em Andamento", "Encerrado"], index=0 if not e or e['sts'] == "Em Andamento" else 1)
         
         obs = st.text_area("DESCRIÇÃO / OBSERVAÇÕES", value=e['obs'] if e else "")
