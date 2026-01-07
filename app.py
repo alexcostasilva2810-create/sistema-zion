@@ -58,7 +58,7 @@ def carregar_dados():
                     "ID": r["id"],
                     "Nº OS": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
                     "CLIENTE": g_t("CLIENTE"), "DT_SAIDA_RAW": g_d("DT SAÍDA"),
-                    "DT SAÍDA": datetime.strptime(g_d("DT SAÍDA"), '%Y-%m-%d').strftime('%d/%m/%Y') if g_d("DT SAÍDA") else "---",
+                    "DT SAÍDA": datetime.strptime(g_d("DT SAÍDA"), '%d-%m-%Y').strftime('%d/%m/%Y') if g_d("DT SAÍDA") else "---",
                     "EMPURRADOR": g_t("EMPURRADOR"), "BALSA": g_t("BALSA"),
                     "LOCAL": g_t("LOCAL"), "DESTINO": g_t("DESTINO"),
                     "HORA_EMBARQUE": g_t("HORA DE EMBARQUE"),
@@ -78,7 +78,7 @@ def salvar_no_notion(dados):
         "properties": {
             "Nº OS": {"title": [{"text": {"content": dados['os_n']}}]},
             "CLIENTE": {"rich_text": [{"text": {"content": dados['cli']}}]},
-            "DT SAÍDA": {"date": {"start": dados['dt_s'].strftime('%Y-%m-%d')}},
+            "DT SAÍDA": {"date": {"start": dados['dt_s'].strftime('%d-%m-%y')}},
             "EMPURRADOR": {"rich_text": [{"text": {"content": dados['emp']}}]},
             "BALSA": {"rich_text": [{"text": {"content": dados['bal']}}]},
             "PEDIDO": {"rich_text": [{"text": {"content": dados['ped']}}]},
@@ -88,8 +88,8 @@ def salvar_no_notion(dados):
             "LOCAL": {"rich_text": [{"text": {"content": dados['loc']}}]},
             "DESTINO": {"rich_text": [{"text": {"content": dados['dst']}}]},
             "ASSINATURA RESPONSÁVEL": {"rich_text": [{"text": {"content": dados['ass']}}]},
-            "INÍCIO DA MISSÃO": {"date": {"start": dados['ini_m'].strftime('%Y-%m-%d')}},
-            "FIM DA MISSÃO": {"date": {"start": dados['fim_m'].strftime('%Y-%m-%d')}},
+            "INÍCIO DA MISSÃO": {"date": {"start": dados['ini_m'].strftime('%d-%m-%y')}},
+            "FIM DA MISSÃO": {"date": {"start": dados['fim_m'].strftime('%d-%m-%y')}},
             "STATUS": {"select": {"name": dados['sts']}},
             "DESCRIÇÃO": {"rich_text": [{"text": {"content": dados['obs']}}]}
         }
