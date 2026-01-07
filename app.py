@@ -17,7 +17,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# --- ESTILO CSS AZUL ROYAL (MANTIDO) ---
+# --- ESTILO CSS AZUL ROYAL FUTURISTA ---
 st.markdown("""
     <style>
     .stApp {
@@ -26,15 +26,43 @@ st.markdown("""
         background-size: cover; background-position: center; background-attachment: fixed;
     }
     h1, h2, h3, label { color: #00ff41 !important; text-shadow: 2px 2px 4px #000; text-align: center; }
-    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; }
+    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; box-shadow: 0 0 10px #28a745; }
     .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border-radius: 10px; border: 1px solid #00ff41; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNÇÃO SALVAR (MOTOR CORRIGIDO) ---
+# --- FUNÇÃO CARREGAR DADOS ---
+def carregar_dados():
+    try:
+        res = requests.post(f"https://api.notion.com/v1/databases/{DATABASE}/query", headers=headers)
+        if res.status_code == 200:
+            results = res.json().get("results", [])
+            lista = []
+            for r in results:
+                p = r["properties"]
+                def g_t(n): 
+                    try: return p[n]["rich_text"][0]["plain_text"] if p[n]["rich_text"] else ""
+                    except: return ""
+                def g_d(n): 
+                    try: return p[n]["date"]["start"] if p[n]["date"] else None
+                    except: return None
+                
+                status = p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"]["select"] else "Em Andamento"
+                valor = 1870.0 if status == "Encerrado" else 0.0
+
+                lista.append({
+                    "Nº OS": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
+                    "CLIENTE": g_t("CLIENTE"), 
+                    "DT SAÍDA": datetime.strptime(g_d("DT SAÍDA"), '%Y-%m-%d').strftime('%d/%m/%Y') if g_d("DT SAÍDA") else "---",
+                    "DT_RAW": g_d("DT SAÍDA"),
+                    "EMPURRADOR": g_t("EMPURRADOR"), "BALSA": g_t("BALSA"), "STATUS": status, "VALOR": valor
+                })
+            return lista
+    except: return []
+
+# --- FUNÇÃO SALVAR NO NOTION (NOMES DE COLUNAS CORRIGIDOS) ---
 def salvar_no_notion(d):
     url = "https://api.notion.com/v1/pages"
-    # Payload simplificado e robusto
     payload = {
         "parent": {"database_id": DATABASE},
         "properties": {
@@ -59,42 +87,13 @@ def salvar_no_notion(d):
     try:
         res = requests.post(url, headers=headers, json=payload)
         return res.status_code == 200
-    except:
-        return False
-
-# --- FUNÇÃO CARREGAR DADOS ---
-def carregar_dados():
-    try:
-        res = requests.post(f"https://api.notion.com/v1/databases/{DATABASE}/query", headers=headers)
-        if res.status_code == 200:
-            results = res.json().get("results", [])
-            lista = []
-            for r in results:
-                p = r["properties"]
-                def g_t(n): 
-                    try: return p[n]["rich_text"][0]["plain_text"] if p[n]["rich_text"] else ""
-                    except: return ""
-                def g_d(n): 
-                    try: return p[n]["date"]["start"] if p[n]["date"] else None
-                    except: return None
-                
-                status = p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"]["select"] else "Em Andamento"
-                lista.append({
-                    "Nº OS": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
-                    "CLIENTE": g_t("CLIENTE"), 
-                    "DT SAÍDA": datetime.strptime(g_d("DT SAÍDA"), '%Y-%m-%d').strftime('%d/%m/%Y') if g_d("DT SAÍDA") else "---",
-                    "DT_RAW": g_d("DT SAÍDA"),
-                    "EMPURRADOR": g_t("EMPURRADOR"), "BALSA": g_t("BALSA"), "STATUS": status,
-                    "VALOR": 1870.0 if status == "Encerrado" else 0.0 # Exemplo de cálculo
-                })
-            return lista
-    except: return []
+    except: return False
 
 # --- NAVEGAÇÃO ---
 if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
 def navegar(p): st.session_state.pagina = p; st.rerun()
 
-# --- TELA HOME ---
+# --- TELAS ---
 if st.session_state.pagina == "🏠 HOME":
     if os.path.exists("LOGO.PNG"): st.image("LOGO.PNG", width=250)
     st.markdown("<h1>SISTEMA ZION</h1>", unsafe_allow_html=True)
@@ -103,9 +102,8 @@ if st.session_state.pagina == "🏠 HOME":
     if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
     if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
-# --- TELA CADASTRO ---
 elif st.session_state.pagina == "📋 CADASTRO":
-    st.header("📋 NOVO REGISTRO")
+    st.markdown("## 📋 NOVO REGISTRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     with st.form("form_os"):
         c1, c2, c3 = st.columns(3)
@@ -129,34 +127,30 @@ elif st.session_state.pagina == "📋 CADASTRO":
         fim_m = c14.date_input("FIM MISSÃO", format="DD/MM/YYYY")
         sts = c15.selectbox("STATUS", ["Em Andamento", "Encerrado"])
         obs = st.text_area("DESCRIÇÃO")
-        
         if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
             dados = {"os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs}
             if salvar_no_notion(dados): navegar("📊 GRADE")
-            else: st.error("Erro ao salvar. Verifique se os nomes das colunas no Notion estão corretos.")
+            else: st.error("Erro ao salvar no Notion. Verifique se as colunas na base de dados estão idênticas ao código.")
 
-# --- TELA GRADE ---
 elif st.session_state.pagina == "📊 GRADE":
-    st.header("📊 AGENDAMENTOS")
+    st.markdown("## 📊 AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     dados = carregar_dados()
-    df = pd.DataFrame(dados) if dados else pd.DataFrame(columns=["Nº OS", "CLIENTE", "DT SAÍDA", "STATUS"])
-    st.dataframe(df, use_container_width=True)
+    cols = ["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]
+    df = pd.DataFrame(dados) if dados else pd.DataFrame(columns=cols)
+    st.dataframe(df[cols], use_container_width=True)
 
-# --- TELA FINANCEIRO ---
 elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.header("💰 FINANCEIRO")
+    st.markdown("## 💰 FINANCEIRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     c1, c2 = st.columns(2)
-    i_f = c1.date_input("INÍCIO", format="DD/MM/YYYY")
-    f_f = c2.date_input("FIM", format="DD/MM/YYYY")
+    i_f, f_f = c1.date_input("INÍCIO", format="DD/MM/YYYY"), c2.date_input("FIM", format="DD/MM/YYYY")
     dados = carregar_dados()
-    col_fin = ["Nº OS", "CLIENTE", "DT SAÍDA", "VALOR"]
+    cols_fin = ["Nº OS", "CLIENTE", "DT SAÍDA", "VALOR"]
     if dados:
         df = pd.DataFrame(dados)
         df['dt_p'] = pd.to_datetime(df['DT_RAW'])
         df_f = df[(df['dt_p'] >= pd.Timestamp(i_f)) & (df['dt_p'] <= pd.Timestamp(f_f))]
-        st.metric("TOTAL", f"R$ {df_f['VALOR'].sum():,.2f}")
-        st.dataframe(df_f[col_fin], use_container_width=True)
-    else:
-        st.dataframe(pd.DataFrame(columns=col_fin), use_container_width=True)
+        st.metric("TOTAL NO PERÍODO", f"R$ {df_f['VALOR'].sum():,.2f}")
+        st.dataframe(df_f[cols_fin], use_container_width=True)
+    else: st.dataframe(pd.DataFrame(columns=cols_fin), use_container_width=True)
