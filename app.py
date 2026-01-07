@@ -139,9 +139,13 @@ elif st.session_state.pagina == "📊 GRADE":
     st.header("📊 AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     dados = carregar_dados()
-    cols = ["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]
-    df = pd.DataFrame(dados) if dados else pd.DataFrame(columns=cols)
-    st.dataframe(df[cols], use_container_width=True)
+    df = pd.DataFrame(dados) if dados else pd.DataFrame(columns=["Nº OS", "CLIENTE", "DT SAÍDA", "STATUS"])
+    st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]], use_container_width=True)
+    for d in (dados or []):
+        with st.expander(f"Ações O.S {d['Nº OS']}"):
+            c1, c2 = st.columns(2)
+            c1.button("✏️ EDITAR", key=f"ed_{d['ID']}")
+            c2.button("📄 PDF", key=f"pdf_{d['ID']}")
 
 elif st.session_state.pagina == "💰 FINANCEIRO":
     st.header("💰 FINANCEIRO")
