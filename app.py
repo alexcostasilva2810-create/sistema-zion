@@ -93,23 +93,21 @@ def carregar_dados():
             lista = []
            for r in results:
             p = r["properties"]
-            # Função para pegar texto com segurança
-            def g_t(n): 
-                if n in p and p[n]["rich_text"]:
-                    return p[n]["rich_text"][0]["plain_text"]
-                return ""
             
-            # Função para pegar data com segurança
+            # Função para pegar texto (alinhada com 12 espaços)
+            def g_t(n): 
+                return p[n]["rich_text"][0]["plain_text"] if n in p and p[n]["rich_text"] else ""
+            
+            # Função para pegar data (alinhada com 12 espaços)
             def g_d(n): 
-                if n in p and p[n]["date"]:
-                    return p[n]["date"]["start"]
-                return ""
+                return p[n]["date"]["start"] if n in p and p.get("date") and p[n]["date"] else None
 
+            # O comando lista.append deve estar alinhado com o 'def' acima
             lista.append({
                 "ID": r["id"],
                 "os_n": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
                 "cli": g_t("CLIENTE"),
-                "dt_s": g_d("DT SAIDA"),  # Removido o acento para bater com o Notion
+                "dt_s": g_d("DT SAIDA"), # Removido o acento conforme seu Notion
                 "emp": g_t("EMPURRADOR"),
                 "bal": g_t("BALSA"),
                 "ped": g_t("PEDIDO"),
@@ -121,12 +119,10 @@ def carregar_dados():
                 "ass": g_t("ASSINATURA RESPONSÁVEL"),
                 "ini_m": g_d("INÍCIO DA MISSÃO"),
                 "fim_m": g_d("FIM DA MISSÃO"),
-                "sts": p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"]["select"] else "Em Andamento",
+                "sts": p["STATUS"]["select"]["name"] if "STATUS" in p and p.get("STATUS") and p["STATUS"]["select"] else "Em Andamento",
                 "obs": g_t("DESCRIÇÃO"),
-                "v_total": p["VALOR TOTAL"]["number"] if "VALOR TOTAL" in p else 0
+                "v_total": p["VALOR TOTAL"]["number"] if "VALOR TOTAL" in p and p["VALOR TOTAL"].get("number") else 0
             })
-                })
-            return lista
     except: return []
 
 def salvar_no_notion(d, page_id=None):
