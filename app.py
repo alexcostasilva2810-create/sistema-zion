@@ -18,7 +18,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# --- ESTILO CSS AZUL ROYAL FUTURISTA ---
+# --- ESTILO CSS (MANTIDO CONFORME SOLICITADO) ---
 st.markdown("""
     <style>
     .stApp {
@@ -58,7 +58,7 @@ def carregar_dados():
                     "ID": r["id"],
                     "Nº OS": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
                     "CLIENTE": g_t("CLIENTE"), "DT_SAIDA_RAW": g_d("DT SAÍDA"),
-                    "DT SAÍDA": datetime.strptime(g_d("DT SAÍDA"), '%d-%m-%Y').strftime('%d/%m/%Y') if g_d("DT SAÍDA") else "---",
+                    "DT SAÍDA": datetime.strptime(g_d("DT SAÍDA"), '%Y-%m-%d').strftime('%d/%m/%Y') if g_d("DT SAÍDA") else "---",
                     "EMPURRADOR": g_t("EMPURRADOR"), "BALSA": g_t("BALSA"),
                     "LOCAL": g_t("LOCAL"), "DESTINO": g_t("DESTINO"),
                     "HORA_EMBARQUE": g_t("HORA DE EMBARQUE"),
@@ -70,28 +70,28 @@ def carregar_dados():
             return lista
     except: return []
 
-# --- FUNÇÃO SALVAR NO NOTION ---
+# --- FUNÇÃO SALVAR NO NOTION (CORRIGIDA) ---
 def salvar_no_notion(dados):
     url = "https://api.notion.com/v1/pages"
     payload = {
         "parent": {"database_id": DATABASE},
         "properties": {
-            "Nº OS": {"title": [{"text": {"content": dados['os_n']}}]},
-            "CLIENTE": {"rich_text": [{"text": {"content": dados['cli']}}]},
-            "DT SAÍDA": {"date": {"start": dados['dt_s'].strftime('%d-%m-%y')}},
-            "EMPURRADOR": {"rich_text": [{"text": {"content": dados['emp']}}]},
-            "BALSA": {"rich_text": [{"text": {"content": dados['bal']}}]},
-            "PEDIDO": {"rich_text": [{"text": {"content": dados['ped']}}]},
-            "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": dados['h_e']}}]},
-            "ESCOLTA 1": {"rich_text": [{"text": {"content": dados['esc1']}}]},
-            "ESCOLTA 2": {"rich_text": [{"text": {"content": dados['esc2']}}]},
-            "LOCAL": {"rich_text": [{"text": {"content": dados['loc']}}]},
-            "DESTINO": {"rich_text": [{"text": {"content": dados['dst']}}]},
-            "ASSINATURA RESPONSÁVEL": {"rich_text": [{"text": {"content": dados['ass']}}]},
-            "INÍCIO DA MISSÃO": {"date": {"start": dados['ini_m'].strftime('%d-%m-%y')}},
-            "FIM DA MISSÃO": {"date": {"start": dados['fim_m'].strftime('%d-%m-%y')}},
+            "Nº OS": {"title": [{"text": {"content": str(dados['os_n'])}}]},
+            "CLIENTE": {"rich_text": [{"text": {"content": str(dados['cli'])}}]},
+            "DT SAÍDA": {"date": {"start": dados['dt_s'].isoformat()}},
+            "EMPURRADOR": {"rich_text": [{"text": {"content": str(dados['emp'])}}]},
+            "BALSA": {"rich_text": [{"text": {"content": str(dados['bal'])}}]},
+            "PEDIDO": {"rich_text": [{"text": {"content": str(dados['ped'])}}]},
+            "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": str(dados['h_e'])}}]},
+            "ESCOLTA 1": {"rich_text": [{"text": {"content": str(dados['esc1'])}}]},
+            "ESCOLTA 2": {"rich_text": [{"text": {"content": str(dados['esc2'])}}]},
+            "LOCAL": {"rich_text": [{"text": {"content": str(dados['loc'])}}]},
+            "DESTINO": {"rich_text": [{"text": {"content": str(dados['dst'])}}]},
+            "ASSINATURA RESPONSÁVEL": {"rich_text": [{"text": {"content": str(dados['ass'])}}]},
+            "INÍCIO DA MISSÃO": {"date": {"start": dados['ini_m'].isoformat()}},
+            "FIM DA MISSÃO": {"date": {"start": dados['fim_m'].isoformat()}},
             "STATUS": {"select": {"name": dados['sts']}},
-            "DESCRIÇÃO": {"rich_text": [{"text": {"content": dados['obs']}}]}
+            "DESCRIÇÃO": {"rich_text": [{"text": {"content": str(dados['obs'])}}]}
         }
     }
     res = requests.post(url, headers=headers, json=payload)
@@ -99,28 +99,26 @@ def salvar_no_notion(dados):
 
 # --- NAVEGAÇÃO ---
 if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
-if "dados_edicao" not in st.session_state: st.session_state.dados_edicao = None
 def navegar(p): st.session_state.pagina = p; st.rerun()
 
 # --- TELA HOME ---
 if st.session_state.pagina == "🏠 HOME":
     st.markdown("<br>", unsafe_allow_html=True)
     if os.path.exists("LOGO.PNG"): st.image("LOGO.PNG", width=250)
-    st.markdown("<h1>SISTEMA ZION</h1><h3>OPERACIONAL & FINANCEIRO</h3>", unsafe_allow_html=True)
-    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    st.markdown("<h1>SISTEMA ZION</h1>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    if c1.button("📋 NOVO LANÇAMENTO"): st.session_state.dados_edicao = None; navegar("📋 CADASTRO")
+    if c1.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
     if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
     if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
-# --- TELA CADASTRO (17 CAMPOS) ---
+# --- TELA CADASTRO (DATAS CORRIGIDAS DIA/MES/ANO) ---
 elif st.session_state.pagina == "📋 CADASTRO":
-    st.markdown("## 📋 REGISTRO DE O.S")
+    st.markdown("## 📋 NOVO REGISTRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     with st.form("form_os"):
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S")
-        dt_s = c2.date_input("DATA SAÍDA")
+        dt_s = c2.date_input("DATA SAÍDA", format="DD/MM/YYYY")
         cli = c3.text_input("CLIENTE")
         c4, c5, c6 = st.columns(3)
         emp = c4.text_input("EMPURRADOR")
@@ -135,30 +133,25 @@ elif st.session_state.pagina == "📋 CADASTRO":
         dst = c11.text_input("DESTINO")
         ass = c12.text_input("ASSINATURA RESPONSÁVEL")
         c13, c14, c15 = st.columns(3)
-        ini_m = c13.date_input("INÍCIO MISSÃO")
-        fim_m = c14.date_input("FIM MISSÃO")
+        ini_m = c13.date_input("INÍCIO MISSÃO", format="DD/MM/YYYY")
+        fim_m = c14.date_input("FIM MISSÃO", format="DD/MM/YYYY")
         sts = c15.selectbox("STATUS", ["Em Andamento", "Encerrado"])
         obs = st.text_area("DESCRIÇÃO")
         if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
             dados = {"os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs}
-            if salvar_no_notion(dados): st.success("Salvo!"); navegar("📊 GRADE")
-            else: st.error("Erro ao salvar!")
+            if salvar_no_notion(dados): navegar("📊 GRADE")
+            else: st.error("Erro ao salvar! Verifique a conexão.")
 
-# --- TELA GRADE (RESTAURADA) ---
+# --- TELA GRADE ---
 elif st.session_state.pagina == "📊 GRADE":
-    st.markdown("## 📊 GRADE DE AGENDAMENTOS")
+    st.markdown("## 📊 AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
-        st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]], use_container_width=True)
-        for d in dados:
-            with st.expander(f"OPÇÕES O.S {d['Nº OS']}"):
-                st.write(f"Cliente: {d['CLIENTE']} | Status: {d['STATUS']}")
-                if st.button("✏️ EDITAR", key=f"ed_{d['ID']}", type="primary"): 
-                    st.session_state.dados_edicao = d; navegar("📋 CADASTRO")
+        st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "STATUS"]], use_container_width=True)
 
-# --- TELA FINANCEIRO (RESTAURADA) ---
+# --- TELA FINANCEIRO (TABELA SEMPRE VISÍVEL) ---
 elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("## 💰 FINANCEIRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
@@ -166,9 +159,15 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
     ini_f = c1.date_input("INÍCIO", format="DD/MM/YYYY")
     fim_f = c2.date_input("FIM", format="DD/MM/YYYY")
     dados = carregar_dados()
+    
+    # Prepara colunas padrão caso não haja dados
+    colunas_fin = ["Nº OS", "CLIENTE", "DT SAÍDA", "VALOR"]
+    
     if dados:
         df = pd.DataFrame(dados)
         df['dt_f'] = pd.to_datetime(df['DT_SAIDA_RAW'])
         df_filt = df[(df['dt_f'] >= pd.Timestamp(ini_f)) & (df['dt_f'] <= pd.Timestamp(fim_f))]
         st.metric("TOTAL NO PERÍODO", f"R$ {df_filt['VALOR'].sum():,.2f}")
-        st.dataframe(df_filt[["Nº OS", "CLIENTE", "DT SAÍDA", "VALOR"]], use_container_width=True)
+        st.dataframe(df_filt[colunas_fin], use_container_width=True)
+    else:
+        st.dataframe(pd.DataFrame(columns=colunas_fin), use_container_width=True)
