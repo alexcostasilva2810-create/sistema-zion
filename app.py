@@ -49,7 +49,7 @@ def salvar_no_notion(d):
             "ESCOLTA 2": {"rich_text": [{"text": {"content": str(d['esc2'])}}]},
             "LOCAL": {"rich_text": [{"text": {"content": str(d['loc'])}}]},
             "DESTINO": {"rich_text": [{"text": {"content": str(d['dst'])}}]},
-            "ASSINATURA RESPONSÁVEL": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
+            "ASSINATURA": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
             "INÍCIO DA MISSÃO": {"date": {"start": d['ini_m'].strftime('%Y-%m-%d')}},
             "FIM DA MISSÃO": {"date": {"start": d['fim_m'].strftime('%Y-%m-%d')}},
             "STATUS": {"select": {"name": str(d['sts'])}},
@@ -122,7 +122,7 @@ elif st.session_state.pagina == "📋 CADASTRO":
         c10, c11, c12 = st.columns(3)
         loc = c10.text_input("LOCAL (ORIGEM)")
         dst = c11.text_input("DESTINO")
-        ass = c12.text_input("ASSINATURA RESPONSÁVEL")
+        ass = c12.text_input("ASSINATURA")
         c13, c14, c15 = st.columns(3)
         ini_m = c13.date_input("INÍCIO MISSÃO", format="DD/MM/YYYY")
         fim_m = c14.date_input("FIM MISSÃO", format="DD/MM/YYYY")
