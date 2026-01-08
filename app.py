@@ -68,23 +68,39 @@ def carregar_dados():
             lista = []
             for r in results:
                 p = r["properties"]
-                def g_t(n): return p[n]["rich_text"][0]["plain_text"] if n in p and p[n]["rich_text"] else ""
-                def g_d(n): return p[n]["date"]["start"] if n in p and p.get("date") and p[n]["date"] else None
                 
+                # Funções de segurança para garantir que o dado retorne mesmo com erro de nome
+                def g_t(n): 
+                    return p[n]["rich_text"][0]["plain_text"] if n in p and p[n].get("rich_text") else ""
+                
+                def g_d(n): 
+                    return p[n]["date"]["start"] if n in p and p.get(n) and p[n].get("date") else None
+
+                # Mapeamento exato das colunas do seu Notion
                 lista.append({
                     "ID": r["id"],
-                    "os_n": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
-                    "cli": g_t("CLIENTE"), "dt_s": g_d("DT SAIDA"), "emp": g_t("EMPURRADOR"),
-                    "bal": g_t("BALSA"), "ped": g_t("PEDIDO"), "h_e": g_t("HORA DE EMBARQUE"),
-                    "esc1": g_t("ESCOLTA 1"), "esc2": g_t("ESCOLTA 2"), "loc": g_t("LOCAL"),
-                    "dst": g_t("DESTINO"), "ass": g_t("ASSINATURA RESPONSÁVEL"),
-                    "ini_m": g_d("INÍCIO DA MISSÃO"), "fim_m": g_d("FIM DA MISSÃO"),
-                    "sts": p["STATUS"]["select"]["name"] if "STATUS" in p and p.get("STATUS") and p["STATUS"]["select"] else "Em Andamento",
+                    "os_n": p["Nº OS"]["title"][0]["plain_text"] if "Nº OS" in p and p["Nº OS"]["title"] else "---",
+                    "cli": g_t("CLIENTE"), 
+                    "dt_s": g_d("DT SAIDA"), # Puxa do Notion (AAAA-MM-DD)
+                    "emp": g_t("EMPURRADOR"),
+                    "bal": g_t("BALSA"),
+                    "ped": g_t("PEDIDO"),
+                    "h_e": g_t("HORA DE EMBARQUE"),
+                    "esc1": g_t("ESCOLTA 1"),
+                    "esc2": g_t("ESCOLTA 2"),
+                    "loc": g_t("LOCAL"),
+                    "dst": g_t("DESTINO"),
+                    "ass": g_t("ASSINATURA RESPONSÁVEL"),
+                    "ini_m": g_d("INÍCIO DA MISSÃO"),
+                    "fim_m": g_d("FIM DA MISSÃO"),
+                    "sts": p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"].get("select") else "Em Andamento",
                     "obs": g_t("DESCRIÇÃO"), 
                     "v_total": p["VALOR TOTAL"]["number"] if "VALOR TOTAL" in p and p["VALOR TOTAL"].get("number") else 0
                 })
             return lista
-    except: return []
+    except Exception as e:
+        st.error(f"Erro ao carregar: {e}")
+        return []
     return []
 
 # --- SALVAR NO NOTION (Restaurado com 17 colunas e nomes corretos) ---
