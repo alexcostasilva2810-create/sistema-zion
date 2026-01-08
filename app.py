@@ -159,29 +159,54 @@ elif st.session_state.pagina == "📋 CADASTRO":
     e = st.session_state.edit_data
     st.header("✏️ EDITAR O.S" if e else "📝 NOVO REGISTRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+    
     with st.form("form_os"):
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S", value=e['os_n'] if e else "")
         dt_s = c2.date_input("DATA SAÍDA", value=datetime.strptime(e['dt_s'], '%Y-%m-%d') if e and e['dt_s'] else datetime.now(), format="DD/MM/YYYY")
         cli = c3.text_input("CLIENTE", value=e['cli'] if e else "")
+        
         c4, c5, c6 = st.columns(3)
-        emp, bal, ped = c4.text_input("EMPURRADOR", value=e['emp'] if e else ""), c5.text_input("BALSA", value=e['bal'] if e else ""), c6.text_input("PEDIDO", value=e['ped'] if e else "")
+        emp = c4.text_input("EMPURRADOR", value=e['emp'] if e else "")
+        bal = c5.text_input("BALSA", value=e['bal'] if e else "")
+        ped = c6.text_input("PEDIDO", value=e['ped'] if e else "")
+        
         c7, c8, c9 = st.columns(3)
-        h_e, esc1, esc2 = c7.text_input("HORA EMBARQUE", value=e['h_e'] if e else ""), c8.text_input("ESCOLTA 1", value=e['esc1'] if e else ""), c9.text_input("ESCOLTA 2", value=e['esc2'] if e else "")
+        h_e = c7.text_input("HORA EMBARQUE", value=e['h_e'] if e else "")
+        esc1 = c8.text_input("ESCOLTA 1", value=e['esc1'] if e else "")
+        esc2 = c9.text_input("ESCOLTA 2", value=e['esc2'] if e else "")
+        
         c10, c11, c12 = st.columns(3)
-        loc, dst, ass = c10.text_input("LOCAL", value=e['loc'] if e else ""), c11.text_input("DESTINO", value=e['dst'] if e else ""), c12.text_input("ASSINATURA", value=e['ass'] if e else "")
+        loc = c10.text_input("LOCAL (ORIGEM)", value=e['loc'] if e else "")
+        dst = c11.text_input("DESTINO", value=e['dst'] if e else "")
+        ass = c12.text_input("ASSINATURA RESP.", value=e['ass'] if e else "")
+        
         c13, c14, c15 = st.columns(3)
         ini_m = c13.date_input("INÍCIO MISSÃO", value=datetime.strptime(e['ini_m'], '%Y-%m-%d') if e and e['ini_m'] else datetime.now(), format="DD/MM/YYYY")
         fim_m = c14.date_input("FIM MISSÃO", value=datetime.strptime(e['fim_m'], '%Y-%m-%d') if e and e['fim_m'] else datetime.now(), format="DD/MM/YYYY")
         sts = c15.selectbox("STATUS", ["Em Andamento", "Encerrado"], index=0 if not e or e['sts'] == "Em Andamento" else 1)
-        obs = st.text_area("DESCRIÇÃO", value=e['obs'] if e else "")
-        v_total = st.text_input("VALOR TOTAL", value=str(e['v_total']) if e else "0.00")
-        st.markdown('<div class="btn-salvar-verde">', unsafe_allow_html=True)
-        if st.form_submit_button("✅ SALVAR OPERAÇÃO"):
-            dados = {"os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs, "v_total":v_total}
-            if salvar_no_notion(dados, e['ID'] if e else None): navegar("📊 GRADE")
-        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # --- NOVOS CAMPOS AJUSTADOS ---
+        c16, c17 = st.columns(2)
+        # Campo para Escolta ou Vigilância
+        modalidade = c16.selectbox("MODALIDADE DO SERVIÇO", ["ESCOLTA", "VIGILÂNCIA"], index=0)
+        # Campo de Valor da Diária (Substituindo o Valor Total)
+        v_diaria = c17.text_input("VALOR DA DIÁRIA (R$)", value=str(e['v_total']) if e else "0.00")
+        
+        obs = st.text_area("DESCRIÇÃO / OBSERVAÇÕES", value=e['obs'] if e else "")
 
+        st.markdown('<div class="btn-salvar-verde">', unsafe_allow_html=True)
+        if st.form_submit_button("✅ SALVAR REGISTRO"):
+            dados = {
+                "os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, 
+                "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, 
+                "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs, 
+                "v_total": v_diaria, # Enviamos o valor da diária para o campo que o financeiro lê
+                "modalidade": modalidade
+            }
+            if salvar_no_notion(dados, e['ID'] if e else None): 
+                navegar("📊 GRADE")
+        st.markdown('</div>', unsafe_allow_html=True)
 elif st.session_state.pagina == "📊 GRADE":
     st.header("📊 AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
