@@ -20,18 +20,41 @@ headers = {
 
 # --- ESTILO CSS AZUL ROYAL (TRAVADO) ---
 st.markdown("""
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     .stApp {
-        background: linear-gradient(rgba(0, 35, 102, 0.9), rgba(0, 35, 102, 0.9)), 
-                    url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=2070&auto=format&fit=crop");
+        background: linear-gradient(rgba(0, 20, 60, 0.8), rgba(0, 20, 60, 0.8)), 
+                    url("https://images.unsplash.com/photo-1454165205744-3b78555e5572?q=80&w=2070&auto=format&fit=crop");
         background-size: cover; background-position: center; background-attachment: fixed;
     }
-    h1, h2, h3, label { color: #00ff41 !important; text-shadow: 2px 2px 4px #000; text-align: center; }
-    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; font-weight: bold; }
-    .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border: 1px solid #00ff41; border-radius: 10px; }
+    
+    h1 { color: #ffffff !important; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; text-align: center; }
+
+    div.stButton > button {
+        width: 100%;
+        height: 160px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 20px !important;
+        transition: all 0.4s ease-in-out !important;
+    }
+
+    div.stButton > button:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: #00ff41 !important;
+        transform: translateY(-10px) !important;
+    }
+
+    .icon-container {
+        font-size: 45px;
+        margin-bottom: 10px;
+        color: #00ff41;
+        text-align: center;
+        display: block;
+    }
     </style>
     """, unsafe_allow_html=True)
-
 # --- FUNÇÃO CARREGAR DADOS ---
 def carregar_dados():
     try:
