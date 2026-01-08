@@ -149,11 +149,88 @@ def navegar(p): st.session_state.pagina = p; st.rerun()
 
 # --- TELAS ---
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<h1>SISTEMA ZION - CONTROLE DE VIGILÂNCIA</h1>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    if c1.button("📋 NOVO LANÇAMENTO"): st.session_state.edit_data = None; navegar("📋 CADASTRO")
-    if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
-    if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
+    # 1. Configuração do Fundo e Estilo (CSS)
+    st.markdown(f"""
+        <style>
+        /* Imagem de Fundo */
+        .stApp {{
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                        url("SUA_IMAGEM_AQUI_OU_LINK");
+            background-size: cover;
+        }}
+        
+        /* Estilo dos Cards em Vidro */
+        .card-home {{
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            height: 450px;
+            transition: 0.3s;
+        }}
+        
+        .card-home:hover {{
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-10px);
+        }}
+
+        h1, h2, h3, p {{
+            color: white !important;
+        }}
+        </style>
+        
+        <div style="text-align: center; padding: 40px 0;">
+            <h1 style="font-size: 50px; font-weight: bold; text-shadow: 2px 2px 4px #000;">
+                ZION TECNOLOGIA - GESTÃO DE ESCOLTA
+            </h1>
+            <p style="font-size: 20px; opacity: 0.9;">Sistema Integrado de Controle Operacional e Financeiro</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # 2. Layout dos Cards com Imagens Realistas
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        # Card Cadastro (Robô com Prancheta)
+        st.markdown("""
+            <div class="card-home">
+                <img src="https://cdn-icons-png.flaticon.com/512/6819/6819615.png" width="150" style="margin-bottom: 20px; filter: drop-shadow(2px 4px 6px black);">
+                <h3>CADASTRO</h3>
+                <p>Novo registro de O.S com inteligência e precisão.</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("NOVO REGISTRO", use_container_width=True, key="btn_cad"):
+            navegar("📋 CADASTRO")
+
+    with col2:
+        # Card Grade (Agenda 3D)
+        st.markdown("""
+            <div class="card-home">
+                <img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" width="150" style="margin-bottom: 20px; filter: drop-shadow(2px 4px 6px black);">
+                <h3>ORDEM DE SERVIÇO</h3>
+                <p>Visualize a grade operacional e emita PDFs.</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("VER AGENDA", use_container_width=True, key="btn_grade"):
+            navegar("📊 GRADE")
+
+    with col3:
+        # Card Financeiro (Dashboard Realista)
+        st.markdown("""
+            <div class="card-home">
+                <img src="https://cdn-icons-png.flaticon.com/512/4222/4222025.png" width="150" style="margin-bottom: 20px; filter: drop-shadow(2px 4px 6px black);">
+                <h3>FINANCEIRO</h3>
+                <p>Relatórios estratégicos e faturamento detalhado.</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("VER FINANCEIRO", use_container_width=True, key="btn_fin"):
+            navegar("💰 FINANCEIRO")
+
+    # 3. Rodapé de Status
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.success(f"✅ Sistema Online | {datetime.now().strftime('%d/%m/%Y')} | Bem-vindo ao comando, Zion.")
 
 elif st.session_state.pagina == "📋 CADASTRO":
     e = st.session_state.edit_data
