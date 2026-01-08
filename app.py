@@ -227,6 +227,15 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO ZION</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
+    # CSS para deixar o valor da métrica em Amarelo
+    st.markdown("""
+        <style>
+        [data-testid="stMetricValue"] {
+            color: #ffff00 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
     # 1. FILTROS DE TELA
     c_f1, c_f2, c_f3 = st.columns([1, 1, 2])
     data_ini = c_f1.date_input("Início do Período", datetime.now(), format="DD/MM/YYYY")
@@ -244,14 +253,12 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
 
         # REGRA DE PREÇO AUTOMATIZADA
         def regra_financeira_zion(row):
-            # Cálculo de dias
             if pd.notnull(row['ini_m']) and pd.notnull(row['fim_m']):
                 dias = (row['fim_m'] - row['ini_m']).days
                 qtd_dias = dias + 1 if dias >= 0 else 1
             else:
                 qtd_dias = 1
             
-            # Identificação por Modalidade (Escolta 1870 / Vigilância 970)
             serv = str(row.get('modalidade', 'ESCOLTA')).upper()
             if "VIGILÂNCIA" in serv or "VIGILANCIA" in serv:
                 v_unit, tipo = 970.00, "VIGILÂNCIA"
@@ -267,7 +274,7 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
         df_f = df.loc[mask].copy()
 
         if not df_f.empty:
-            # MÉTRICAS DE TELA (Sem Gráfico aqui)
+            # MÉTRICAS DE TELA (Faturamento agora aparecerá em Amarelo devido ao CSS acima)
             c_m1, c_m2 = st.columns(2)
             c_m1.metric("Quantidade de O.S", len(df_f))
             c_m2.metric("Faturamento Total do Período", f"R$ {df_f['TOTAL_OS'].sum():,.2f}")
@@ -277,12 +284,10 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
             df_view.columns = ['Nº O.S', 'CLIENTE', 'TIPO', 'DIAS', 'V. UNIT (R$)', 'TOTAL (R$)', 'STATUS']
             st.dataframe(df_view, use_container_width=True, hide_index=True)
 
-            # --- FUNÇÃO GERAR PDF COM TODAS AS COLUNAS ---
+            # --- FUNÇÃO GERAR PDF ---
             def gerar_relatorio_pdf_zion(df_rel, d1, d2):
-                pdf = FPDF(orientation='L') # Formato Paisagem para elegância
+                pdf = FPDF(orientation='L')
                 pdf.add_page()
-                
-                # Cabeçalho Zion
                 pdf.set_fill_color(0, 35, 102)
                 pdf.rect(0, 0, 297, 40, 'F')
                 pdf.set_text_color(255, 255, 255)
@@ -296,7 +301,6 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
                 pdf.set_font("Arial", 'B', 9)
                 pdf.set_fill_color(235, 235, 235)
                 
-                # Títulos das colunas no PDF
                 pdf.cell(20, 10, "O.S", 1, 0, 'C', True)
                 pdf.cell(75, 10, "CLIENTE", 1, 0, 'C', True)
                 pdf.cell(35, 10, "SERVICO", 1, 0, 'C', True)
@@ -325,7 +329,6 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
                 
                 return pdf.output(dest='S').encode('latin-1')
 
-            # Botão de Impressão
             pdf_out = gerar_relatorio_pdf_zion(df_view, data_ini, data_fim)
             st.download_button(
                 label="🖨️ BAIXAR RELATÓRIO PDF COMPLETO",
@@ -335,5 +338,3 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
             )
         else:
             st.warning("Não há dados para os filtros aplicados.")
-    else:
-        st.error("Erro ao conectar com a base de dados.")
