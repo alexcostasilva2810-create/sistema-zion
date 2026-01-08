@@ -58,6 +58,12 @@ st.markdown("""
 # ============================================================
 # # ........ BLOCO: HOME (MENU PRINCIPAL) ........ #
 # ============================================================
+import streamlit as st
+
+# O erro anterior ocorria porque o CSS não estava dentro de uma variável string.
+# Aqui definimos o bloco completo como uma constante.
+
+MENU_HTML = """
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
@@ -143,7 +149,11 @@ st.markdown("""
         </a>
 
     </div>
-</div></div></div># ============================================================
+</div>
+"""
+
+# Comando para renderizar o Menu no Streamlit
+st.markdown(MENU_HTML, unsafe_allow_html=True)</div></div></div># ============================================================
 # # ........ BLOCO: CADASTRO (REGISTRO) ........ #
 # ============================================================
 elif st.session_state.pagina == "📋 CADASTRO":
