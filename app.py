@@ -1,23 +1,22 @@
 import streamlit as st
-import pandas as pd
-from datetime import datetime
-from fpdf import FPDF
 import requests
+import pandas as pd
+from fpdf import FPDF
+from datetime import datetime
 import io
 
-# 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="Zion Tecnologia", layout="wide")
+# 1. CONFIGURAÇÃO DA PÁGINA (Sempre a primeira linha de código Streamlit)
+st.set_page_config(page_title="Zion Tecnologia - Gestão O.S", layout="wide")
 
-# 2. INICIALIZAÇÃO DO ESTADO (Evita o erro AttributeError)
+# 2. INICIALIZAÇÃO DO MOTOR DE NAVEGAÇÃO (Resolve AttributeError)
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
-# 3. FUNÇÃO DE NAVEGAÇÃO (Evita o erro NameError)
 def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
-# ----------------------------------------------------------
-# --- CONEXÃO NOTION ---
+
+# 3. CONEXÃO NOTION (Certifique-se que os secrets estão configurados no Streamlit Cloud)
 TOKEN = st.secrets["notion"]["token"].replace('"', '').strip()
 DATABASE = st.secrets["notion"]["database_id"].replace('"', '').strip()
 
@@ -26,7 +25,6 @@ headers = {
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json"
 }
-
 # --- ESTILO CSS (ROBÔ + AZUL ROYAL TRANSPARENTE) ---
 st.markdown(f"""
     <style>
@@ -249,8 +247,16 @@ elif st.session_state.pagina == "📋 CADASTRO":
 
 # ESTA LINHA ABAIXO DEVE ESTAR TOTALMENTE À ESQUERDA (COLUNA ZERO)
 elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.markdown("<h1 style='text-align: center; color: white;'>💰 FINANCEIRO ESTRATÉGICO</h1>", unsafe_allow_html=True)
-    if st.button("⬅️ VOLTAR PARA HOME"):
+    st.markdown("""
+        <style>
+        .stApp { background: linear-gradient(135deg, #001a4d 0%, #003399 100%); }
+        h1 { color: white !important; text-align: center; }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO</h1>", unsafe_allow_html=True)
+    
+    if st.button("⬅️ VOLTAR PARA HOME", key="voltar_fin"):
         navegar("🏠 HOME")
     
     dados = carregar_dados()
