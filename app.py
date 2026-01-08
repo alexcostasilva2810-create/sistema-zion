@@ -210,19 +210,66 @@ elif st.session_state.pagina == "📋 CADASTRO":
                 navegar("📊 GRADE")
         st.markdown('</div>', unsafe_allow_html=True)
 elif st.session_state.pagina == "📊 GRADE":
-    st.header("📊 AGENDAMENTOS")
+    # Cabeçalho com nome e imagem do navio
+    col_tit1, col_tit2 = st.columns([0.8, 0.2])
+    with col_tit1:
+        st.markdown("<h1>ORDEM DE SERVIÇOS 🚢</h1>", unsafe_allow_html=True)
+    with col_tit2:
+        # Aqui você pode usar um emoji ou carregar uma imagem pequena
+        st.markdown("🚢", unsafe_allow_html=True)
+
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+    
+    st.divider()
+
     dados = carregar_dados()
     if dados:
-        for d in dados:
-            col_os, col_cli, col_edit, col_print = st.columns([1, 3, 1, 1])
-            col_os.write(f"O.S: {d['os_n']}")
-            col_cli.write(f"Cli: {d['cli']}")
-            if col_edit.button("✏️", key=f"ed_{d['ID']}"):
-                st.session_state.edit_data = d
-                navegar("📋 CADASTRO")
-            col_print.download_button("🖨️", data=gerar_os_pdf(d), file_name=f"OS_{d['os_n']}.pdf", key=f"pr_{d['ID']}")
-            st.divider()
+        # Criamos o DataFrame para visualização em tabela
+        df = pd.DataFrame(dados)
+        
+        # Filtro de busca rápida na tela de Grade
+        busca = st.text_input("🔍 Buscar por Cliente ou Nº O.S", "")
+        if busca:
+            df = df[df['cli'].str.contains(busca, case=False) | df['os_n'].str.contains(busca, case=False)]
+
+        # --- TABELA DE AGENDAMENTOS VISÍVEL ---
+        st.write("### 📅 Cronograma de Operações")
+        
+        # Selecionamos as colunas principais para a grade operacional
+        df_grade = df[['os_n', 'dt_s', 'cli', 'emp', 'bal', 'loc', 'dst', 'sts']].copy()
+        
+        # Renomeamos para ficar elegante na tela
+        df_grade.columns = ['Nº O.S', 'DATA SAÍDA', 'CLIENTE', 'EMPURRADOR', 'BALSA', 'ORIGEM', 'DESTINO', 'STATUS']
+        
+        # Exibição da Tabela Interativa
+        st.dataframe(
+            df_grade, 
+            use_container_width=True, 
+            hide_index=True,
+            column_config={
+                "STATUS": st.column_config.TextColumn("STATUS", help="Status da Operação"),
+                "DATA SAÍDA": st.column_config.DateColumn("DATA SAÍDA", format="DD/MM/YYYY")
+            }
+        )
+
+        st.divider()
+        
+        # Mantemos os cards detalhados abaixo se você desejar editar ou ver observações
+        st.write("### 🔍 Detalhes e Ações")
+        for d in df.to_dict('records'):
+            with st.expander(f"O.S: {d['os_n']} - {d['cli']}"):
+                c1, c2, c3 = st.columns(3)
+                c1.write(f"**Escolta 1:** {d['esc1']}")
+                c2.write(f"**Escolta 2:** {d['esc2']}")
+                c3.write(f"**Hora Embarque:** {d['h_e']}")
+                
+                st.write(f"**Observações:** {d['obs']}")
+                
+                if st.button(f"📝 EDITAR O.S {d['os_n']}", key=f"edit_{d['ID']}"):
+                    st.session_state.edit_data = d
+                    navegar("📋 CADASTRO")
+    else:
+        st.info("Nenhuma Ordem de Serviço encontrada na base de dados.")
 elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO ZION</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
