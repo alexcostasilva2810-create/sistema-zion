@@ -227,7 +227,7 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO ZION</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
-    # CSS para deixar o valor da métrica em Amarelo
+    # CSS para faturamento em Amarelo
     st.markdown("""
         <style>
         [data-testid="stMetricValue"] {
@@ -236,22 +236,29 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
         </style>
         """, unsafe_allow_html=True)
     
-    # 1. FILTROS DE TELA
+    # 1. FILTROS (Status configurado para mostrar TUDO por padrão)
     c_f1, c_f2, c_f3 = st.columns([1, 1, 2])
     data_ini = c_f1.date_input("Início do Período", datetime.now(), format="DD/MM/YYYY")
     data_fim = c_f2.date_input("Fim do Período", datetime.now(), format="DD/MM/YYYY")
-    filtro_status = c_f3.multiselect("Filtrar por Status:", ["Em Andamento", "Encerrado"], default=["Em Andamento", "Encerrado"])
+    
+    # Ao colocar as duas opções no 'default', você visualiza TUDO ao entrar na tela
+    opcoes_status = ["Em Andamento", "Encerrado"]
+    filtro_status = c_f3.multiselect(
+        "Filtrar por Status (Deixe ambos para ver TUDO):", 
+        options=opcoes_status, 
+        default=opcoes_status
+    )
 
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
         
-        # Preparação de datas para cálculo
+        # Preparação de datas
         df['ini_m'] = pd.to_datetime(df['ini_m'], errors='coerce')
         df['fim_m'] = pd.to_datetime(df['fim_m'], errors='coerce')
         df['dt_s'] = pd.to_datetime(df['dt_s'], errors='coerce')
 
-        # REGRA DE PREÇO AUTOMATIZADA
+        # REGRA DE PREÇO AUTOMÁTICA
         def regra_financeira_zion(row):
             if pd.notnull(row['ini_m']) and pd.notnull(row['fim_m']):
                 dias = (row['fim_m'] - row['ini_m']).days
@@ -269,17 +276,17 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
 
         df[['DIAS', 'V_UNIT', 'TOTAL_OS', 'TIPO_SERV']] = df.apply(regra_financeira_zion, axis=1)
 
-        # APLICAR FILTROS NA TABELA
+        # APLICAR FILTROS (Data e Status)
         mask = (df['dt_s'].dt.date >= data_ini) & (df['dt_s'].dt.date <= data_fim) & (df['sts'].isin(filtro_status))
         df_f = df.loc[mask].copy()
 
         if not df_f.empty:
-            # MÉTRICAS DE TELA (Faturamento agora aparecerá em Amarelo devido ao CSS acima)
+            # MÉTRICAS
             c_m1, c_m2 = st.columns(2)
             c_m1.metric("Quantidade de O.S", len(df_f))
             c_m2.metric("Faturamento Total do Período", f"R$ {df_f['TOTAL_OS'].sum():,.2f}")
 
-            st.write("### 📋 Extrato Financeiro Detalhado")
+            st.write("### 📋 Extrato Financeiro")
             df_view = df_f[['os_n', 'cli', 'TIPO_SERV', 'DIAS', 'V_UNIT', 'TOTAL_OS', 'sts']].copy()
             df_view.columns = ['Nº O.S', 'CLIENTE', 'TIPO', 'DIAS', 'V. UNIT (R$)', 'TOTAL (R$)', 'STATUS']
             st.dataframe(df_view, use_container_width=True, hide_index=True)
@@ -333,8 +340,8 @@ elif st.session_state.pagina == "💰 FINANCEIRO":
             st.download_button(
                 label="🖨️ BAIXAR RELATÓRIO PDF COMPLETO",
                 data=pdf_out,
-                file_name=f"Relatorio_Zion_{data_ini.strftime('%d%m%Y')}.pdf",
+                file_name=f"Relatorio_Zion.pdf",
                 mime="application/pdf"
             )
         else:
-            st.warning("Não há dados para os filtros aplicados.")
+            st.warning("Selecione ao menos um Status ou mude o período.")
