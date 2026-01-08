@@ -156,109 +156,62 @@ def navegar(pagina):
     st.rerun()
 
 if st.session_state.pagina == "🏠 HOME":
-    # Fundo Azul Royal Leve (conforme solicitado)
     st.markdown("""
         <style>
-        .stApp { background: linear-gradient(135deg, #e0e8f9 0%, #f0f4ff 100%); }
-        .card { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #ddd; }
+        .stApp {
+            background: linear-gradient(135deg, #001a4d 0%, #003399 100%);
+        }
+        .card-home {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<h1 style='text-align:center; color:#002366;'>ZION - GESTÃO DE ESCOLTA</h1>", unsafe_allow_html=True)
-
-    # Usar colunas que se empilham no celular
-    c1, c2, c3 = st.columns([1,1,1])
+    st.markdown("<h1 style='text-align: center; color: white;'>SISTEMA ZION - CONTROLE</h1>", unsafe_allow_html=True)
     
-    with c1:
-        st.markdown('<div class="card">🤖<br><b>CADASTRO</b></div>', unsafe_allow_html=True)
-        if st.button("NOVO LANÇAMENTO", use_container_width=True): navegar("📋 CADASTRO")
+    # Colunas que se ajustam ao celular
+    col1, col2, col3 = st.columns([1, 1, 1])
     
-    with c2:
-        st.markdown('<div class="card">📅<br><b>GRADE</b></div>', unsafe_allow_html=True)
-        if st.button("VER AGENDAMENTOS", use_container_width=True): navegar("📊 GRADE")
-        
-    with c3:
-        st.markdown('<div class="card">📈<br><b>FINANCEIRO</b></div>', unsafe_allow_html=True)
-        if st.button("ESTRATÉGICO", use_container_width=True): navegar("💰 FINANCEIRO")
-    # 3. Barra de Status no rodapé
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.info(f"✅ Sistema Zion Conectado | {datetime.now().strftime('%d/%m/%Y')} | Todos os módulos operacionais.")
-
-elif st.session_state.pagina == "📋 CADASTRO":
-    e = st.session_state.edit_data
-    st.header("✏️ EDITAR O.S" if e else "📝 NOVO REGISTRO")
-    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    
-    with st.form("form_os", clear_on_submit=True):
-        c1, c2, c3 = st.columns(3)
-        os_n = c1.text_input("Nº O.S", value=e['os_n'] if e else "")
-        dt_s = c2.date_input("DATA SAÍDA", value=datetime.strptime(e['dt_s'], '%Y-%m-%d') if e and e['dt_s'] else datetime.now(), format="DD/MM/YYYY")
-        cli = c3.text_input("CLIENTE", value=e['cli'] if e else "")
-        
-        c4, c5, c6 = st.columns(3)
-        emp = c4.text_input("EMPURRADOR", value=e['emp'] if e else "")
-        bal = c5.text_input("BALSA", value=e['bal'] if e else "")
-        ped = c6.text_input("PEDIDO", value=e['ped'] if e else "")
-        
-        c7, c8, c9 = st.columns(3)
-        h_e = c7.text_input("HORA EMBARQUE", value=e['h_e'] if e else "")
-        esc1 = c8.text_input("ESCOLTA 1", value=e['esc1'] if e else "")
-        esc2 = c9.text_input("ESCOLTA 2", value=e['esc2'] if e else "")
-        
-        c10, c11, c12 = st.columns(3)
-        loc = c10.text_input("LOCAL (ORIGEM)", value=e['loc'] if e else "")
-        dst = c11.text_input("DESTINO", value=e['dst'] if e else "")
-        ass = c12.text_input("ASSINATURA RESP.", value=e['ass'] if e else "")
-        
-        c13, c14, c15 = st.columns(3)
-        ini_m = c13.date_input("INÍCIO MISSÃO", value=datetime.strptime(e['ini_m'], '%Y-%m-%d') if e and e['ini_m'] else datetime.now(), format="DD/MM/YYYY")
-        fim_m = c14.date_input("FIM MISSÃO", value=datetime.strptime(e['fim_m'], '%Y-%m-%d') if e and e['fim_m'] else datetime.now(), format="DD/MM/YYYY")
-        sts = c15.selectbox("STATUS", ["Em Andamento", "Encerrado"], index=0 if not e or e['sts'] == "Em Andamento" else 1)
-        
-        # --- NOVOS CAMPOS OPERACIONAIS ---
-        st.divider()
-        c16, c17 = st.columns(2)
-        # Seleção que definirá o valor automaticamente no financeiro
-        modalidade = c16.selectbox("TIPO DE SERVIÇO", ["ESCOLTA", "VIGILÂNCIA"], index=0)
-        # Campo para anexar comprovantes
-        arquivo_despesa = c17.file_uploader("CARREGAR COMPROVANTES DE DESPESAS", type=['png', 'jpg', 'jpeg', 'pdf'], help="Anexe notas de combustível, alimentação, etc.")
-        
-        obs = st.text_area("DESCRIÇÃO / OBSERVAÇÕES", value=e['obs'] if e else "")
-
-        st.markdown('<div class="btn-salvar-verde">', unsafe_allow_html=True)
-        if st.form_submit_button("✅ SALVAR REGISTRO"):
-            dados = {
-                "os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, 
-                "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, 
-                "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs, 
-                "modalidade": modalidade,
-                "v_total": 0 # Valor será definido via regra no Financeiro
-            }
-            # ... (dentro do bloco elif da GRADE)
-    dados = carregar_dados()
-    
-    if dados: # <--- Este IF começa aqui
-        for d in dados:
-            # Seu código de exibição da tabela/cards aqui
-            st.write(f"OS: {d['os_n']}") 
+    with col1:
+        st.markdown('<div class="card-home">📝 CADASTRO</div>', unsafe_allow_html=True)
+        if st.button("NOVO LANÇAMENTO", key="btn_cad", use_container_width=True):
+            navegar("📋 CADASTRO")
             
-    else: # <--- Este ELSE deve estar EXATAMENTE na mesma coluna do 'if dados:'
-        st.info("Nenhuma Ordem de Serviço registrada.")
+    with col2:
+        st.markdown('<div class="card-home">📅 OPERACIONAL</div>', unsafe_allow_html=True)
+        if st.button("VER AGENDAMENTOS", key="btn_grade", use_container_width=True):
+            navegar("📊 GRADE")
+            
+    with col3:
+        st.markdown('<div class="card-home">💰 FINANCEIRO</div>', unsafe_allow_html=True)
+        if st.button("ESTRATÉGICO", key="btn_fin", use_container_width=True):
+            navegar("💰 FINANCEIRO")
 
-# ESTA LINHA ABAIXO DEVE ESTAR TOTALMENTE À ESQUERDA (COLUNA ZERO)
-elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.markdown("""
-        <style>
-        .stApp { background: linear-gradient(135deg, #001a4d 0%, #003399 100%); }
-        h1 { color: white !important; text-align: center; }
-        </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO</h1>", unsafe_allow_html=True)
-    
-    if st.button("⬅️ VOLTAR PARA HOME", key="voltar_fin"):
+# --- TRANSIÇÃO PARA GRADE (Fim do erro de Indentação) ---
+elif st.session_state.pagina == "📊 GRADE":
+    st.markdown("<h1 style='color: white;'>ORDEM DE SERVIÇOS</h1>", unsafe_allow_html=True)
+    if st.button("⬅️ VOLTAR PARA HOME"):
         navegar("🏠 HOME")
     
+    dados = carregar_dados()
+    if dados:
+        for d in dados:
+            # O st.markdown abaixo deve estar alinhado exatamente aqui (Linha 359)
+            st.write(f"OS: {d['os_n']} - Cliente: {d['cli']}")
+            st.markdown("---") 
+    else:
+        st.info("Nenhuma O.S registrada no momento.")
+
+# --- TRANSIÇÃO PARA FINANCEIRO ---
+elif st.session_state.pagina == "💰 FINANCEIRO":
+    st.markdown("<h1 style='color: white;'>FINANCEIRO ESTRATÉGICO</h1>", unsafe_allow_html=True)
+    if st.button("⬅️ VOLTAR", key="back_f"):
+        navegar("🏠 HOME")    
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
