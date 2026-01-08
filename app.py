@@ -210,67 +210,92 @@ elif st.session_state.pagina == "📋 CADASTRO":
                 navegar("📊 GRADE")
         st.markdown('</div>', unsafe_allow_html=True)
 elif st.session_state.pagina == "📊 GRADE":
-    # Cabeçalho com nome e imagem do navio
-    col_tit1, col_tit2 = st.columns([0.8, 0.2])
-    with col_tit1:
-        st.markdown("<h1>ORDEM DE SERVIÇOS 🚢</h1>", unsafe_allow_html=True)
-    with col_tit2:
-        # Aqui você pode usar um emoji ou carregar uma imagem pequena
-        st.markdown("🚢", unsafe_allow_html=True)
-
+    st.markdown("<h1>ORDEM DE SERVIÇOS 🚢</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
-    st.divider()
-
     dados = carregar_dados()
     if dados:
-        # Criamos o DataFrame para visualização em tabela
         df = pd.DataFrame(dados)
         
-        # Filtro de busca rápida na tela de Grade
-        busca = st.text_input("🔍 Buscar por Cliente ou Nº O.S", "")
-        if busca:
-            df = df[df['cli'].str.contains(busca, case=False) | df['os_n'].str.contains(busca, case=False)]
+        # Cabeçalho da Tabela customizada
+        st.markdown("---")
+        h1, h2, h3, h4, h5 = st.columns([1, 3, 2, 2, 2])
+        h1.write("**O.S**")
+        h2.write("**CLIENTE**")
+        h3.write("**STATUS**")
+        h4.write("**EDITAR**")
+        h5.write("**IMPRIMIR**")
+        st.markdown("---")
 
-        # --- TABELA DE AGENDAMENTOS VISÍVEL ---
-        st.write("### 📅 Cronograma de Operações")
-        
-        # Selecionamos as colunas principais para a grade operacional
-        df_grade = df[['os_n', 'dt_s', 'cli', 'emp', 'bal', 'loc', 'dst', 'sts']].copy()
-        
-        # Renomeamos para ficar elegante na tela
-        df_grade.columns = ['Nº O.S', 'DATA SAÍDA', 'CLIENTE', 'EMPURRADOR', 'BALSA', 'ORIGEM', 'DESTINO', 'STATUS']
-        
-        # Exibição da Tabela Interativa
-        st.dataframe(
-            df_grade, 
-            use_container_width=True, 
-            hide_index=True,
-            column_config={
-                "STATUS": st.column_config.TextColumn("STATUS", help="Status da Operação"),
-                "DATA SAÍDA": st.column_config.DateColumn("DATA SAÍDA", format="DD/MM/YYYY")
-            }
-        )
+        for d in dados:
+            c1, c2, c3, c4, c5 = st.columns([1, 3, 2, 2, 2])
+            
+            c1.write(d['os_n'])
+            c2.write(d['cli'])
+            # Cor para o Status
+            cor_status = "🟢" if d['sts'] == "Encerrado" else "🟡"
+            c3.write(f"{cor_status} {d['sts']}")
+            
+            # Botão de Edição (Lápis)
+            if c4.button(f"✏️", key=f"ed_{d['ID']}"):
+                st.session_state.edit_data = d
+                navegar("📋 CADASTRO")
+            
+            # Botão de Impressão (Impressora)
+            if c5.button(f"🖨️", key=f"pr_{d['ID']}"):
+                # Função interna para gerar o PDF da O.S individual
+                def gerar_pdf_os_individual(dados_os):
+                    pdf = FPDF()
+                    pdf.add_page()
+                    # Cabeçalho Zion
+                    pdf.set_fill_color(0, 35, 102)
+                    pdf.rect(0, 0, 210, 40, 'F')
+                    pdf.set_text_color(255, 255, 255)
+                    pdf.set_font("Arial", 'B', 20)
+                    pdf.cell(190, 15, "ZION - ORDEM DE SERVIÇO", ln=True, align='C')
+                    pdf.set_font("Arial", '', 10)
+                    pdf.cell(190, 10, f"Documento Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align='C')
+                    
+                    pdf.ln(20)
+                    pdf.set_text_color(0, 0, 0)
+                    pdf.set_font("Arial", 'B', 12)
+                    pdf.cell(190, 10, f"DETALHES DA OPERAÇÃO - O.S Nº {dados_os['os_n']}", border="B", ln=True)
+                    
+                    pdf.set_font("Arial", '', 10)
+                    pdf.ln(5)
+                    
+                    # Organização das colunas do formulário no PDF
+                    colunas_os = [
+                        ("CLIENTE", dados_os['cli']), ("DATA SAÍDA", dados_os['dt_s']),
+                        ("EMPURRADOR", dados_os['emp']), ("BALSA", dados_os['bal']),
+                        ("PEDIDO", dados_os['ped']), ("HORA EMBARQUE", dados_os['h_e']),
+                        ("ESCOLTA 1", dados_os['esc1']), ("ESCOLTA 2", dados_os['esc2']),
+                        ("ORIGEM", dados_os['loc']), ("DESTINO", dados_os['dst']),
+                        ("INÍCIO MISSÃO", dados_os['ini_m']), ("FIM MISSÃO", dados_os['fim_m']),
+                        ("MODALIDADE", dados_os.get('modalidade', 'ESCOLTA')), ("STATUS", dados_os['sts']),
+                        ("RESPONSÁVEL", dados_os['ass'])
+                    ]
+                    
+                    for label, valor in colunas_os:
+                        pdf.set_font("Arial", 'B', 10)
+                        pdf.cell(50, 8, f"{label}:", 0)
+                        pdf.set_font("Arial", '', 10)
+                        pdf.cell(140, 8, f"{valor}", 0, ln=True)
+                    
+                    pdf.ln(5)
+                    pdf.set_font("Arial", 'B', 10)
+                    pdf.cell(190, 8, "OBSERVAÇÕES:", ln=True)
+                    pdf.set_font("Arial", '', 10)
+                    pdf.multi_cell(190, 8, f"{dados_os['obs']}")
+                    
+                    return pdf.output(dest='S').encode('latin-1')
 
-        st.divider()
-        
-        # Mantemos os cards detalhados abaixo se você desejar editar ou ver observações
-        st.write("### 🔍 Detalhes e Ações")
-        for d in df.to_dict('records'):
-            with st.expander(f"O.S: {d['os_n']} - {d['cli']}"):
-                c1, c2, c3 = st.columns(3)
-                c1.write(f"**Escolta 1:** {d['esc1']}")
-                c2.write(f"**Escolta 2:** {d['esc2']}")
-                c3.write(f"**Hora Embarque:** {d['h_e']}")
-                
-                st.write(f"**Observações:** {d['obs']}")
-                
-                if st.button(f"📝 EDITAR O.S {d['os_n']}", key=f"edit_{d['ID']}"):
-                    st.session_state.edit_data = d
-                    navegar("📋 CADASTRO")
+                pdf_os = gerar_pdf_os_individual(d)
+                st.download_button(f"📥 Baixar PDF O.S {d['os_n']}", pdf_os, f"OS_{d['os_n']}.pdf", "application/pdf")
+            
+            st.markdown("---")
     else:
-        st.info("Nenhuma Ordem de Serviço encontrada na base de dados.")
-elif st.session_state.pagina == "💰 FINANCEIRO":
+        st.info("Nenhuma O.S registrada.")elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO ZION</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
