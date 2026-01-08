@@ -107,6 +107,8 @@ def carregar_dados():
 def salvar_no_notion(d, page_id=None):
     url = f"https://api.notion.com/v1/pages/{page_id}" if page_id else "https://api.notion.com/v1/pages"
     method = requests.patch if page_id else requests.post
+    
+    # Montagem do Payload (O que será enviado ao Notion)
     payload = {
         "properties": {
             "Nº OS": {"title": [{"text": {"content": str(d['os_n'])}}]},
@@ -120,18 +122,26 @@ def salvar_no_notion(d, page_id=None):
             "ESCOLTA 2": {"rich_text": [{"text": {"content": str(d['esc2'])}}]},
             "LOCAL": {"rich_text": [{"text": {"content": str(d['loc'])}}]},
             "DESTINO": {"rich_text": [{"text": {"content": str(d['dst'])}}]},
-            "ASSINATURA": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
+            "ASSINATURA RESPONSÁVEL": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
             "INÍCIO DA MISSÃO": {"date": {"start": d['ini_m'].strftime('%Y-%m-%d')}} if d['ini_m'] else None,
             "FIM DA MISSÃO": {"date": {"start": d['fim_m'].strftime('%Y-%m-%d')}} if d['fim_m'] else None,
             "STATUS": {"select": {"name": str(d['sts'])}},
             "DESCRIÇÃO": {"rich_text": [{"text": {"content": str(d['obs'])}}]},
-            "VALOR TOTAL": {"number": float(str(d['v_total']).replace(',', '.'))}
+            "VALOR TOTAL": {"number": float(str(d['v_total']).replace(',', '.')) if d['v_total'] else 0.0}
         }
     }
-    if not page_id: payload["parent"] = {"database_id": DATABASE}
+    
+    if not page_id: 
+        payload["parent"] = {"database_id": DATABASE}
+        
     res = method(url, headers=headers, json=payload)
-    return res.status_code in [200, 202]
-
+    
+    # Verifica se deu certo (Status 200 ou 202)
+    if res.status_code in [200, 202]:
+        return True
+    else:
+        st.error(f"Erro ao salvar no Notion: {res.text}")
+        return False
 # --- NAVEGAÇÃO ---
 if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
 if "edit_data" not in st.session_state: st.session_state.edit_data = None
