@@ -21,7 +21,7 @@ def navegar(destino):
     st.rerun()
 
 # 3. ESTILO VISUAL (Fundo Azul Royal e Letras Brancas)
-st.markdown("""
+st.markdown
     <style>
     /* Fundo do App */
     .stApp { 
