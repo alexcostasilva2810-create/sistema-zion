@@ -160,7 +160,7 @@ elif st.session_state.pagina == "📋 CADASTRO":
     st.header("✏️ EDITAR O.S" if e else "📝 NOVO REGISTRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
-    with st.form("form_os"):
+    with st.form("form_os", clear_on_submit=True):
         c1, c2, c3 = st.columns(3)
         os_n = c1.text_input("Nº O.S", value=e['os_n'] if e else "")
         dt_s = c2.date_input("DATA SAÍDA", value=datetime.strptime(e['dt_s'], '%Y-%m-%d') if e and e['dt_s'] else datetime.now(), format="DD/MM/YYYY")
@@ -186,12 +186,13 @@ elif st.session_state.pagina == "📋 CADASTRO":
         fim_m = c14.date_input("FIM MISSÃO", value=datetime.strptime(e['fim_m'], '%Y-%m-%d') if e and e['fim_m'] else datetime.now(), format="DD/MM/YYYY")
         sts = c15.selectbox("STATUS", ["Em Andamento", "Encerrado"], index=0 if not e or e['sts'] == "Em Andamento" else 1)
         
-        # --- NOVOS CAMPOS AJUSTADOS ---
+        # --- NOVOS CAMPOS OPERACIONAIS ---
+        st.divider()
         c16, c17 = st.columns(2)
-        # Campo para Escolta ou Vigilância
-        modalidade = c16.selectbox("MODALIDADE DO SERVIÇO", ["ESCOLTA", "VIGILÂNCIA"], index=0)
-        # Campo de Valor da Diária (Substituindo o Valor Total)
-        v_diaria = c17.text_input("VALOR DA DIÁRIA (R$)", value=str(e['v_total']) if e else "0.00")
+        # Seleção que definirá o valor automaticamente no financeiro
+        modalidade = c16.selectbox("TIPO DE SERVIÇO", ["ESCOLTA", "VIGILÂNCIA"], index=0)
+        # Campo para anexar comprovantes
+        arquivo_despesa = c17.file_uploader("CARREGAR COMPROVANTES DE DESPESAS", type=['png', 'jpg', 'jpeg', 'pdf'], help="Anexe notas de combustível, alimentação, etc.")
         
         obs = st.text_area("DESCRIÇÃO / OBSERVAÇÕES", value=e['obs'] if e else "")
 
@@ -201,10 +202,11 @@ elif st.session_state.pagina == "📋 CADASTRO":
                 "os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, 
                 "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, 
                 "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs, 
-                "v_total": v_diaria, # Enviamos o valor da diária para o campo que o financeiro lê
-                "modalidade": modalidade
+                "modalidade": modalidade,
+                "v_total": 0 # Valor será definido via regra no Financeiro
             }
             if salvar_no_notion(dados, e['ID'] if e else None): 
+                st.success("Dados salvos com sucesso!")
                 navegar("📊 GRADE")
         st.markdown('</div>', unsafe_allow_html=True)
 elif st.session_state.pagina == "📊 GRADE":
