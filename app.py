@@ -143,94 +143,101 @@ def salvar_no_notion(d, page_id=None):
         st.error(f"Erro ao salvar no Notion: {res.text}")
         return False
 # --- NAVEGAÇÃO ---
-if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
-if "edit_data" not in st.session_state: st.session_state.edit_data = None
-def navegar(p): st.session_state.pagina = p; st.rerun()
-
-# --- TELAS ---
 if st.session_state.pagina == "🏠 HOME":
-    # 1. Configuração do Fundo e Estilo (CSS)
-    st.markdown(f"""
+    # 1. Configuração do Fundo Azul Royal Leve e Estilos
+    st.markdown("""
         <style>
-        /* Imagem de Fundo */
-        .stApp {{
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
-                        url("SUA_IMAGEM_AQUI_OU_LINK");
-            background-size: cover;
-        }}
+        /* Fundo Azul Royal Bem Leve */
+        .stApp {
+            background: linear-gradient(135deg, #e0e8f9 0%, #f0f4ff 100%);
+            background-attachment: fixed;
+        }
         
-        /* Estilo dos Cards em Vidro */
-        .card-home {{
-            background: rgba(255, 255, 255, 0.1);
+        /* Estilo dos Cards (Vidro Azulado) */
+        .card-home {
+            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(0, 35, 102, 0.1);
             text-align: center;
-            height: 450px;
-            transition: 0.3s;
-        }}
+            height: 420px;
+            transition: 0.4s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
         
-        .card-home:hover {{
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-10px);
-        }}
+        .card-home:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 15px 35px rgba(0, 35, 102, 0.15);
+            background: rgba(255, 255, 255, 0.9);
+        }
 
-        h1, h2, h3, p {{
-            color: white !important;
-        }}
+        /* Títulos e Textos em Azul Zion para contraste no fundo claro */
+        h1 { color: #002366 !important; text-align: center; font-weight: 800; }
+        h3 { color: #002366 !important; margin-top: 15px; }
+        p { color: #444 !important; font-size: 15px; }
+        
+        /* Botões customizados */
+        .stButton>button {
+            border-radius: 10px;
+            background-color: #002366;
+            color: white;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+        }
         </style>
         
-        <div style="text-align: center; padding: 40px 0;">
-            <h1 style="font-size: 50px; font-weight: bold; text-shadow: 2px 2px 4px #000;">
+        <div style="text-align: center; padding: 20px 0 40px 0;">
+            <h1 style="font-size: 42px; text-transform: uppercase; letter-spacing: 2px;">
                 ZION TECNOLOGIA - GESTÃO DE ESCOLTA
             </h1>
-            <p style="font-size: 20px; opacity: 0.9;">Sistema Integrado de Controle Operacional e Financeiro</p>
+            <p style="font-size: 18px; color: #555 !important;">Sistema Integrado de Controle Operacional e Financeiro</p>
         </div>
     """, unsafe_allow_html=True)
 
-    # 2. Layout dos Cards com Imagens Realistas
+    # 2. Layout dos Cards com Ícones Realistas
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # Card Cadastro (Robô com Prancheta)
+        # Ícone: Robô realista em prancheta
         st.markdown("""
             <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/6819/6819615.png" width="150" style="margin-bottom: 20px; filter: drop-shadow(2px 4px 6px black);">
+                <img src="https://cdn-icons-png.flaticon.com/512/6134/6134346.png" width="140">
                 <h3>CADASTRO</h3>
-                <p>Novo registro de O.S com inteligência e precisão.</p>
+                <p>Registro inteligente de novas missões e controle de frota com precisão robótica.</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("NOVO REGISTRO", use_container_width=True, key="btn_cad"):
+        if st.button("NOVO REGISTRO", use_container_width=True, key="btn_cad_home"):
             navegar("📋 CADASTRO")
 
     with col2:
-        # Card Grade (Agenda 3D)
+        # Ícone: Agenda/Calendário 3D
         st.markdown("""
             <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" width="150" style="margin-bottom: 20px; filter: drop-shadow(2px 4px 6px black);">
+                <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" width="140">
                 <h3>ORDEM DE SERVIÇO</h3>
-                <p>Visualize a grade operacional e emita PDFs.</p>
+                <p>Gestão de grade horária, visualização de cronograma e emissão de PDFs individuais.</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("VER AGENDA", use_container_width=True, key="btn_grade"):
+        if st.button("VER AGENDA", use_container_width=True, key="btn_grade_home"):
             navegar("📊 GRADE")
 
     with col3:
-        # Card Financeiro (Dashboard Realista)
+        # Ícone: Dashboard Financeiro realista
         st.markdown("""
             <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/4222/4222025.png" width="150" style="margin-bottom: 20px; filter: drop-shadow(2px 4px 6px black);">
+                <img src="https://cdn-icons-png.flaticon.com/512/3222/3222800.png" width="140">
                 <h3>FINANCEIRO</h3>
-                <p>Relatórios estratégicos e faturamento detalhado.</p>
+                <p>Análise de faturamento, relatórios estratégicos e indicadores de performance.</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("VER FINANCEIRO", use_container_width=True, key="btn_fin"):
+        if st.button("VER FINANCEIRO", use_container_width=True, key="btn_fin_home"):
             navegar("💰 FINANCEIRO")
 
     # 3. Rodapé de Status
     st.markdown("<br><br>", unsafe_allow_html=True)
-    st.success(f"✅ Sistema Online | {datetime.now().strftime('%d/%m/%Y')} | Bem-vindo ao comando, Zion.")
+    st.info(f"📊 Status do Sistema: Online | 📅 {datetime.now().strftime('%d/%m/%Y')} | Bem-vindo à Zion Tecnologia.")
 
 elif st.session_state.pagina == "📋 CADASTRO":
     e = st.session_state.edit_data
