@@ -113,7 +113,7 @@ def salvar_no_notion(d, page_id=None):
         "properties": {
             "Nº OS": {"title": [{"text": {"content": str(d['os_n'])}}]},
             "CLIENTE": {"rich_text": [{"text": {"content": str(d['cli'])}}]},
-            "DT SAIDA": {"date": {"start": d['dt_s'].strftime('%Y-%m-%d')}} if d['dt_s'] else None,
+            "DT SAÍDA": {"date": {"start": d['dt_s'].strftime('%Y-%m-%d')}} if d['dt_s'] else None,
             "EMPURRADOR": {"rich_text": [{"text": {"content": str(d['emp'])}}]},
             "BALSA": {"rich_text": [{"text": {"content": str(d['bal'])}}]},
             "PEDIDO": {"rich_text": [{"text": {"content": str(d['ped'])}}]},
@@ -122,7 +122,7 @@ def salvar_no_notion(d, page_id=None):
             "ESCOLTA 2": {"rich_text": [{"text": {"content": str(d['esc2'])}}]},
             "LOCAL": {"rich_text": [{"text": {"content": str(d['loc'])}}]},
             "DESTINO": {"rich_text": [{"text": {"content": str(d['dst'])}}]},
-            "ASSINATURA RESPONSÁVEL": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
+            "ASSINATURA": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
             "INÍCIO DA MISSÃO": {"date": {"start": d['ini_m'].strftime('%Y-%m-%d')}} if d['ini_m'] else None,
             "FIM DA MISSÃO": {"date": {"start": d['fim_m'].strftime('%Y-%m-%d')}} if d['fim_m'] else None,
             "STATUS": {"select": {"name": str(d['sts'])}},
