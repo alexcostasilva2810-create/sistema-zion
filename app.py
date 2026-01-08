@@ -1,165 +1,87 @@
 import streamlit as st
 import requests
 import pandas as pd
-import os
-import base64
-from fpdf import FPDF
 from datetime import datetime
 
-# 1. CONFIGURAÇÃO DA PÁGINA (Limpa e Mobile-First)
+# 1. CONFIGURAÇÃO DE TELA (Oculta barra lateral e limpa o layout)
 st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
 
-# --- CONEXÃO NOTION (Mantenha seus Secrets) ---
-TOKEN = st.secrets["notion"]["token"].replace('"', '').strip()
-DATABASE = st.secrets["notion"]["database_id"].replace('"', '').strip()
+# 2. MOTOR DE NAVEGAÇÃO
+if 'pagina' not in st.session_state:
+    st.session_state.pagina = "🏠 HOME"
 
-headers = {
-    "Authorization": f"Bearer {TOKEN}",
-    "Content-Type": "application/json",
-    "Notion-Version": "2022-06-28"
-}
+def navegar(destino):
+    st.session_state.pagina = destino
+    st.rerun()
 
-# --- ESTILO CSS PREMIUM (Azul Suave e Ícones) ---
+# 3. ESTILO VISUAL (Fundo de Escritório + Azul Suave + Ícones Mostarda)
 st.markdown("""
-    <style>
-    /* Remove barra lateral e erros */
+<style>
+    /* Remove barra lateral e mensagens de erro padrão */
     [data-testid="stSidebar"], .stAlert { display: none !important; }
-    .block-container { padding-top: 2rem !important; }
-
-    /* Fundo Azul Suave Profundo */
-    .stApp { background: linear-gradient(135deg, #000c24 0%, #001a40 100%) !important; }
     
-    /* Títulos */
-    h1, h2, h3, label, .stMarkdown { color: white !important; font-family: 'sans-serif'; }
+    /* Fundo com Imagem de Escritório e Overlay Azul Suave */
+    .stApp {
+        background: linear-gradient(rgba(0, 20, 50, 0.85), rgba(0, 20, 50, 0.85)), 
+                    url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000');
+        background-size: cover;
+        background-attachment: fixed;
+    }
 
-    /* Estilo dos Botões de Menu */
+    h1 { color: white !important; text-align: center; font-size: 38px !important; margin-bottom: 40px !important; font-weight: 800; }
+
+    /* Botões Modernos */
     div.stButton > button {
         width: 100%;
         height: 100px !important;
-        background: rgba(255, 255, 255, 0.05) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
         color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 15px !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 20px !important;
         font-weight: bold !important;
-        font-size: 16px !important;
-        transition: 0.3s;
+        transition: 0.3s ease;
     }
     div.stButton > button:hover {
-        border-color: #00ff41 !important;
-        background: rgba(0, 255, 65, 0.1) !important;
+        border-color: #FFCC33 !important; /* Cor Mostarda no Hover */
+        background: rgba(255, 255, 255, 0.15) !important;
+        transform: translateY(-3px);
     }
 
-    /* Estilo do Botão Primário (Verde) */
-    div.stButton > button[kind="primary"] {
-        background-color: #28a745 !important;
-        height: 3.5em !important;
-    }
+    /* Ícones com Filtros de Cor */
+    .icon-box { text-align: center; margin-bottom: -15px; }
+    .icon-box img { width: 85px; filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.5)); }
+    
+    /* Filtro Mostarda para o primeiro ícone */
+    .icon-mostarda img { filter: sepia(1) saturate(5) hue-rotate(5deg) brightness(1.2); }
+</style>
+""", unsafe_allow_html=True)
 
-    /* Ajuste de Ícones */
-    .icon-wrapper { text-align: center; margin-bottom: -15px; }
-    .icon-wrapper img { 
-        width: 80px; 
-        filter: brightness(1.2) saturate(1.5) drop-shadow(0px 0px 10px rgba(0, 255, 65, 0.3)); 
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- FUNÇÕES DE APOIO (Mantenha sua lógica original) ---
-def carregar_dados():
-    try:
-        res = requests.post(f"https://api.notion.com/v1/databases/{DATABASE}/query", headers=headers)
-        if res.status_code == 200:
-            results = res.json().get("results", [])
-            lista = []
-            for r in results:
-                p = r["properties"]
-                def g_t(n): 
-                    try: return p[n]["rich_text"][0]["plain_text"] if p[n]["rich_text"] else ""
-                    except: return ""
-                def g_d(n): 
-                    try: return p[n]["date"]["start"] if p[n]["date"] else None
-                    except: return None
-                
-                status = p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"]["select"] else "Em Andamento"
-                
-                valor = 0.0
-                if status == "Encerrado":
-                    if g_t("ESCOLTA 1"): valor += 1870.0
-                    if g_t("ESCOLTA 2"): valor += 970.0
-
-                lista.append({
-                    "ID": r["id"],
-                    "Nº OS": p["Nº OS"]["title"][0]["plain_text"] if p["Nº OS"]["title"] else "---",
-                    "CLIENTE": g_t("CLIENTE"), 
-                    "DT_SAIDA_RAW": g_d("DT SAÍDA"),
-                    "DT SAÍDA": datetime.strptime(g_d("DT SAÍDA"), '%Y-%m-%d').strftime('%d/%m/%Y') if g_d("DT SAÍDA") else "---",
-                    "EMPURRADOR": g_t("EMPURRADOR"), "BALSA": g_t("BALSA"),
-                    "LOCAL": g_t("LOCAL"), "DESTINO": g_t("DESTINO"),
-                    "HORA_EMBARQUE": g_t("HORA DE EMBARQUE"),
-                    "ESCOLTA 1": g_t("ESCOLTA 1"), "ESCOLTA 2": g_t("ESCOLTA 2"),
-                    "DESCRIÇÃO": g_t("DESCRIÇÃO"), "PEDIDO": g_t("PEDIDO"),
-                    "INÍCIO": g_d("INÍCIO DA MISSÃO"), "FIM": g_d("FIM DA MISSÃO"),
-                    "ASSINATURA": g_t("ASSINATURA RESPONSÁVEL"),
-                    "STATUS": status, "VALOR": valor
-                })
-            return lista
-    except: return []
-
-# --- FUNÇÕES PDF ---
-def gerar_pdf_os(d):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, "ORDEM DE SERVIÇO - ZION", ln=True, align="C")
-    pdf.set_font("Arial", "", 10)
-    for k, v in d.items():
-        if k not in ["ID", "VALOR", "DT_SAIDA_RAW"]:
-            pdf.cell(0, 7, f"{k}: {v}", border="B", ln=True)
-    return pdf.output(dest="S").encode("latin-1")
-
-def gerar_pdf_financeiro(df, total, ini, fim):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, f"RELATÓRIO FINANCEIRO: {ini.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}", ln=True, align="C")
-    pdf.ln(5)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(30, 8, "OS", 1); pdf.cell(80, 8, "CLIENTE", 1); pdf.cell(40, 8, "DATA", 1); pdf.cell(40, 8, "VALOR", 1, ln=True)
-    pdf.set_font("Arial", "", 9)
-    for _, row in df.iterrows():
-        pdf.cell(30, 8, str(row['Nº OS']), 1)
-        pdf.cell(80, 8, str(row['CLIENTE']), 1)
-        pdf.cell(40, 8, str(row['DT SAÍDA']), 1)
-        pdf.cell(40, 8, f"R$ {row['VALOR']:,.2f}", 1, ln=True)
-    pdf.ln(5)
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, f"TOTAL: R$ {total:,.2f}", ln=True, align="R")
-    return pdf.output(dest="S").encode("latin-1")
-
-# --- NAVEGAÇÃO ---
-if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
-if "dados_edicao" not in st.session_state: st.session_state.dados_edicao = None
-def navegar(p): st.session_state.pagina = p; st.rerun()
-
-# --- TELAS ---
+# 4. TELA INICIAL (HOME)
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<h1 style='text-align: center;'>ZION BUSINESS</h1>", unsafe_allow_html=True)
-    st.markdown("<div style='margin-bottom: 50px;'></div>", unsafe_allow_html=True)
+    st.markdown("<h1>ZION BUSINESS</h1>", unsafe_allow_html=True)
     
-    c1, c2, c3 = st.columns(3)
-    
-    with c1:
-        st.markdown('<div class="icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/6819/6819643.png"></div>', unsafe_allow_html=True)
-        if st.button("📝 NOVO LANÇAMENTO"): st.session_state.dados_edicao = None; navegar("📋 CADASTRO")
-    
-    with c2:
-        st.markdown('<div class="icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png"></div>', unsafe_allow_html=True)
-        if st.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
-    
-    with c3:
-        st.markdown('<div class="icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png"></div>', unsafe_allow_html=True)
-        if st.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
+    col1, col2, col3 = st.columns(3)
 
+    with col1:
+        # Ícone de Lançamento na cor MOSTARDA
+        st.markdown('<div class="icon-box icon-mostarda"><img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png"></div>', unsafe_allow_html=True)
+        if st.button("📝 NOVO LANÇAMENTO", key="bt_1"):
+            st.session_state.dados_edicao = None
+            navegar("📋 CADASTRO")
+
+    with col2:
+        # Ícone Operacional (Verde/Azul original)
+        st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png"></div>', unsafe_allow_html=True)
+        if st.button("📊 VER AGENDAMENTOS", key="bt_2"):
+            navegar("📊 GRADE")
+
+    with col3:
+        # Ícone Financeiro (Dourado/Amarelo original)
+        st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png"></div>', unsafe_allow_html=True)
+        if st.button("💰 FINANCEIRO", key="bt_3"):
+            navegar("💰 FINANCEIRO")
+
+# Os demais blocos (Cadastro, Grade, Financeiro) seguem sua lógica original abaixo
 elif st.session_state.pagina == "📋 CADASTRO":
     edit = st.session_state.dados_edicao
     st.header("📝 Formulário O.S")
