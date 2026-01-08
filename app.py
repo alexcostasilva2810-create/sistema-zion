@@ -2,12 +2,11 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime
-import os
 
-# 1. CONFIGURAÇÃO DA PÁGINA
+# --- 1. CONFIGURAÇÃO INICIAL ---
 st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. MOTOR DE NAVEGAÇÃO
+# --- 2. MOTOR DE NAVEGAÇÃO ---
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
@@ -15,92 +14,78 @@ def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
 
-# 3. ESTILO CSS (Fundo Escritório, Azul Suave, Ícones Mostarda, Mão de Robô e Texto Futuro)
+# --- 3. BLOCO DE ESTILO (CSS) ---
 st.markdown("""
 <style>
-    /* Remove barra lateral e erros */
     [data-testid="stSidebar"], .stAlert { display: none !important; }
     
-    /* Fundo com Imagem de Escritório e Overlay Azul */
     .stApp {
-        background: linear-gradient(rgba(0, 26, 64, 0.8), rgba(0, 26, 64, 0.8)), 
+        background: linear-gradient(rgba(0, 26, 64, 0.85), rgba(0, 26, 64, 0.85)), 
                     url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000');
         background-size: cover;
         background-attachment: fixed;
     }
 
-    h1 { 
-        color: white !important; 
-        text-align: center; 
-        font-size: 38px !important; 
-        margin-bottom: 40px !important; 
-        font-weight: 800;
-        text-shadow: 2px 2px 10px rgba(0,0,0,0.5); /* Sombra para destaque */
-    }
+    h1 { color: white !important; text-align: center; font-size: 40px !important; font-weight: 800; margin-bottom: 50px; }
 
-    /* Estilo dos Botões */
     div.stButton > button {
         width: 100%;
-        height: 100px !important;
-        background: rgba(255, 255, 255, 0.07) !important;
+        height: 80px !important;
+        background: rgba(255, 255, 255, 0.08) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 15px !important;
         font-weight: bold !important;
-        transition: 0.3s ease;
-    }
-    div.stButton > button:hover { 
-        border-color: #E2B13C !important; /* Mostarda no hover */
-        background: rgba(255, 255, 255, 0.15) !important;
     }
 
-    /* Ajuste de Ícones */
-    .icon-box { text-align: center; margin-bottom: -15px; }
-    .icon-box img { width: 80px; }
-    
-    /* Filtro Amarelo Mostarda */
     .mostarda img { 
         filter: invert(78%) sepia(35%) saturate(836%) hue-rotate(354deg) brightness(93%) contrast(92%) !important; 
     }
 
-    /* Frase de Boas-Vindas */
+    .icon-box { text-align: center; margin-bottom: -10px; }
+    .icon-box img { width: 90px; }
+
     .welcome-text {
-        color: #E2B13C; /* Cor Mostarda */
+        color: white;
         text-align: center;
-        font-size: 55px; /* Tamanho AUMENTADO */
-        font-weight: 900; /* Negrito Extra */
+        font-size: 70px !important; 
+        font-weight: 900;
         margin-top: 60px;
-        text-shadow: 3px 3px 20px rgba(0,0,0,0.8); /* Sombra mais forte */
-        font-family: 'sans-serif';
-        line-height: 1.2; /* Espaçamento entre linhas */
+        text-shadow: 4px 4px 15px rgba(0,0,0,0.8);
     }
 
-    /* Ícone Mão de Robô */
-    .robot-hand-icon {
-        text-align: center;
-        margin-top: 40px; /* Espaço acima da frase */
-        margin-bottom: 20px; /* Espaço abaixo da mão */
-    }
-    .robot-hand-icon img {
-        width: 180px; /* Tamanho da Mão de Robô */
-        filter: invert(90%) sepia(10%) saturate(1000%) hue-rotate(180deg) brightness(1.2); /* Cor de Robô */
-        opacity: 0.8; /* Transparência suave */
-    }
+    .handshake-box { text-align: center; margin-top: 10px; }
+    .handshake-box img { width: 220px; filter: brightness(1.2); }
 </style>
 """, unsafe_allow_html=True)
 
-# 4. TELA INICIAL (HOME)
+# --- 4. BLOCO DA TELA HOME ---
 if st.session_state.pagina == "🏠 HOME":
     st.markdown("<h1>ZION BUSINESS</h1>", unsafe_allow_html=True)
-    
+
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # Ícone de Caneta (Mostarda)
         st.markdown('<div class="icon-box mostarda"><img src="https://cdn-icons-png.flaticon.com/512/1250/1250615.png"></div>', unsafe_allow_html=True)
-        if st.button("📝 NOVO LANÇAMENTO", key="bt_lan"):
-            st.session_state.dados_edicao = None
-    # Frase solicitada
+        if st.button("📝 NOVO LANÇAMENTO", key="bt_1"):
+            navegar("📋 CADASTRO")
+
+    with col2:
+        st.markdown('<div class="icon-box mostarda"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png"></div>', unsafe_allow_html=True)
+        if st.button("📊 VER AGENDAMENTOS", key="bt_2"):
+            navegar("📊 GRADE")
+
+    with col3:
+        st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png"></div>', unsafe_allow_html=True)
+        if st.button("💰 FINANCEIRO", key="bt_3"):
+            navegar("💰 FINANCEIRO")
+
+    st.markdown('<p class="welcome-text">Seja Bem Vindo ao Futuro</p>', unsafe_allow_html=True)
+    st.markdown('<div class="handshake-box"><img src="https://cdn-icons-png.flaticon.com/512/5909/5909249.png"></div>', unsafe_allow_html=True)
+
+# --- A PARTIR DAQUI COMEÇAM OS OUTROS BLOCOS (Cadastro, Grade, etc) ---
+# elif st.session_state.pagina == "📋 CADASTRO":
+# ... continue com seu código original ...    # Frase solicitada
     st.markdown('<p class="welcome-text">Seja Bem Vindo ao Futuro</p>', unsafe_allow_html=True)# Os demais blocos (Cadastro, Grade, Financeiro) seguem sua lógica original abaixo
 elif st.session_state.pagina == "📋 CADASTRO":
     edit = st.session_state.dados_edicao
