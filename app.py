@@ -200,9 +200,86 @@ elif st.session_state.pagina == "📊 GRADE":
 elif st.session_state.pagina == "💰 FINANCEIRO":
     st.header("💰 RELATÓRIO FINANCEIRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+    
+    # 1. Filtro de Período
+    c1, c2 = st.columns(2)
+    data_inicio = c1.date_input("De:", datetime.now(), format="DD/MM/YYYY")
+    data_fim = c2.date_input("Até:", datetime.now(), format="DD/MM/YYYY")
+
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
-        df['v_total'] = pd.to_numeric(df['v_total'], errors='coerce').fillna(0)
-        st.metric("Faturamento Total", f"R$ {df['v_total'].sum():,.2f}")
-        st.dataframe(df[['os_n', 'cli', 'dt_s', 'v_total', 'sts']])
+        # Converter colunas para data
+        df['dt_s'] = pd.to_datetime(df['dt_s'], errors='coerce')
+        df['ini_m'] = pd.to_datetime(df['ini_m'], errors='coerce')
+        df['fim_m'] = pd.to_datetime(df['fim_m'], errors='coerce')
+        
+        # Filtrar pelo período selecionado
+        mask = (df['dt_s'].dt.date >= data_inicio) & (df['dt_s'].dt.date <= data_fim)
+        df_filtrado = df.loc[mask].copy()
+
+        # 2. Lógica de Cálculo por Dias
+        def calcular_total_os(row):
+            if pd.notnull(row['ini_m']) and pd.notnull(row['fim_m']):
+                dias = (row['fim_m'] - row['ini_m']).days
+                dias = 1 if dias <= 0 else dias + 1 # Garante pelo menos 1 diária
+                valor_diaria = float(str(row['v_total']).replace(',', '.')) if row['v_total'] else 0
+                return dias * valor_diaria
+            return 0
+
+        df_filtrado['VALOR_CALCULADO'] = df_filtrado.apply(calcular_total_os, axis=1)
+
+        # Exibir Métricas
+        total_periodo = df_filtrado['VALOR_CALCULADO'].sum()
+        st.metric("Faturamento do Período", f"R$ {total_periodo:,.2f}")
+
+        # Tabela Visual
+        st.write("### Detalhamento por O.S")
+        exibir_df = df_filtrado[['os_n', 'cli', 'dt_s', 'VALOR_CALCULADO', 'sts']].copy()
+        exibir_df['dt_s'] = exibir_df['dt_s'].dt.strftime('%d/%m/%Y')
+        st.dataframe(exibir_df, use_container_width=True)
+
+        # 3. Função para Gerar PDF do Relatório Financeiro
+        def gerar_pdf_financeiro(df_f, d_ini, d_fim, total):
+            pdf = FPDF()
+            pdf.add_page()
+            # Logo e Cabeçalho
+            pdf.set_fill_color(10, 20, 40)
+            pdf.rect(0, 0, 210, 40, 'F')
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font("Arial", 'B', 16)
+            pdf.cell(190, 15, "ZION TECNOLOGIA - RELATORIO FINANCEIRO", ln=True, align='C')
+            pdf.set_font("Arial", '', 10)
+            pdf.cell(190, 10, f"Periodo: {d_ini.strftime('%d/%m/%Y')} ate {d_fim.strftime('%d/%m/%Y')}", ln=True, align='C')
+            
+            pdf.ln(10)
+            pdf.set_text_color(0, 0, 0)
+            pdf.set_font("Arial", 'B', 10)
+            # Cabeçalho da Tabela
+            pdf.cell(30, 8, "O.S", 1)
+            pdf.cell(80, 8, "CLIENTE", 1)
+            pdf.cell(40, 8, "DATA", 1)
+            pdf.cell(40, 8, "VALOR (R$)", 1, ln=True)
+            
+            pdf.set_font("Arial", '', 9)
+            for _, row in df_f.iterrows():
+                pdf.cell(30, 8, str(row['os_n']), 1)
+                pdf.cell(80, 8, str(row['cli'])[:30], 1)
+                pdf.cell(40, 8, row['dt_s'], 1)
+                pdf.cell(40, 8, f"{row['VALOR_CALCULADO']:,.2f}", 1, ln=True)
+            
+            pdf.ln(5)
+            pdf.set_font("Arial", 'B', 11)
+            pdf.cell(190, 10, f"TOTAL GERAL: R$ {total:,.2f}", border=0, ln=True, align='R')
+            return pdf.output(dest='S').encode('latin-1')
+
+        # Botão de Download do Relatório
+        pdf_fin = gerar_pdf_financeiro(exibir_df, data_inicio, data_fim, total_periodo)
+        st.download_button(
+            label="📄 BAIXAR RELATÓRIO PDF",
+            data=pdf_fin,
+            file_name=f"Relatorio_Financeiro_{data_inicio}.pdf",
+            mime="application/pdf"
+        )
+    else:
+        st.info("Nenhum dado encontrado para calcular o financeiro.")
