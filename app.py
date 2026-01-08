@@ -81,7 +81,7 @@ def carregar_dados():
                     "ID": r["id"],
                     "os_n": p["Nº OS"]["title"][0]["plain_text"] if "Nº OS" in p and p["Nº OS"]["title"] else "---",
                     "cli": g_t("CLIENTE"), 
-                    "dt_s": g_d("DT SAIDA"), # Puxa do Notion (AAAA-MM-DD)
+                    "dt_s": g_d("DT SAÍDA"), # Puxa do Notion (AAAA-MM-DD)
                     "emp": g_t("EMPURRADOR"),
                     "bal": g_t("BALSA"),
                     "ped": g_t("PEDIDO"),
@@ -90,7 +90,7 @@ def carregar_dados():
                     "esc2": g_t("ESCOLTA 2"),
                     "loc": g_t("LOCAL"),
                     "dst": g_t("DESTINO"),
-                    "ass": g_t("ASSINATURA RESPONSÁVEL"),
+                    "ass": g_t("ASSINATURA"),
                     "ini_m": g_d("INÍCIO DA MISSÃO"),
                     "fim_m": g_d("FIM DA MISSÃO"),
                     "sts": p["STATUS"]["select"]["name"] if "STATUS" in p and p["STATUS"].get("select") else "Em Andamento",
