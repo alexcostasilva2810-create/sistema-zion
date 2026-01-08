@@ -143,101 +143,102 @@ def salvar_no_notion(d, page_id=None):
         st.error(f"Erro ao salvar no Notion: {res.text}")
         return False
 # --- NAVEGAÇÃO ---
+# Certifique-se que esta função navegar esteja no topo do seu arquivo app.py
+def navegar(pagina):
+    st.session_state.pagina = pagina
+    st.rerun()
+
 if st.session_state.pagina == "🏠 HOME":
-    # 1. Configuração do Fundo Azul Royal Leve e Estilos
+    # 1. Configuração Visual (Fundo Azul Royal Leve e Letras Brancas)
     st.markdown("""
         <style>
-        /* Fundo Azul Royal Bem Leve */
         .stApp {
-            background: linear-gradient(135deg, #e0e8f9 0%, #f0f4ff 100%);
+            background: linear-gradient(135deg, #001a4d 0%, #003399 100%);
             background-attachment: fixed;
         }
         
-        /* Estilo dos Cards (Vidro Azulado) */
         .card-home {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            border: 1px solid rgba(0, 35, 102, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             text-align: center;
-            height: 420px;
-            transition: 0.4s;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            height: 480px;
+            transition: 0.5s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         
         .card-home:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 15px 35px rgba(0, 35, 102, 0.15);
-            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-15px);
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid #00d4ff;
         }
 
-        /* Títulos e Textos em Azul Zion para contraste no fundo claro */
-        h1 { color: #002366 !important; text-align: center; font-weight: 800; }
-        h3 { color: #002366 !important; margin-top: 15px; }
-        p { color: #444 !important; font-size: 15px; }
+        h1, h2, h3, p, span {
+            color: white !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
         
-        /* Botões customizados */
+        /* Ajuste do botão dentro do card */
         .stButton>button {
-            border-radius: 10px;
-            background-color: #002366;
-            color: white;
-            font-weight: bold;
-            border: none;
-            padding: 10px 20px;
+            background-color: #ffffff !important;
+            color: #001a4d !important;
+            font-weight: bold !important;
+            border-radius: 12px !important;
+            border: none !important;
+            margin-top: 20px;
         }
         </style>
         
-        <div style="text-align: center; padding: 20px 0 40px 0;">
-            <h1 style="font-size: 42px; text-transform: uppercase; letter-spacing: 2px;">
-                ZION TECNOLOGIA - GESTÃO DE ESCOLTA
-            </h1>
-            <p style="font-size: 18px; color: #555 !important;">Sistema Integrado de Controle Operacional e Financeiro</p>
+        <div style="text-align: center; padding: 30px 0;">
+            <h1 style="font-size: 48px; font-weight: 900;">ZION TECNOLOGIA</h1>
+            <h2 style="font-size: 24px; font-weight: 300; opacity: 0.9;">Gestão de Escolta</h2>
         </div>
     """, unsafe_allow_html=True)
 
-    # 2. Layout dos Cards com Ícones Realistas
+    # 2. Grid de Navegação
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # Ícone: Robô realista em prancheta
         st.markdown("""
             <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/6134/6134346.png" width="140">
-                <h3>CADASTRO</h3>
-                <p>Registro inteligente de novas missões e controle de frota com precisão robótica.</p>
+                <img src="https://cdn-icons-png.flaticon.com/512/8644/8644612.png" width="160" style="filter: drop-shadow(0px 0px 10px rgba(0,212,255,0.5));">
+                <h3 style="margin-top:20px;">CADASTRO</h3>
+                <p>Registro inteligente e preciso de novas missões.</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("NOVO REGISTRO", use_container_width=True, key="btn_cad_home"):
+        if st.button("NOVO LANÇAMENTO", key="btn_cad_home", use_container_width=True):
             navegar("📋 CADASTRO")
 
     with col2:
-        # Ícone: Agenda/Calendário 3D
         st.markdown("""
             <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" width="140">
-                <h3>ORDEM DE SERVIÇO</h3>
-                <p>Gestão de grade horária, visualização de cronograma e emissão de PDFs individuais.</p>
+                <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" width="160" style="filter: drop-shadow(0px 0px 10px rgba(0,212,255,0.5));">
+                <h3 style="margin-top:20px;">ORDEM DE SERVIÇO</h3>
+                <p>Grade operacional e impressão de documentos.</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("VER AGENDA", use_container_width=True, key="btn_grade_home"):
+        if st.button("VER AGENDAMENTOS", key="btn_grade_home", use_container_width=True):
             navegar("📊 GRADE")
 
     with col3:
-        # Ícone: Dashboard Financeiro realista
         st.markdown("""
             <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/3222/3222800.png" width="140">
-                <h3>FINANCEIRO</h3>
-                <p>Análise de faturamento, relatórios estratégicos e indicadores de performance.</p>
+                <img src="https://cdn-icons-png.flaticon.com/512/9334/9334541.png" width="160" style="filter: drop-shadow(0px 0px 10px rgba(0,212,255,0.5));">
+                <h3 style="margin-top:20px;">FINANCEIRO</h3>
+                <p>Análise de faturamento e extratos estratégicos.</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("VER FINANCEIRO", use_container_width=True, key="btn_fin_home"):
+        if st.button("VER FINANCEIRO", key="btn_fin_home", use_container_width=True):
             navegar("💰 FINANCEIRO")
 
-    # 3. Rodapé de Status
+    # 3. Barra de Status no rodapé
     st.markdown("<br><br>", unsafe_allow_html=True)
-    st.info(f"📊 Status do Sistema: Online | 📅 {datetime.now().strftime('%d/%m/%Y')} | Bem-vindo à Zion Tecnologia.")
+    st.info(f"✅ Sistema Zion Conectado | {datetime.now().strftime('%d/%m/%Y')} | Todos os módulos operacionais.")
 
 elif st.session_state.pagina == "📋 CADASTRO":
     e = st.session_state.edit_data
