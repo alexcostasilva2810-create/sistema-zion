@@ -101,7 +101,7 @@ def salvar_no_notion(d):
 if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
 def navegar(p): st.session_state.pagina = p; st.rerun()
 
-# --- TELAS ---
+#---- Tela Inicial ----# 
 if st.session_state.pagina == "🏠 HOME":
     st.markdown("<h1>SISTEMA ZION</h1>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
@@ -109,6 +109,7 @@ if st.session_state.pagina == "🏠 HOME":
     if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
     if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
+#---- Tela Cadastro ----# 
 elif st.session_state.pagina == "📋 CADASTRO":
     st.header("📋 NOVO REGISTRO (17 COLUNAS)")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
@@ -131,6 +132,7 @@ elif st.session_state.pagina == "📋 CADASTRO":
             if salvar_no_notion(d): navegar("📊 GRADE")
             else: st.error("Erro ao salvar no Notion.")
 
+#---- Tela Grade ----# 
 elif st.session_state.pagina == "📊 GRADE":
     st.header("📊 AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
@@ -143,6 +145,7 @@ elif st.session_state.pagina == "📊 GRADE":
             c1.button("✏️ EDITAR", key=f"ed_{d['ID']}")
             c2.button("📄 PDF", key=f"pdf_{d['ID']}")
 
+#---- Tela Financeiro ----# 
 elif st.session_state.pagina == "💰 FINANCEIRO":
     st.header("💰 FINANCEIRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
