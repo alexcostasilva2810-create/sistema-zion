@@ -215,87 +215,83 @@ elif st.session_state.pagina == "📊 GRADE":
     
     dados = carregar_dados()
     if dados:
-        df = pd.DataFrame(dados)
-        
-        # Cabeçalho da Tabela customizada
+        # Cabeçalho da Lista Operacional
         st.markdown("---")
-        h1, h2, h3, h4, h5 = st.columns([1, 3, 2, 2, 2])
+        h1, h2, h3, h4, h5 = st.columns([1, 3, 2, 1, 1])
         h1.write("**O.S**")
         h2.write("**CLIENTE**")
         h3.write("**STATUS**")
         h4.write("**EDITAR**")
-        h5.write("**IMPRIMIR**")
+        h5.write("**PDF**")
         st.markdown("---")
 
         for d in dados:
-            c1, c2, c3, c4, c5 = st.columns([1, 3, 2, 2, 2])
+            c1, c2, c3, c4, c5 = st.columns([1, 3, 2, 1, 1])
             
             c1.write(d['os_n'])
             c2.write(d['cli'])
-            # Cor para o Status
-            cor_status = "🟢" if d['sts'] == "Encerrado" else "🟡"
-            c3.write(f"{cor_status} {d['sts']}")
+            # Estilização visual do Status
+            status_cor = "🟢" if d['sts'] == "Encerrado" else "🟡"
+            c3.write(f"{status_cor} {d['sts']}")
             
-            # Botão de Edição (Lápis)
-            if c4.button(f"✏️", key=f"ed_{d['ID']}"):
+            # Ação 1: EDITAR (Lápis)
+            if c4.button("✏️", key=f"btn_ed_{d['ID']}"):
                 st.session_state.edit_data = d
                 navegar("📋 CADASTRO")
             
-            # Botão de Impressão (Impressora)
-            if c5.button(f"🖨️", key=f"pr_{d['ID']}"):
-                # Função interna para gerar o PDF da O.S individual
-                def gerar_pdf_os_individual(dados_os):
-                    pdf = FPDF()
-                    pdf.add_page()
-                    # Cabeçalho Zion
-                    pdf.set_fill_color(0, 35, 102)
-                    pdf.rect(0, 0, 210, 40, 'F')
-                    pdf.set_text_color(255, 255, 255)
-                    pdf.set_font("Arial", 'B', 20)
-                    pdf.cell(190, 15, "ZION - ORDEM DE SERVIÇO", ln=True, align='C')
-                    pdf.set_font("Arial", '', 10)
-                    pdf.cell(190, 10, f"Documento Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align='C')
-                    
-                    pdf.ln(20)
-                    pdf.set_text_color(0, 0, 0)
-                    pdf.set_font("Arial", 'B', 12)
-                    pdf.cell(190, 10, f"DETALHES DA OPERAÇÃO - O.S Nº {dados_os['os_n']}", border="B", ln=True)
-                    
-                    pdf.set_font("Arial", '', 10)
-                    pdf.ln(5)
-                    
-                    # Organização das colunas do formulário no PDF
-                    colunas_os = [
-                        ("CLIENTE", dados_os['cli']), ("DATA SAÍDA", dados_os['dt_s']),
-                        ("EMPURRADOR", dados_os['emp']), ("BALSA", dados_os['bal']),
-                        ("PEDIDO", dados_os['ped']), ("HORA EMBARQUE", dados_os['h_e']),
-                        ("ESCOLTA 1", dados_os['esc1']), ("ESCOLTA 2", dados_os['esc2']),
-                        ("ORIGEM", dados_os['loc']), ("DESTINO", dados_os['dst']),
-                        ("INÍCIO MISSÃO", dados_os['ini_m']), ("FIM MISSÃO", dados_os['fim_m']),
-                        ("MODALIDADE", dados_os.get('modalidade', 'ESCOLTA')), ("STATUS", dados_os['sts']),
-                        ("RESPONSÁVEL", dados_os['ass'])
-                    ]
-                    
-                    for label, valor in colunas_os:
-                        pdf.set_font("Arial", 'B', 10)
-                        pdf.cell(50, 8, f"{label}:", 0)
-                        pdf.set_font("Arial", '', 10)
-                        pdf.cell(140, 8, f"{valor}", 0, ln=True)
-                    
-                    pdf.ln(5)
+            # Ação 2: IMPRIMIR (Impressora)
+            # Geramos o PDF com o nome solicitado: ZION ORDEM DE SERVIÇO
+            def preparar_pdf_individual(item):
+                pdf = FPDF()
+                pdf.add_page()
+                # Cabeçalho Azul com Logo Escrita
+                pdf.set_fill_color(0, 35, 102)
+                pdf.rect(0, 0, 210, 40, 'F')
+                pdf.set_text_color(255, 255, 255)
+                pdf.set_font("Arial", 'B', 22)
+                pdf.cell(190, 20, "ZION ORDEM DE SERVICO", ln=True, align='C')
+                
+                pdf.ln(25)
+                pdf.set_text_color(0, 0, 0)
+                pdf.set_font("Arial", 'B', 14)
+                pdf.cell(190, 10, f"DADOS DA O.S: {item['os_n']}", border="B", ln=True)
+                
+                pdf.ln(5)
+                pdf.set_font("Arial", 'B', 10)
+                
+                # Campos da O.S (Mesmas colunas da tela de Cadastro)
+                campos = [
+                    ("CLIENTE", item['cli']), ("STATUS", item['sts']),
+                    ("DATA SAIDA", item['dt_s']), ("HORA EMBARQUE", item['h_e']),
+                    ("EMPURRADOR", item['emp']), ("BALSA", item['bal']),
+                    ("PEDIDO", item['ped']), ("MODALIDADE", item.get('modalidade', 'ESCOLTA')),
+                    ("ESCOLTA 1", item['esc1']), ("ESCOLTA 2", item['esc2']),
+                    ("ORIGEM", item['loc']), ("DESTINO", item['dst']),
+                    ("INICIO MISSAO", item['ini_m']), ("FIM MISSAO", item['fim_m']),
+                    ("RESPONSAVEL", item['ass'])
+                ]
+                
+                for label, val in campos:
                     pdf.set_font("Arial", 'B', 10)
-                    pdf.cell(190, 8, "OBSERVAÇÕES:", ln=True)
+                    pdf.cell(50, 8, f"{label}:", 0)
                     pdf.set_font("Arial", '', 10)
-                    pdf.multi_cell(190, 8, f"{dados_os['obs']}")
-                    
-                    return pdf.output(dest='S').encode('latin-1')
+                    pdf.cell(140, 8, f"{val}", 0, ln=True)
+                
+                pdf.ln(5)
+                pdf.set_font("Arial", 'B', 10)
+                pdf.cell(190, 8, "OBSERVACOES:", ln=True)
+                pdf.set_font("Arial", '', 10)
+                pdf.multi_cell(190, 7, f"{item['obs']}")
+                
+                return pdf.output(dest='S').encode('latin-1')
 
-                pdf_os = gerar_pdf_os_individual(d)
-                st.download_button(f"📥 Baixar PDF O.S {d['os_n']}", pdf_os, f"OS_{d['os_n']}.pdf", "application/pdf")
+            # O botão de download aparece apenas se clicado na impressora
+            pdf_data = preparar_pdf_individual(d)
+            c5.download_button("🖨️", pdf_data, f"OS_{d['os_n']}.pdf", "application/pdf", key=f"btn_pr_{d['ID']}")
             
-            st.markdown("---")
+            st.markdown('<hr style="margin:0; border-top: 1px solid #333;">', unsafe_allow_html=True)
     else:
-        st.info("Nenhuma O.S registrada.")elif st.session_state.pagina == "💰 FINANCEIRO":
+        st.info("Nenhuma Ordem de Serviço registrada.")elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO ZION</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
