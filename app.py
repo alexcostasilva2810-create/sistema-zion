@@ -215,7 +215,6 @@ elif st.session_state.pagina == "📊 GRADE":
     
     dados = carregar_dados()
     if dados:
-        # Cabeçalho da Lista Operacional
         st.markdown("---")
         h1, h2, h3, h4, h5 = st.columns([1, 3, 2, 1, 1])
         h1.write("**O.S**")
@@ -227,191 +226,80 @@ elif st.session_state.pagina == "📊 GRADE":
 
         for d in dados:
             c1, c2, c3, c4, c5 = st.columns([1, 3, 2, 1, 1])
-            
             c1.write(d['os_n'])
             c2.write(d['cli'])
-            # Estilização visual do Status
             status_cor = "🟢" if d['sts'] == "Encerrado" else "🟡"
             c3.write(f"{status_cor} {d['sts']}")
             
-            # Ação 1: EDITAR (Lápis)
             if c4.button("✏️", key=f"btn_ed_{d['ID']}"):
                 st.session_state.edit_data = d
                 navegar("📋 CADASTRO")
             
-            # Ação 2: IMPRIMIR (Impressora)
-            # Geramos o PDF com o nome solicitado: ZION ORDEM DE SERVIÇO
-            def preparar_pdf_individual(item):
+            # Função para PDF individual da O.S
+            def preparar_pdf_os(item):
                 pdf = FPDF()
                 pdf.add_page()
-                # Cabeçalho Azul com Logo Escrita
                 pdf.set_fill_color(0, 35, 102)
                 pdf.rect(0, 0, 210, 40, 'F')
                 pdf.set_text_color(255, 255, 255)
                 pdf.set_font("Arial", 'B', 22)
                 pdf.cell(190, 20, "ZION ORDEM DE SERVICO", ln=True, align='C')
-                
-                pdf.ln(25)
-                pdf.set_text_color(0, 0, 0)
+                pdf.ln(25); pdf.set_text_color(0, 0, 0)
                 pdf.set_font("Arial", 'B', 14)
                 pdf.cell(190, 10, f"DADOS DA O.S: {item['os_n']}", border="B", ln=True)
+                pdf.ln(5); pdf.set_font("Arial", '', 10)
                 
-                pdf.ln(5)
-                pdf.set_font("Arial", 'B', 10)
-                
-                # Campos da O.S (Mesmas colunas da tela de Cadastro)
-                campos = [
-                    ("CLIENTE", item['cli']), ("STATUS", item['sts']),
-                    ("DATA SAIDA", item['dt_s']), ("HORA EMBARQUE", item['h_e']),
-                    ("EMPURRADOR", item['emp']), ("BALSA", item['bal']),
-                    ("PEDIDO", item['ped']), ("MODALIDADE", item.get('modalidade', 'ESCOLTA')),
-                    ("ESCOLTA 1", item['esc1']), ("ESCOLTA 2", item['esc2']),
-                    ("ORIGEM", item['loc']), ("DESTINO", item['dst']),
-                    ("INICIO MISSAO", item['ini_m']), ("FIM MISSAO", item['fim_m']),
-                    ("RESPONSAVEL", item['ass'])
-                ]
-                
+                # Lista de campos para o PDF
+                campos = [("CLIENTE", item['cli']), ("STATUS", item['sts']), ("ORIGEM", item['loc']), ("DESTINO", item['dst'])]
                 for label, val in campos:
-                    pdf.set_font("Arial", 'B', 10)
-                    pdf.cell(50, 8, f"{label}:", 0)
-                    pdf.set_font("Arial", '', 10)
-                    pdf.cell(140, 8, f"{val}", 0, ln=True)
-                
-                pdf.ln(5)
-                pdf.set_font("Arial", 'B', 10)
-                pdf.cell(190, 8, "OBSERVACOES:", ln=True)
-                pdf.set_font("Arial", '', 10)
-                pdf.multi_cell(190, 7, f"{item['obs']}")
-                
+                    pdf.set_font("Arial", 'B', 10); pdf.cell(40, 8, f"{label}:", 0)
+                    pdf.set_font("Arial", '', 10); pdf.cell(140, 8, f"{val}", 0, ln=True)
                 return pdf.output(dest='S').encode('latin-1')
 
-            # O botão de download aparece apenas se clicado na impressora
-            pdf_data = preparar_pdf_individual(d)
-            c5.download_button("🖨️", pdf_data, f"OS_{d['os_n']}.pdf", "application/pdf", key=f"btn_pr_{d['ID']}")
-            
+            c5.download_button("🖨️", preparar_pdf_os(d), f"OS_{d['os_n']}.pdf", "application/pdf", key=f"btn_pr_{d['ID']}")
             st.markdown('<hr style="margin:0; border-top: 1px solid #333;">', unsafe_allow_html=True)
     else:
         st.info("Nenhuma Ordem de Serviço registrada.")
-        
-    elif st.session_state.pagina == "💰 FINANCEIRO":
+
+# ATENÇÃO: O elif abaixo deve estar EXATAMENTE nesta posição, sem nada na frente dele
+elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO ZION</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
-    # CSS para faturamento em Amarelo
-    st.markdown("""
-        <style>
-        [data-testid="stMetricValue"] {
-            color: #ffff00 !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+    # CSS para o Amarelo (Corrigido)
+    st.markdown("<style>[data-testid='stMetricValue'] {color: #ffff00 !important;}</style>", unsafe_allow_html=True)
     
-    # 1. FILTROS (Status configurado para mostrar TUDO por padrão)
     c_f1, c_f2, c_f3 = st.columns([1, 1, 2])
-    data_ini = c_f1.date_input("Início do Período", datetime.now(), format="DD/MM/YYYY")
-    data_fim = c_f2.date_input("Fim do Período", datetime.now(), format="DD/MM/YYYY")
-    
-    # Ao colocar as duas opções no 'default', você visualiza TUDO ao entrar na tela
-    opcoes_status = ["Em Andamento", "Encerrado"]
-    filtro_status = c_f3.multiselect(
-        "Filtrar por Status (Deixe ambos para ver TUDO):", 
-        options=opcoes_status, 
-        default=opcoes_status
-    )
+    data_ini = c_f1.date_input("Início", datetime.now())
+    data_fim = c_f2.date_input("Fim", datetime.now())
+    opcoes = ["Em Andamento", "Encerrado"]
+    filtro_status = c_f3.multiselect("Status:", options=opcoes, default=opcoes)
 
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
-        
-        # Preparação de datas
+        # Conversão de datas
+        df['dt_s'] = pd.to_datetime(df['dt_s'], errors='coerce')
         df['ini_m'] = pd.to_datetime(df['ini_m'], errors='coerce')
         df['fim_m'] = pd.to_datetime(df['fim_m'], errors='coerce')
-        df['dt_s'] = pd.to_datetime(df['dt_s'], errors='coerce')
 
-        # REGRA DE PREÇO AUTOMÁTICA
-        def regra_financeira_zion(row):
-            if pd.notnull(row['ini_m']) and pd.notnull(row['fim_m']):
-                dias = (row['fim_m'] - row['ini_m']).days
-                qtd_dias = dias + 1 if dias >= 0 else 1
-            else:
-                qtd_dias = 1
-            
+        def calc_zion(row):
+            dias = (row['fim_m'] - row['ini_m']).days + 1 if pd.notnull(row['ini_m']) else 1
             serv = str(row.get('modalidade', 'ESCOLTA')).upper()
-            if "VIGILÂNCIA" in serv or "VIGILANCIA" in serv:
-                v_unit, tipo = 970.00, "VIGILÂNCIA"
-            else:
-                v_unit, tipo = 1870.00, "ESCOLTA"
-                
-            return pd.Series([qtd_dias, v_unit, qtd_dias * v_unit, tipo])
+            v_unit = 970.0 if "VIGIL" in serv else 1870.0
+            return pd.Series([dias, v_unit, dias * v_unit, "VIGILÂNCIA" if v_unit == 970 else "ESCOLTA"])
 
-        df[['DIAS', 'V_UNIT', 'TOTAL_OS', 'TIPO_SERV']] = df.apply(regra_financeira_zion, axis=1)
-
-        # APLICAR FILTROS (Data e Status)
+        df[['DIAS', 'V_UNIT', 'TOTAL_OS', 'TIPO']] = df.apply(calc_zion, axis=1)
+        
+        # Filtro final
         mask = (df['dt_s'].dt.date >= data_ini) & (df['dt_s'].dt.date <= data_fim) & (df['sts'].isin(filtro_status))
         df_f = df.loc[mask].copy()
 
         if not df_f.empty:
-            # MÉTRICAS
             c_m1, c_m2 = st.columns(2)
-            c_m1.metric("Quantidade de O.S", len(df_f))
-            c_m2.metric("Faturamento Total do Período", f"R$ {df_f['TOTAL_OS'].sum():,.2f}")
-
-            st.write("### 📋 Extrato Financeiro")
-            df_view = df_f[['os_n', 'cli', 'TIPO_SERV', 'DIAS', 'V_UNIT', 'TOTAL_OS', 'sts']].copy()
-            df_view.columns = ['Nº O.S', 'CLIENTE', 'TIPO', 'DIAS', 'V. UNIT (R$)', 'TOTAL (R$)', 'STATUS']
-            st.dataframe(df_view, use_container_width=True, hide_index=True)
-
-            # --- FUNÇÃO GERAR PDF ---
-            def gerar_relatorio_pdf_zion(df_rel, d1, d2):
-                pdf = FPDF(orientation='L')
-                pdf.add_page()
-                pdf.set_fill_color(0, 35, 102)
-                pdf.rect(0, 0, 297, 40, 'F')
-                pdf.set_text_color(255, 255, 255)
-                pdf.set_font("Arial", 'B', 18)
-                pdf.cell(277, 15, "ZION TECNOLOGIA - RELATORIO FINANCEIRO", ln=True, align='C')
-                pdf.set_font("Arial", '', 11)
-                pdf.cell(277, 10, f"PERIODO: {d1.strftime('%d/%m/%Y')} A {d2.strftime('%d/%m/%Y')}", ln=True, align='C')
-                
-                pdf.ln(20)
-                pdf.set_text_color(0, 0, 0)
-                pdf.set_font("Arial", 'B', 9)
-                pdf.set_fill_color(235, 235, 235)
-                
-                pdf.cell(20, 10, "O.S", 1, 0, 'C', True)
-                pdf.cell(75, 10, "CLIENTE", 1, 0, 'C', True)
-                pdf.cell(35, 10, "SERVICO", 1, 0, 'C', True)
-                pdf.cell(15, 10, "DIAS", 1, 0, 'C', True)
-                pdf.cell(40, 10, "V. UNIT (R$)", 1, 0, 'C', True)
-                pdf.cell(40, 10, "TOTAL (R$)", 1, 0, 'C', True)
-                pdf.cell(32, 10, "STATUS", 1, 1, 'C', True)
-                
-                pdf.set_font("Arial", '', 9)
-                for _, r in df_rel.iterrows():
-                    pdf.cell(20, 8, str(r['Nº O.S']), 1, 0, 'C')
-                    pdf.cell(75, 8, str(r['CLIENTE'])[:35], 1, 0, 'L')
-                    pdf.cell(35, 8, str(r['TIPO']), 1, 0, 'C')
-                    pdf.cell(15, 8, str(int(r['DIAS'])), 1, 0, 'C')
-                    pdf.cell(40, 8, f"{r['V. UNIT (R$)']:,.2f}", 1, 0, 'R')
-                    pdf.cell(40, 8, f"{r['TOTAL (R$)']:,.2f}", 1, 0, 'R')
-                    pdf.cell(32, 8, str(r['STATUS']), 1, 1, 'C')
-                
-                pdf.ln(10)
-                total_geral = df_rel['TOTAL (R$)'].sum()
-                pdf.set_font("Arial", 'B', 14)
-                pdf.set_fill_color(0, 35, 102)
-                pdf.set_text_color(255, 255, 255)
-                pdf.cell(210, 12, "", 0, 0)
-                pdf.cell(67, 12, f" TOTAL: R$ {total_geral:,.2f} ", 0, 1, 'R', True)
-                
-                return pdf.output(dest='S').encode('latin-1')
-
-            pdf_out = gerar_relatorio_pdf_zion(df_view, data_ini, data_fim)
-            st.download_button(
-                label="🖨️ BAIXAR RELATÓRIO PDF COMPLETO",
-                data=pdf_out,
-                file_name=f"Relatorio_Zion.pdf",
-                mime="application/pdf"
-            )
+            c_m1.metric("Qtd O.S", len(df_f))
+            c_m2.metric("Faturamento", f"R$ {df_f['TOTAL_OS'].sum():,.2f}")
+            
+            st.dataframe(df_f[['os_n', 'cli', 'TIPO', 'DIAS', 'TOTAL_OS', 'sts']], use_container_width=True, hide_index=True)
         else:
-            st.warning("Selecione ao menos um Status ou mude o período.")
+            st.warning("Sem dados para este filtro.")
