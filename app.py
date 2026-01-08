@@ -1,135 +1,77 @@
 import streamlit as st
 import requests
 import pandas as pd
-from fpdf import FPDF
+import os
 from datetime import datetime
-import io
 
-# 1. CONFIGURAÇÃO DE TELA (Mobile-First)
-st.set_page_config(
-    page_title="Zion Tecnologia", 
-    layout="wide", 
-    initial_sidebar_state="collapsed"
-)
+# 1. CONFIGURAÇÃO DA PÁGINA
+st.set_page_config(page_title="Zion Tecnologia - Gestão O.S", layout="wide")
 
-# 2. MOTOR DE NAVEGAÇÃO
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = "🏠 HOME"
+# --- CONEXÃO NOTION ---
+TOKEN = st.secrets["notion"]["token"].replace('"', '').strip()
+DATABASE = st.secrets["notion"]["database_id"].replace('"', '').strip()
 
-def navegar(destino):
-    st.session_state.pagina = destino
-    st.rerun()
+headers = {
+    "Authorization": f"Bearer {TOKEN}",
+    "Notion-Version": "2022-06-28",
+    "Content-Type": "application/json"
+}
 
-# 3. ESTILO VISUAL E MENU (Corrigido para evitar SyntaxError)
+# --- ESTILO CSS AZUL ROYAL ---
 st.markdown("""
     <style>
-    /* Fundo do App */
-    .stApp { 
-        background: linear-gradient(135deg, #001a4d 0%, #003399 100%); 
+    .stApp {
+        background: linear-gradient(rgba(0, 35, 102, 0.88), rgba(0, 35, 102, 0.88)), 
+                    url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=2070&auto=format&fit=crop");
+        background-size: cover; background-position: center; background-attachment: fixed;
     }
-    
-    /* Textos Globais */
-    h1, h2, h3, p, span, label { color: white !important; }
-    
-    /* Botões Padrão Streamlit */
-    .stButton>button { 
-        width: 100%; 
-        border-radius: 12px; 
-        height: 3.8em; 
-        font-weight: bold; 
-        background-color: white !important; 
-        color: #001a4d !important;
-        border: none;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
-        margin-bottom: 10px;
-    }
-
-    /* Estilo para a Logo e Menu de Ícones */
-    .menu-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        padding: 20px 0;
-    }
-
-    .zion-logo {
-        width: 180px;
-        margin-bottom: 30px;
-    }
-
-    .icon-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        width: 100%;
-        max-width: 400px;
-    }
-
-    .icon-card {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        padding: 25px;
-        text-align: center;
-        text-decoration: none !important;
-        transition: 0.3s;
-    }
-
-    .icon-card:hover {
-        background: rgba(255, 255, 255, 0.2);
-        transform: translateY(-5px);
-    }
-
-    .icon-card i {
-        font-size: 40px;
-        color: white;
-        margin-bottom: 10px;
-        display: block;
-    }
-
-    .icon-card span {
-        color: white;
-        font-weight: bold;
-        font-size: 16px;
-    }
+    h1, h2, h3, label { color: #00ff41 !important; text-shadow: 2px 2px 4px #000; text-align: center; }
+    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; width: 100%; height: 50px; font-weight: bold; }
+    .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border: 1px solid #00ff41; }
     </style>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     """, unsafe_allow_html=True)
 
-# 4. LÓGICA DA HOME (Com Logo e Ícones Navegáveis)
+# --- FUNÇÃO SALVAR NO NOTION (AS 17 COLUNAS) ---
+def salvar_no_notion(d):
+    url = "https://api.notion.com/v1/pages"
+    payload = {
+        "parent": {"database_id": DATABASE},
+        "properties": {
+            "Nº OS": {"title": [{"text": {"content": str(d['os_n'])}}]},
+            "CLIENTE": {"rich_text": [{"text": {"content": str(d['cli'])}}]},
+            "DT SAÍDA": {"date": {"start": d['dt_s'].strftime('%Y-%m-%d')}},
+            "EMPURRADOR": {"rich_text": [{"text": {"content": str(d['emp'])}}]},
+            "BALSA": {"rich_text": [{"text": {"content": str(d['bal'])}}]},
+            "PEDIDO": {"rich_text": [{"text": {"content": str(d['ped'])}}]},
+            "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": str(d['h_e'])}}]},
+            "ESCOLTA 1": {"rich_text": [{"text": {"content": str(d['esc1'])}}]},
+            "ESCOLTA 2": {"rich_text": [{"text": {"content": str(d['esc2'])}}]},
+            "LOCAL": {"rich_text": [{"text": {"content": str(d['loc'])}}]},
+            "DESTINO": {"rich_text": [{"text": {"content": str(d['dst'])}}]},
+            "ASSINATURA": {"rich_text": [{"text": {"content": str(d['ass'])}}]},
+            "INÍCIO DA MISSÃO": {"date": {"start": d['ini_m'].strftime('%Y-%m-%d')}},
+            "FIM DA MISSÃO": {"date": {"start": d['fim_m'].strftime('%Y-%m-%d')}},
+            "STATUS": {"select": {"name": str(d['sts'])}},
+            "DESCRIÇÃO": {"rich_text": [{"text": {"content": str(d['obs'])}}]},
+            "VALOR TOTAL": {"number": float(d['v_total']) if d['v_total'] else 0.0} # 17ª Coluna (Financeira)
+        }
+    }
+    res = requests.post(url, headers=headers, json=payload)
+    if res.status_code != 200:
+        st.error(f"Erro Notion: {res.json().get('message')}")
+    return res.status_code == 200
+
+# --- NAVEGAÇÃO ---
+if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
+def navegar(p): st.session_state.pagina = p; st.rerun()
+
+# --- TELAS ---
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown(f"""
-        <div class="menu-container">
-            <img src="https://i.imgur.com/vHq0AUP.png" class="zion-logo"> 
-            
-            <div class="icon-grid">
-                <a href="/?p=cadastro" target="_self" class="icon-card">
-                    <i class="fas fa-user-plus"></i>
-                    <span>CADASTRO</span>
-                </a>
-                
-                <a href="/?p=financeiro" target="_self" class="icon-card">
-                    <i class="fas fa-chart-line"></i>
-                    <span>FINANCEIRO</span>
-                </a>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # Botões invisíveis para capturar o clique do link HTML no Streamlit (Opcional)
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("ACESSAR CADASTRO", key="btn_cad"): navegar("📋 CADASTRO")
-    with col2:
-        if st.button("ACESSAR FINANCEIRO", key="btn_fin"): navegar("💰 FINANCEIRO")
-
-# 5. BLOCO DE CADASTRO (Onde você estava tendo erro)
-elif st.session_state.pagina == "📋 CADASTRO":
-    st.markdown("<h2>📋 NOVO LANÇAMENTO</h2>", unsafe_allow_html=True)
-    if st.button("⬅️ VOLTAR PARA HOME"): 
-        navegar("🏠 HOME")# ============================================================
+    st.markdown("<h1>SISTEMA ZION - GESTÃO MARÍTIMA</h1>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    if c1.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
+    if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
+    if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")        navegar("🏠 HOME")# ============================================================
 # # ........ BLOCO: HOME (MENU PRINCIPAL) ........ #
 # ============================================================
 # --- Definição do Menu (Coloque isso antes do bloco if/elif) ---
