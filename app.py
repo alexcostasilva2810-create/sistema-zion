@@ -5,11 +5,14 @@ from fpdf import FPDF
 from datetime import datetime
 import io
 
-# ============================================================
-# # ........ CONFIGURAÇÕES E MOTOR ........ #
-# ============================================================
-st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
+# 1. CONFIGURAÇÃO DE TELA (Mobile-First)
+st.set_page_config(
+    page_title="Zion Tecnologia", 
+    layout="wide", 
+    initial_sidebar_state="collapsed"
+)
 
+# 2. MOTOR DE NAVEGAÇÃO (Evita erro de NameError)
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
@@ -17,24 +20,41 @@ def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
 
-# --- Estilo Visual para Smartphone ---
+# 3. ESTILO VISUAL (Fundo Azul Royal e Letras Brancas)
 st.markdown("""
     <style>
-    .stApp { background: linear-gradient(135deg, #001a4d 0%, #003399 100%); }
-    h1, h2, h3, p, span, label { color: white !important; }
-    .stButton>button { 
-        width: 100%; border-radius: 12px; height: 3.5em; 
-        font-weight: bold; background-color: white !important; color: #001a4d !important;
-        border: none; box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+    /* Fundo do App */
+    .stApp { 
+        background: linear-gradient(135deg, #001a4d 0%, #003399 100%); 
     }
-    .card {
+    
+    /* Textos Globais */
+    h1, h2, h3, p, span, label { color: white !important; }
+    
+    /* Botões Grandes para Celular */
+    .stButton>button { 
+        width: 100%; 
+        border-radius: 12px; 
+        height: 3.8em; 
+        font-weight: bold; 
+        background-color: white !important; 
+        color: #001a4d !important;
+        border: none;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+        margin-bottom: 10px;
+    }
+    
+    /* Cards de Destaque */
+    .card-zion {
         background: rgba(255, 255, 255, 0.1);
-        padding: 20px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.2);
-        text-align: center; margin-bottom: 15px;
+        padding: 20px; 
+        border-radius: 15px; 
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-align: center; 
+        margin-bottom: 15px;
     }
     </style>
 """, unsafe_allow_html=True)
-
 # ============================================================
 # # ........ BLOCO: HOME (MENU PRINCIPAL) ........ #
 # ============================================================
