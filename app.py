@@ -18,90 +18,20 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# --- ESTILO CSS MELHORADO ---
-# --- SUBSTITUA O BLOCO DE ESTILO E A HOME POR ESTE ---
-
+# --- ESTILO CSS AZUL ROYAL (TRAVADO) ---
 st.markdown("""
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     .stApp {
-        background: linear-gradient(rgba(0, 35, 102, 0.85), rgba(0, 35, 102, 0.85)), 
+        background: linear-gradient(rgba(0, 35, 102, 0.9), rgba(0, 35, 102, 0.9)), 
                     url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=2070&auto=format&fit=crop");
         background-size: cover; background-position: center; background-attachment: fixed;
     }
-
-    /* Estilo dos Cards em 3D */
-    div.stButton > button {
-        width: 100%;
-        border-radius: 20px;
-        height: 150px; /* Aumentado para caber o ícone grande */
-        font-weight: bold;
-        background: rgba(255, 255, 255, 0.15) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.4) !important;
-        
-        /* Efeito 3D (Sombra projetada e brilho interno) */
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3), inset 0 0 15px rgba(255,255,255,0.1) !important;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-
-    /* Efeito de Clique e Hover 3D */
-    div.stButton > button:hover {
-        transform: translateY(-10px) scale(1.02);
-        background: rgba(255, 255, 255, 0.25) !important;
-        border-color: #00ff41 !important;
-        box-shadow: 0 15px 30px rgba(0,255,65,0.2) !important;
-    }
-
-    /* Ajuste para os ícones aparecerem grandes e nítidos */
-    .icon-3d {
-        font-size: 50px !important;
-        margin-bottom: 10px;
-        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); /* Sombra no ícone para efeito 3D */
-        display: block;
-    }
-
-    .label-3d {
-        font-size: 18px;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    }
-
-    .zion-header { text-align: center; padding-bottom: 40px; }
-    .logo-img { width: 220px; filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.5)); }
+    h1, h2, h3, label { color: #00ff41 !important; text-shadow: 2px 2px 4px #000; text-align: center; }
+    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; font-weight: bold; }
+    .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border: 1px solid #00ff41; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- BLOCO DA HOME ---
-if st.session_state.pagina == "🏠 HOME":
-    # Logo Zion no Topo
-    st.markdown('<div class="zion-header"><img src="https://i.imgur.com/vHq0AUP.png" class="logo-img"></div>', unsafe_allow_html=True)
-    
-    st.markdown("<h1>SISTEMA DE GESTÃO ZION</h1>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        # Ícone de Cadastro/OS
-        st.markdown('<div style="text-align:center;"><span class="icon-3d">📋</span></div>', unsafe_allow_html=True)
-        if st.button("NOVO LANÇAMENTO", key="btn_cad"): 
-            navegar("📋 CADASTRO")
-
-    with col2:
-        # Ícone de Grade/OS
-        st.markdown('<div style="text-align:center;"><span class="icon-3d">📊</span></div>', unsafe_allow_html=True)
-        if st.button("VER AGENDAMENTOS", key="btn_gra"): 
-            navegar("📊 GRADE")
-
-    with col3:
-        # Ícone de Financeiro Sofisticado (Tendência de Lucro)
-        st.markdown('<div style="text-align:center;"><span class="icon-3d">📈</span></div>', unsafe_allow_html=True)
-        if st.button("FINANCEIRO", key="btn_fin"): 
-            navegar("💰 FINANCEIRO")
 # --- FUNÇÃO CARREGAR DADOS ---
 def carregar_dados():
     try:
@@ -139,7 +69,7 @@ def carregar_dados():
             return lista
     except: return []
 
-# --- FUNÇÃO SALVAR NO NOTION ---
+# --- FUNÇÃO SALVAR NO NOTION (17 COLUNAS) ---
 def salvar_no_notion(d):
     url = "https://api.notion.com/v1/pages"
     payload = {
@@ -172,36 +102,16 @@ if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
 def navegar(p): st.session_state.pagina = p; st.rerun()
 
 # --- TELAS ---
-
-# 🏠 HOME PRINCIPAL
 if st.session_state.pagina == "🏠 HOME":
-    # Logo Centralizada
-    st.markdown('<div class="zion-header"><img src="https://i.imgur.com/vHq0AUP.png" class="logo-img"></div>', unsafe_allow_html=True)
-    st.markdown("<h1>SISTEMA DE GESTÃO ZION</h1>", unsafe_allow_html=True)
-    
-    st.write("---")
-    
-    # Grid de botões estilizados
+    st.markdown("<h1>SISTEMA ZION</h1>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    
-    with c1:
-        st.markdown("<h3 style='text-align:center'><i class='fas fa-folder-plus'></i></h3>", unsafe_allow_html=True)
-        if st.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
-        
-    with c2:
-        st.markdown("<h3 style='text-align:center'><i class='fas fa-calendar-alt'></i></h3>", unsafe_allow_html=True)
-        if st.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
-        
-    with c3:
-        # Ícone de Financeiro Sofisticado (Gráfico de colunas/tendência)
-        st.markdown("<h3 style='text-align:center'><i class='fas fa-chart-line'></i></h3>", unsafe_allow_html=True)
-        if st.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
+    if c1.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
+    if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
+    if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
-# 📋 TELA DE CADASTRO
 elif st.session_state.pagina == "📋 CADASTRO":
     st.header("📋 NOVO REGISTRO (17 COLUNAS)")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    
     with st.form("form_os"):
         c1, c2, c3 = st.columns(3)
         os_n, dt_s, cli = c1.text_input("Nº O.S"), c2.date_input("DATA SAÍDA", format="DD/MM/YYYY"), c3.text_input("CLIENTE")
@@ -218,42 +128,31 @@ elif st.session_state.pagina == "📋 CADASTRO":
         
         if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
             d = {"os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs, "v_total":v_total}
-            if salvar_no_notion(d): 
-                st.success("Salvo com sucesso!")
-                navegar("📊 GRADE")
+            if salvar_no_notion(d): navegar("📊 GRADE")
             else: st.error("Erro ao salvar no Notion.")
 
-# 📊 TELA DE GRADE
 elif st.session_state.pagina == "📊 GRADE":
     st.header("📊 AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     dados = carregar_dados()
-    if dados:
-        df = pd.DataFrame(dados)
-        st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]], use_container_width=True)
-        for d in dados:
-            with st.expander(f"Ações O.S {d['Nº OS']}"):
-                c1, c2 = st.columns(2)
-                c1.button("✏️ EDITAR", key=f"ed_{d['ID']}")
-                c2.button("📄 PDF", key=f"pdf_{d['ID']}")
-    else:
-        st.info("Nenhum registro encontrado.")
+    df = pd.DataFrame(dados) if dados else pd.DataFrame(columns=["Nº OS", "CLIENTE", "DT SAÍDA", "STATUS"])
+    st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]], use_container_width=True)
+    for d in (dados or []):
+        with st.expander(f"Ações O.S {d['Nº OS']}"):
+            c1, c2 = st.columns(2)
+            c1.button("✏️ EDITAR", key=f"ed_{d['ID']}")
+            c2.button("📄 PDF", key=f"pdf_{d['ID']}")
 
-# 💰 TELA FINANCEIRA
 elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.header("💰 GESTÃO FINANCEIRA")
+    st.header("💰 FINANCEIRO")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    
     c1, c2 = st.columns(2)
     i_f, f_f = c1.date_input("INÍCIO", format="DD/MM/YYYY"), c2.date_input("FIM", format="DD/MM/YYYY")
-    
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
         df['dt_p'] = pd.to_datetime(df['DT_RAW'])
         df_f = df[(df['dt_p'] >= pd.Timestamp(i_f)) & (df['dt_p'] <= pd.Timestamp(f_f))]
-        
-        st.metric("FATURAMENTO NO PERÍODO", f"R$ {df_f['VALOR'].sum():,.2f}")
-        st.dataframe(df_f[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "VALOR"]], use_container_width=True)
-    else:
-        st.warning("Sem dados financeiros para o período.")
+        st.metric("FATURAMENTO", f"R$ {df_f['VALOR'].sum():,.2f}")
+        st.dataframe(df_f[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "ESCOLTA 1", "ESCOLTA 2", "VALOR"]], use_container_width=True)
+    else: st.dataframe(pd.DataFrame(columns=["Nº OS", "CLIENTE", "DT SAÍDA", "VALOR"]), use_container_width=True)
