@@ -215,52 +215,102 @@ elif st.session_state.pagina == "📊 GRADE":
     
     dados = carregar_dados()
     if dados:
+        df = pd.DataFrame(dados)
+        
+        # --- TABELA VISÍVEL NA TELA ---
+        st.write("### 📋 Lista de Operações")
+        df_grade = df[['os_n', 'dt_s', 'cli', 'sts']].copy()
+        df_grade.columns = ['Nº O.S', 'DATA SAÍDA', 'CLIENTE', 'STATUS']
+        st.dataframe(df_grade, use_container_width=True, hide_index=True)
+        
         st.markdown("---")
-        h1, h2, h3, h4, h5 = st.columns([1, 3, 2, 1, 1])
+        st.write("### 🛠️ Ações por Registro")
+
+        # Cabeçalho da Lista de Ações
+        h1, h2, h3, h4 = st.columns([1, 4, 1, 1])
         h1.write("**O.S**")
         h2.write("**CLIENTE**")
-        h3.write("**STATUS**")
-        h4.write("**EDITAR**")
-        h5.write("**PDF**")
-        st.markdown("---")
+        h3.write("**EDITAR**")
+        h4.write("**IMPRIMIR**")
 
         for d in dados:
-            c1, c2, c3, c4, c5 = st.columns([1, 3, 2, 1, 1])
+            c1, c2, c3, c4 = st.columns([1, 4, 1, 1])
             c1.write(d['os_n'])
             c2.write(d['cli'])
-            status_cor = "🟢" if d['sts'] == "Encerrado" else "🟡"
-            c3.write(f"{status_cor} {d['sts']}")
             
-            if c4.button("✏️", key=f"btn_ed_{d['ID']}"):
+            # BOTÃO EDITAR (Lápis)
+            if c3.button("✏️", key=f"ed_{d['ID']}"):
                 st.session_state.edit_data = d
                 navegar("📋 CADASTRO")
             
-            # Função para PDF individual da O.S
-            def preparar_pdf_os(item):
+            # BOTÃO IMPRIMIR (PDF Completo)
+            def gerar_pdf_os_completa(item):
                 pdf = FPDF()
                 pdf.add_page()
+                
+                # Cabeçalho Superior
                 pdf.set_fill_color(0, 35, 102)
                 pdf.rect(0, 0, 210, 40, 'F')
                 pdf.set_text_color(255, 255, 255)
-                pdf.set_font("Arial", 'B', 22)
-                pdf.cell(190, 20, "ZION ORDEM DE SERVICO", ln=True, align='C')
-                pdf.ln(25); pdf.set_text_color(0, 0, 0)
-                pdf.set_font("Arial", 'B', 14)
-                pdf.cell(190, 10, f"DADOS DA O.S: {item['os_n']}", border="B", ln=True)
-                pdf.ln(5); pdf.set_font("Arial", '', 10)
+                pdf.set_font("Arial", 'B', 20)
+                pdf.cell(190, 20, "ZION - ORDEM DE SERVICO", ln=True, align='C')
                 
-                # Lista de campos para o PDF
-                campos = [("CLIENTE", item['cli']), ("STATUS", item['sts']), ("ORIGEM", item['loc']), ("DESTINO", item['dst'])]
-                for label, val in campos:
-                    pdf.set_font("Arial", 'B', 10); pdf.cell(40, 8, f"{label}:", 0)
-                    pdf.set_font("Arial", '', 10); pdf.cell(140, 8, f"{val}", 0, ln=True)
+                pdf.ln(25)
+                pdf.set_text_color(0, 0, 0)
+                
+                # --- BLOCO 1: DADOS GERAIS ---
+                pdf.set_fill_color(230, 230, 230)
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(190, 10, f" INFORMACOES GERAIS - O.S {item['os_n']}", 1, ln=True, fill=True)
+                pdf.set_font("Arial", '', 10)
+                
+                # Organização das 17 colunas em blocos
+                pdf.cell(95, 8, f"CLIENTE: {item['cli']}", 1)
+                pdf.cell(95, 8, f"DATA SAIDA: {item['dt_s']}", 1, ln=True)
+                pdf.cell(95, 8, f"EMPURRADOR: {item['emp']}", 1)
+                pdf.cell(95, 8, f"BALSA: {item['bal']}", 1, ln=True)
+                pdf.cell(95, 8, f"PEDIDO: {item['ped']}", 1)
+                pdf.cell(95, 8, f"HORA EMBARQUE: {item['h_e']}", 1, ln=True)
+                
+                # --- BLOCO 2: OPERACIONAL ---
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(190, 10, " DETALHES DA MISSAO", 1, ln=True, fill=True)
+                pdf.set_font("Arial", '', 10)
+                pdf.cell(95, 8, f"ORIGEM: {item['loc']}", 1)
+                pdf.cell(95, 8, f"DESTINO: {item['dst']}", 1, ln=True)
+                pdf.cell(95, 8, f"INICIO: {item['ini_m']}", 1)
+                pdf.cell(95, 8, f"FIM: {item['fim_m']}", 1, ln=True)
+                pdf.cell(95, 8, f"ESCOLTA 1: {item['esc1']}", 1)
+                pdf.cell(95, 8, f"ESCOLTA 2: {item['esc2']}", 1, ln=True)
+                pdf.cell(95, 8, f"MODALIDADE: {item.get('modalidade', 'ESCOLTA')}", 1)
+                pdf.cell(95, 8, f"STATUS: {item['sts']}", 1, ln=True)
+                
+                # --- BLOCO 3: OBSERVAÇÕES ---
+                pdf.ln(5)
+                pdf.set_font("Arial", 'B', 10)
+                pdf.cell(190, 8, "OBSERVACOES:", ln=True)
+                pdf.set_font("Arial", '', 10)
+                pdf.multi_cell(190, 7, f"{item['obs']}", 1)
+                
+                # --- BLOCO 4: ASSINATURAS (No rodapé) ---
+                pdf.ln(25)
+                # Linha para Solicitante
+                pdf.line(20, pdf.get_y(), 90, pdf.get_y())
+                # Linha para Prestador
+                pdf.line(120, pdf.get_y(), 190, pdf.get_y())
+                
+                pdf.set_font("Arial", 'B', 8)
+                pdf.cell(95, 5, "ASSINATURA DO SOLICITANTE", 0, 0, 'C')
+                pdf.cell(95, 5, "ASSINATURA DO PRESTADOR (DIGITAL)", 0, 1, 'C')
+                
                 return pdf.output(dest='S').encode('latin-1')
 
-            c5.download_button("🖨️", preparar_pdf_os(d), f"OS_{d['os_n']}.pdf", "application/pdf", key=f"btn_pr_{d['ID']}")
-            st.markdown('<hr style="margin:0; border-top: 1px solid #333;">', unsafe_allow_html=True)
+            # Botão de Download PDF
+            pdf_bytes = gerar_pdf_os_completa(d)
+            c4.download_button("🖨️", pdf_bytes, f"OS_{d['os_n']}.pdf", "application/pdf", key=f"pr_btn_{d['ID']}")
+            st.markdown("---")
     else:
-        st.info("Nenhuma Ordem de Serviço registrada.")
-
+        st.info("Nenhuma Ordem de Serviço encontrada.")
 # ATENÇÃO: O elif abaixo deve estar EXATAMENTE nesta posição, sem nada na frente dele
 elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO ZION</h1>", unsafe_allow_html=True)
