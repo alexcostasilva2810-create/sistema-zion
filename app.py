@@ -150,7 +150,6 @@ MENU_HTML = """
 
     </div>
 </div>
-"""
 
 # Comando para renderizar o Menu no Streamlit
 st.markdown(MENU_HTML, unsafe_allow_html=True)
