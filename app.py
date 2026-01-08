@@ -339,10 +339,13 @@ elif st.session_state.pagina == "📊 GRADE":
             pdf_bytes = gerar_pdf_os_completa(d)
             c4.download_button("🖨️", pdf_bytes, f"OS_{d['os_n']}.pdf", "application/pdf", key=f"pr_btn_{d['ID']}")
             st.markdown("---")
-   else:
-            st.info("Nenhuma Ordem de Serviço registrada.")
+# ... final do seu loop de dados ...
+                st.markdown("---")
+        
+    else:
+        st.info("Nenhuma Ordem de Serviço registrada.")
 
-# ATENÇÃO: O elif abaixo deve estar encostado na margem esquerda (sem espaços antes)
+# ESTA LINHA ABAIXO DEVE ESTAR TOTALMENTE ENCOSTADA NA ESQUERDA
 elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1 style='text-align: center; color: white;'>💰 FINANCEIRO ESTRATÉGICO</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR PARA HOME"):
