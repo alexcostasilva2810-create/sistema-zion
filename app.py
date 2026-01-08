@@ -161,13 +161,21 @@ if st.session_state.pagina == "🏠 HOME":
         st.markdown('<i class="fas fa-chart-pie icon-container"></i>', unsafe_allow_html=True)
         if st.button("INTELIGÊNCIA FINANCEIRA"): navegar("💰 FINANCEIRO")
 
-    # --- LOGO ABAIXO DOS ÍCONES ---
-    st.markdown("""
-        <div class="logo-footer">
-            <img src="https://i.imgur.com/vHq0AUP.png" class="logo-img" alt="Logo Zion">
-        </div>
-    """, unsafe_allow_html=True)
-
+    # --- CÓDIGO PARA CARREGAR IMAGEM DA BIBLIOTECA LOCAL ---
+    try:
+        # Substitua 'logo.png' pelo nome exato do arquivo que está na sua pasta
+        nome_arquivo_logo = "logo.png" 
+        
+        with open(nome_arquivo_logo, "rb") as f:
+            data = base64.b64encode(f.read()).decode("utf-8")
+            
+        st.markdown(f"""
+            <div class="logo-footer">
+                <img src="data:image/png;base64,{data}" class="logo-img">
+            </div>
+        """, unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.error("⚠️ Erro: O arquivo da logo não foi encontrado na pasta do sistema.")
 #---- Tela Cadastro ----# 
 elif st.session_state.pagina == "📋 CADASTRO":
     st.header("📋 NOVO REGISTRO (17 COLUNAS)")
