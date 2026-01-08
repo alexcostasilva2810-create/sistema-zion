@@ -4,18 +4,30 @@ import pandas as pd
 from fpdf import FPDF
 from datetime import datetime
 import io
+import base64  # <--- Certifique-se de que este import está aqui
+import os      # <--- E este também
 
-# 1. Configuração da Página
+# --- NOVO CÓDIGO DA LOGO (COLOQUE AQUI) ---
+def get_base64_image(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    return None
+
+# Busca a logo que você já tem na pasta (conforme sua imagem LOGO.PNG)
+img_base64 = get_base64_image("LOGO.PNG")
+# ------------------------------------------
+
+# 1. CONFIGURAÇÃO DE TELA
 st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. Inicialização do Estado e Navegação
+# 2. MOTOR DE NAVEGAÇÃO
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
 def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
-
 # 3. Estilo Visual Global (Melhoria de UI)
 st.markdown("""
 <style>
@@ -152,9 +164,12 @@ if st.session_state.pagina == "🏠 HOME":
             navegar("💰 FINANCEIRO")
 
     # Logo Footer
-    st.markdown("""
-        <div class='logo-footer'>
-            <img src='https://logodownload.org/wp-content/uploads/2019/09/google-logo-1.png' class='logo-img' style='width:150px; opacity:0.5; margin-top:40px'>
+    st.markdown(f"""
+        <div style="text-align: center; margin-top: 50px; padding: 20px;">
+            <img src="data:image/png;base64,{img_base64}" style="width: 200px; opacity: 0.8; filter: drop-shadow(0px 5px 15px rgba(0,0,0,0.5));">
+            <p style="color: rgba(255,255,255,0.5) !important; font-size: 12px; margin-top: 10px;">
+                ZION TECNOLOGIA © 2026
+            </p>
         </div>
     """, unsafe_allow_html=True)
 
