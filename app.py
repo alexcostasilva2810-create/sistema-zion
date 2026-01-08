@@ -19,21 +19,11 @@ headers = {
 }
 
 # --- ESTILO CSS MELHORADO ---
+# Substitua o bloco de estilo anterior por este:
+
 st.markdown("""
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-    .stApp {
-        background: linear-gradient(rgba(0, 35, 102, 0.85), rgba(0, 35, 102, 0.85)), 
-                    url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=2070&auto=format&fit=crop");
-        background-size: cover; background-position: center; background-attachment: fixed;
-    }
-    h1, h2, h3, label { color: #ffffff !important; text-shadow: 2px 2px 4px #000; text-align: center; }
-    
-    /* Menu Principal Estilizado */
-    .zion-header { text-align: center; padding-bottom: 30px; }
-    .logo-img { width: 180px; filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.5)); }
-    
-    /* Botões do Streamlit como Cards */
+    /* 1. Botões como Cards (Menu Principal) */
     div.stButton > button {
         width: 100%;
         border-radius: 15px;
@@ -42,19 +32,26 @@ st.markdown("""
         font-weight: bold;
         background-color: rgba(255, 255, 255, 0.1) !important;
         color: white !important;
-        border: 1px solid rgba(255,255,255,0.3) !important;
-        transition: 0.3s;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        transition: all 0.3s ease;
     }
+
+    /* 2. Efeito ao passar o mouse (Hover) */
     div.stButton > button:hover {
         background-color: rgba(255, 255, 255, 0.2) !important;
-        border-color: #00ff41 !important;
+        border-color: #00ff41 !important; /* Verde neon da Zion */
         transform: translateY(-5px);
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
     }
-    
-    .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border: 1px solid #00ff41; border-radius: 10px; }
+
+    /* 3. Estilização das tabelas de dados */
+    .stDataFrame {
+        background-color: rgba(15, 23, 42, 0.9);
+        border: 1px solid #00ff41;
+        border-radius: 10px;
+    }
     </style>
     """, unsafe_allow_html=True)
-
 # --- FUNÇÃO CARREGAR DADOS ---
 def carregar_dados():
     try:
