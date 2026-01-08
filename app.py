@@ -4,22 +4,24 @@ import pandas as pd
 from fpdf import FPDF
 from datetime import datetime
 import io
-import base64  # Importante para converter a imagem
-import os      # Importante para verificar se o arquivo existe
+import base64
+import os
 
-# 1. FUNÇÃO PARA CARREGAR IMAGEM LOCAL (LOGO.PNG)
-def get_base64_image(image_path):
-    # Verifica se o arquivo existe exatamente com este nome na pasta
-    if os.path.exists(image_path):
-        with open(image_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
+# 1. CONFIGURAÇÃO DE TELA
+st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
+
+# 2. FUNÇÃO BLINDADA PARA A LOGO (Evita a faixa vermelha)
+def carregar_logo_safe(caminho="LOGO.PNG"):
+    try:
+        if os.path.exists(caminho):
+            with open(caminho, "rb") as f:
+                data = f.read()
+                return base64.b64encode(data).decode()
+    except Exception:
+        pass # Se der erro, ele não mostra a faixa vermelha, apenas ignora a imagem
     return None
 
-# Carrega a logo uma única vez para economizar memória
-img_base64 = get_base64_image("LOGO.PNG")
-
-# 2. CONFIGURAÇÃO INICIAL DO STREAMLIT
-st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
+img_base64 = carregar_logo_safe()
 
 # 3. MOTOR DE NAVEGAÇÃO
 if 'pagina' not in st.session_state:
@@ -29,7 +31,7 @@ def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
 
-# 4. ESTILO VISUAL (Resolve o erro de texto aparecendo na tela)
+# 4. ESTILO VISUAL GLOBAL (Melhoria de Interface)
 st.markdown(f"""
 <style>
     .stApp {{
@@ -37,20 +39,26 @@ st.markdown(f"""
                     url('https://img.freepik.com/free-vector/abstract-digital-technology-background-with-network-connection-lines_1017-25552.jpg');
         background-size: cover;
     }}
-    
-    /* Estilo dos Botões Grandes */
+    /* Botões Premium Estilo Card */
     div.stButton > button {{
         width: 100%;
-        height: 160px !important;
-        background: rgba(255, 255, 255, 0.05) !important;
+        height: 200px !important;
+        background: rgba(255, 255, 255, 0.07) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 20px !important;
-        font-weight: bold !important;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+        border-radius: 25px !important;
+        transition: all 0.4s ease;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    }}
+    div.stButton > button:hover {{
+        border-color: #00ff41 !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        transform: translateY(-5px);
     }}
 </style>
-""", unsafe_allow_html=True)# --- FUNÇÃO CARREGAR DADOS ---
+""", unsafe_allow_html=True)
+
+# --- FUNÇÃO CARREGAR DADOS ---
 def carregar_dados():
     try:
         res = requests.post(f"https://api.notion.com/v1/databases/{DATABASE}/query", headers=headers)
@@ -121,28 +129,35 @@ def navegar(p): st.session_state.pagina = p; st.rerun()
 
 #---- Tela Inicial ----# 
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<h1 style='text-align: center; margin-bottom: 50px;'>ZION BUSINESS TECHNOLOGY</h1>", unsafe_allow_html=True)
+    # Exibe a logo centralizada (sem erro se não encontrar)
+    if img_base64:
+        st.markdown(f"""
+            <div style="text-align: center; padding-top: 20px;">
+                <img src="data:image/png;base64,{img_base64}" width="200" style="filter: drop-shadow(0px 5px 15px rgba(0,0,0,0.6));">
+            </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("<h1 style='text-align: center; margin-bottom: 40px;'>ZION BUSINESS</h1>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # Ícone: Robô anotando (Cadastro)
-        st.markdown("<div style='text-align:center'><img src='https://cdn-icons-png.flaticon.com/512/6819/6819643.png' width='80'></div>", unsafe_allow_html=True)
-        if st.button("📝 CADASTRO\n(Registro)", key="go_cad"):
+        # Ícone Robô 3D
+        st.markdown("<div style='text-align:center'><img src='https://cdn-icons-png.flaticon.com/512/6819/6819643.png' width='90'></div>", unsafe_allow_html=True)
+        if st.button("📝 CADASTRO\nREGISTRO INTELIGENTE", key="btn_cad"):
             navegar("📋 CADASTRO")
 
     with col2:
-        # Ícone: Agenda Dourada (Ordem de Serviço)
-        st.markdown("<div style='text-align:center'><img src='https://cdn-icons-png.flaticon.com/512/2693/2693507.png' width='80'></div>", unsafe_allow_html=True)
-        if st.button("📅 OPERACIONAL\n(Ordem de Serviço)", key="go_grade"):
+        # Ícone Agenda Dourada 3D
+        st.markdown("<div style='text-align:center'><img src='https://cdn-icons-png.flaticon.com/512/2693/2693507.png' width='90'></div>", unsafe_allow_html=True)
+        if st.button("📅 OPERACIONAL\nORDEM DE SERVIÇO", key="btn_grade"):
             navegar("📊 GRADE")
 
     with col3:
-        # Ícone: Dashboard/Calculadora (Financeiro)
-        st.markdown("<div style='text-align:center'><img src='https://cdn-icons-png.flaticon.com/512/10543/10543111.png' width='80'></div>", unsafe_allow_html=True)
-        if st.button("💰 FINANCEIRO\n(Estratégico)", key="go_fin"):
+        # Ícone Financeiro 3D
+        st.markdown("<div style='text-align:center'><img src='https://cdn-icons-png.flaticon.com/512/10543/10543111.png' width='90'></div>", unsafe_allow_html=True)
+        if st.button("💰 FINANCEIRO\nESTRATÉGICO", key="btn_fin"):
             navegar("💰 FINANCEIRO")
-
     # Logo Footer
     st.markdown(f"""
         <div style="text-align: center; margin-top: 50px; padding: 20px;">
