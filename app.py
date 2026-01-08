@@ -58,90 +58,93 @@ st.markdown("""
 # ============================================================
 # # ........ BLOCO: HOME (MENU PRINCIPAL) ........ #
 # ============================================================
-if st.session_state.pagina == "🏠 HOME":
-    # Configuração de Estilo Específica para a Home
-    st.markdown("""
-        <style>
-        /* Fundo Azul Royal com sobreposição de Dashboard */
-        .stApp {
-            background: linear-gradient(rgba(0, 26, 77, 0.8), rgba(0, 51, 153, 0.8)), 
-                        url('https://img.freepik.com/free-vector/abstract-digital-technology-background-with-network-connection-lines_1017-25552.jpg');
-            background-size: cover;
-            background-attachment: fixed;
-        }
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    .zion-nav-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+        background-color: #f8f9fa; /* Fundo suave */
+        border-radius: 15px;
+    }
+
+    .zion-logo {
+        width: 180px; /* Ajuste o tamanho da sua logo aqui */
+        margin-bottom: 40px;
+        filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
+    }
+
+    .nav-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* 3 colunas iguais */
+        gap: 25px;
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: #ffffff;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border: 1px solid #eee;
+    }
+
+    .nav-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        border-color: #007bff; /* Cor de destaque ao passar o mouse */
+    }
+
+    .nav-item i {
+        font-size: 28px;
+        margin-bottom: 12px;
+    }
+
+    /* Cores específicas para sofisticação */
+    .icon-cadastro { color: #444; }
+    .icon-financeiro { color: #1a5276; } /* Azul marinho sofisticado */
+    .icon-outros { color: #888; }
+
+    .nav-label {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+</style>
+
+<div class="zion-nav-container">
+    
+    <img src="URL_DA_SUA_LOGO_AQUI.png" alt="Zion Logo" class="zion-logo">
+
+    <div class="nav-grid">
         
-        /* Container dos Cards */
-        .card-home {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border-radius: 25px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            text-align: center;
-            margin-bottom: 20px;
-            min-height: 320px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: 0.3s;
-        }
-        
-        .card-home:hover {
-            transform: scale(1.02);
-            border: 1px solid #ffdb58; /* Brilho dourado no hover */
-        }
+        <a href="/cadastro" class="nav-item">
+            <i class="fas fa-address-card icon-cadastro"></i>
+            <span class="nav-label">Cadastro</span>
+        </a>
 
-        .icon-img {
-            width: 120px;
-            margin-bottom: 15px;
-            filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.3));
-        }
+        <a href="/financeiro" class="nav-item">
+            <i class="fas fa-landmark icon-financeiro"></i>
+            <span class="nav-label">Financeiro</span>
+        </a>
 
-        h1 { font-size: 40px !important; font-weight: 800 !important; margin-bottom: 0px !important; }
-        h3 { font-size: 22px !important; letter-spacing: 1px; margin-top: 10px !important; }
-        </style>
-    """, unsafe_allow_html=True)
+        <a href="/configuracoes" class="nav-item">
+            <i class="fas fa-sliders-h icon-outros"></i>
+            <span class="nav-label">Ajustes</span>
+        </a>
 
-    # Título Principal
-    st.markdown("<h1 style='text-align: center; padding-bottom: 40px;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
-
-    # Grid de Navegação
-    col1, col2, col3 = st.columns([1, 1, 1])
-
-    with col1:
-        st.markdown(f"""
-            <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/6819/6819643.png" class="icon-img">
-                <h3>CADASTRO</h3>
-                <p style='font-size: 14px; opacity: 0.8;'>Registro Inteligente</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("ABRIR", key="h_cad"): 
-            navegar("📋 CADASTRO")
-
-    with col2:
-        st.markdown(f"""
-            <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" class="icon-img">
-                <h3 style='color: #FFD700 !important;'>ORDEM SERVIÇO</h3>
-                <p style='font-size: 14px; opacity: 0.8;'>Agenda e Operação</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("ABRIR", key="h_grade"): 
-            navegar("📊 GRADE")
-
-    with col3:
-        st.markdown(f"""
-            <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png" class="icon-img">
-                <h3>FINANCEIRO</h3>
-                <p style='font-size: 14px; opacity: 0.8;'>Calculadora e Métricas</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("ABRIR", key="h_fin"): 
-            navegar("💰 FINANCEIRO")
-# ============================================================
+    </div>
+</div># ============================================================
 # # ........ BLOCO: CADASTRO (REGISTRO) ........ #
 # ============================================================
 elif st.session_state.pagina == "📋 CADASTRO":
