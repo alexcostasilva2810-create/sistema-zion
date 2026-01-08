@@ -4,73 +4,53 @@ import pandas as pd
 from fpdf import FPDF
 from datetime import datetime
 import io
-import base64  # <--- Certifique-se de que este import está aqui
-import os      # <--- E este também
+import base64  # Importante para converter a imagem
+import os      # Importante para verificar se o arquivo existe
 
-# --- NOVO CÓDIGO DA LOGO (COLOQUE AQUI) ---
+# 1. FUNÇÃO PARA CARREGAR IMAGEM LOCAL (LOGO.PNG)
 def get_base64_image(image_path):
+    # Verifica se o arquivo existe exatamente com este nome na pasta
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
     return None
 
-# Busca a logo que você já tem na pasta (conforme sua imagem LOGO.PNG)
+# Carrega a logo uma única vez para economizar memória
 img_base64 = get_base64_image("LOGO.PNG")
-# ------------------------------------------
 
-# 1. CONFIGURAÇÃO DE TELA
+# 2. CONFIGURAÇÃO INICIAL DO STREAMLIT
 st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. MOTOR DE NAVEGAÇÃO
+# 3. MOTOR DE NAVEGAÇÃO
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
 def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
-# 3. Estilo Visual Global (Melhoria de UI)
-st.markdown("""
+
+# 4. ESTILO VISUAL (Resolve o erro de texto aparecendo na tela)
+st.markdown(f"""
 <style>
-    .stApp {
-        background: linear-gradient(rgba(0, 26, 77, 0.85), rgba(0, 26, 77, 0.85)), 
+    .stApp {{
+        background: linear-gradient(rgba(0, 26, 77, 0.9), rgba(0, 26, 77, 0.9)), 
                     url('https://img.freepik.com/free-vector/abstract-digital-technology-background-with-network-connection-lines_1017-25552.jpg');
         background-size: cover;
-        background-attachment: fixed;
-    }
+    }}
     
-    /* Correção do erro visual: O CSS deve estar dentro deste bloco st.markdown */
-    div.stButton > button {
+    /* Estilo dos Botões Grandes */
+    div.stButton > button {{
         width: 100%;
-        height: 180px !important;
-        background: rgba(255, 255, 255, 0.08) !important;
+        height: 160px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 25px !important;
-        transition: all 0.4s ease-in-out !important;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-    div.stButton > button:hover {
-        background: rgba(255, 255, 255, 0.15) !important;
-        border-color: #00ff41 !important;
-        transform: translateY(-10px) !important;
-    }
-
-    .card-title {
-        font-weight: bold;
-        font-size: 18px;
-        margin-top: 10px;
-        color: white;
-    }
-
-    h1 { color: white !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        border-radius: 20px !important;
+        font-weight: bold !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+    }}
 </style>
-""", unsafe_allow_html=True)
-# --- FUNÇÃO CARREGAR DADOS ---
+""", unsafe_allow_html=True)# --- FUNÇÃO CARREGAR DADOS ---
 def carregar_dados():
     try:
         res = requests.post(f"https://api.notion.com/v1/databases/{DATABASE}/query", headers=headers)
