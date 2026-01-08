@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. MOTOR DE NAVEGAÇÃO (Evita erro de NameError)
+# 2. MOTOR DE NAVEGAÇÃO
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
@@ -20,8 +20,8 @@ def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
 
-# 3. ESTILO VISUAL (Fundo Azul Royal e Letras Brancas)
-st.markdown
+# 3. ESTILO VISUAL E MENU (Corrigido para evitar SyntaxError)
+st.markdown("""
     <style>
     /* Fundo do App */
     .stApp { 
@@ -31,7 +31,7 @@ st.markdown
     /* Textos Globais */
     h1, h2, h3, p, span, label { color: white !important; }
     
-    /* Botões Grandes para Celular */
+    /* Botões Padrão Streamlit */
     .stButton>button { 
         width: 100%; 
         border-radius: 12px; 
@@ -43,19 +43,93 @@ st.markdown
         box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
         margin-bottom: 10px;
     }
-    
-    /* Cards de Destaque */
-    .card-zion {
+
+    /* Estilo para a Logo e Menu de Ícones */
+    .menu-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        padding: 20px 0;
+    }
+
+    .zion-logo {
+        width: 180px;
+        margin-bottom: 30px;
+    }
+
+    .icon-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .icon-card {
         background: rgba(255, 255, 255, 0.1);
-        padding: 20px; 
-        border-radius: 15px; 
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        text-align: center; 
-        margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        padding: 25px;
+        text-align: center;
+        text-decoration: none !important;
+        transition: 0.3s;
+    }
+
+    .icon-card:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-5px);
+    }
+
+    .icon-card i {
+        font-size: 40px;
+        color: white;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .icon-card span {
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
     }
     </style>
- unsafe_allow_html=True)
-# ============================================================
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    """, unsafe_allow_html=True)
+
+# 4. LÓGICA DA HOME (Com Logo e Ícones Navegáveis)
+if st.session_state.pagina == "🏠 HOME":
+    st.markdown(f"""
+        <div class="menu-container">
+            <img src="https://i.imgur.com/vHq0AUP.png" class="zion-logo"> 
+            
+            <div class="icon-grid">
+                <a href="/?p=cadastro" target="_self" class="icon-card">
+                    <i class="fas fa-user-plus"></i>
+                    <span>CADASTRO</span>
+                </a>
+                
+                <a href="/?p=financeiro" target="_self" class="icon-card">
+                    <i class="fas fa-chart-line"></i>
+                    <span>FINANCEIRO</span>
+                </a>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Botões invisíveis para capturar o clique do link HTML no Streamlit (Opcional)
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("ACESSAR CADASTRO", key="btn_cad"): navegar("📋 CADASTRO")
+    with col2:
+        if st.button("ACESSAR FINANCEIRO", key="btn_fin"): navegar("💰 FINANCEIRO")
+
+# 5. BLOCO DE CADASTRO (Onde você estava tendo erro)
+elif st.session_state.pagina == "📋 CADASTRO":
+    st.markdown("<h2>📋 NOVO LANÇAMENTO</h2>", unsafe_allow_html=True)
+    if st.button("⬅️ VOLTAR PARA HOME"): 
+        navegar("🏠 HOME")# ============================================================
 # # ........ BLOCO: HOME (MENU PRINCIPAL) ........ #
 # ============================================================
 # --- Definição do Menu (Coloque isso antes do bloco if/elif) ---
