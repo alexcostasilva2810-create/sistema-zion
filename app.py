@@ -1,14 +1,14 @@
 import streamlit as st
-import requests
 import pandas as pd
-from fpdf import FPDF
 from datetime import datetime
+from fpdf import FPDF
+import requests
 import io
 
 # 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="Zion Tecnologia - Gestão O.S", layout="wide")
+st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
-# --- SISTEMA DE NAVEGAÇÃO (Adicionado para evitar erros) ---
+# 2. MOTOR DE NAVEGAÇÃO (Obrigatório estar aqui em cima)
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
