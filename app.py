@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# 1. CONFIGURAÇÃO DE TELA (Esconde a barra lateral e limpa o layout)
+# 1. CONFIGURAÇÃO DE TELA (Mobile-First)
 st.set_page_config(
     page_title="Zion Tecnologia", 
     layout="wide", 
@@ -17,12 +17,11 @@ def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
 
-# 3. ESTILO VISUAL (Azul Suave, Ícones Verdes/Amarelos e Sem Erros)
+# 3. ESTILO VISUAL (Azul Suave e Ícones Nítidos)
 st.markdown("""
 <style>
     /* Remove a barra lateral da esquerda e erros vermelhos */
-    [data-testid="stSidebar"] { display: none; }
-    .stAlert { display: none !important; }
+    [data-testid="stSidebar"], .stAlert { display: none !important; }
 
     /* Fundo Azul Suave Profundo */
     .stApp {
@@ -30,7 +29,7 @@ st.markdown("""
     }
     
     /* Título Principal */
-    h1 { color: white !important; text-align: center; font-size: 35px !important; margin-bottom: 50px !important; }
+    h1 { color: white !important; text-align: center; font-size: 32px !important; margin-bottom: 40px !important; }
 
     /* Estilo dos Botões */
     div.stButton > button {
@@ -41,7 +40,6 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 15px !important;
         font-weight: bold !important;
-        transition: 0.3s;
     }
 
     div.stButton > button:hover {
@@ -49,15 +47,11 @@ st.markdown("""
         background: rgba(0, 255, 65, 0.1) !important;
     }
 
-    /* Ajuste de Nitidez e Cores dos Ícones */
-    .icon-box {
-        text-align: center;
-        margin-bottom: -15px;
-    }
+    /* Ajuste de Nitidez dos Ícones (Verde e Amarelo) */
+    .icon-box { text-align: center; margin-bottom: -15px; }
     .icon-box img {
-        width: 80px;
-        /* Filtro para deixar as cores Verde Claro e Amarelo mais vibrantes */
-        filter: drop-shadow(0px 0px 8px rgba(0, 255, 65, 0.5)) brightness(1.2);
+        width: 85px;
+        filter: saturate(1.5) brightness(1.2) drop-shadow(0px 0px 10px rgba(255, 215, 0, 0.3));
     }
 </style>
 """, unsafe_allow_html=True)
@@ -137,24 +131,23 @@ if st.session_state.pagina == "🏠 HOME":
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # Ícone: Robô (Verde Claro)
+        # Ícone: Robô (Ajustado para Verde Claro)
         st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/6819/6819643.png"></div>', unsafe_allow_html=True)
-        if st.button("📝 CADASTRO", key="bt1"):
+        if st.button("📝 CADASTRO", key="home_btn1"):
             navegar("📋 CADASTRO")
 
     with col2:
-        # Ícone: Agenda (Dourada/Amarela)
+        # Ícone: Agenda (Ajustado para Amarelo Dourado)
         st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png"></div>', unsafe_allow_html=True)
-        if st.button("📅 OPERACIONAL", key="bt2"):
+        if st.button("📅 OPERACIONAL", key="home_btn2"):
             navegar("📊 GRADE")
 
     with col3:
-        # Ícone: Financeiro (Verde Neon)
+        # Ícone: Financeiro (Ajustado para Verde Vibrante)
         st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png"></div>', unsafe_allow_html=True)
-        if st.button("💰 FINANCEIRO", key="bt3"):
-            navegar("💰 FINANCEIRO")
-            
-    # --- LOGO OPCIONAL NO TOPO (SÓ APARECE SE NÃO DER ERRO) ---
+        if st.button("💰 FINANCEIRO", key="home_btn3"):
+            navegar("💰 FINANCEIRO")            
+   
     # Se quiser a logo no topo bem discreta, use o código abaixo:
     if img_base64:
         st.sidebar.markdown(f'<img src="data:image/png;base64,{img_base64}" width="150">', unsafe_allow_html=True)
