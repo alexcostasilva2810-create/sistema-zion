@@ -54,7 +54,7 @@ st.markdown("""
         margin-bottom: 15px;
     }
     </style>
-""", unsafe_allow_html=True)
+ unsafe_allow_html=True)
 # ============================================================
 # # ........ BLOCO: HOME (MENU PRINCIPAL) ........ #
 # ============================================================
