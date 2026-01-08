@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# 1. CONFIGURAÇÃO DE TELA (Mobile-First)
+# 1. CONFIGURAÇÃO DE TELA (Força ocultar barra lateral e erros)
 st.set_page_config(
     page_title="Zion Tecnologia", 
     layout="wide", 
@@ -17,10 +17,10 @@ def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
 
-# 3. ESTILO VISUAL (Azul Suave e Ícones Nítidos)
+# 3. ESTILO VISUAL (Azul Suave e Ícones Amarelo/Verde Nitidez Máxima)
 st.markdown("""
 <style>
-    /* Remove a barra lateral da esquerda e erros vermelhos */
+    /* Remove a barra lateral da esquerda e qualquer erro visual */
     [data-testid="stSidebar"], .stAlert { display: none !important; }
 
     /* Fundo Azul Suave Profundo */
@@ -29,9 +29,15 @@ st.markdown("""
     }
     
     /* Título Principal */
-    h1 { color: white !important; text-align: center; font-size: 32px !important; margin-bottom: 40px !important; }
+    h1 { 
+        color: white !important; 
+        text-align: center; 
+        font-size: 32px !important; 
+        margin-bottom: 50px !important; 
+        font-family: 'sans-serif';
+    }
 
-    /* Estilo dos Botões */
+    /* Estilo dos Botões - Limpos e Modernos */
     div.stButton > button {
         width: 100%;
         height: 100px !important;
@@ -40,6 +46,7 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 15px !important;
         font-weight: bold !important;
+        font-size: 16px !important;
     }
 
     div.stButton > button:hover {
@@ -47,11 +54,16 @@ st.markdown("""
         background: rgba(0, 255, 65, 0.1) !important;
     }
 
-    /* Ajuste de Nitidez dos Ícones (Verde e Amarelo) */
-    .icon-box { text-align: center; margin-bottom: -15px; }
+    /* Centralização e Nitidez dos Ícones */
+    .icon-box {
+        text-align: center;
+        margin-bottom: -15px; /* Cola o ícone no botão */
+    }
+    
     .icon-box img {
-        width: 85px;
-        filter: saturate(1.5) brightness(1.2) drop-shadow(0px 0px 10px rgba(255, 215, 0, 0.3));
+        width: 80px;
+        /* Brilho e Nitidez para Amarelo e Verde */
+        filter: brightness(1.3) saturate(1.8) drop-shadow(0px 0px 12px rgba(0, 255, 65, 0.4));
     }
 </style>
 """, unsafe_allow_html=True)
@@ -128,25 +140,26 @@ def navegar(p): st.session_state.pagina = p; st.rerun()
 if st.session_state.pagina == "🏠 HOME":
     st.markdown("<h1>ZION BUSINESS</h1>", unsafe_allow_html=True)
 
+    # Criação das 3 Colunas para os Ícones Nítidos
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # Ícone: Robô (Ajustado para Verde Claro)
+        # Ícone Robô (Verde Claro Nítido)
         st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/6819/6819643.png"></div>', unsafe_allow_html=True)
-        if st.button("📝 CADASTRO", key="home_btn1"):
+        if st.button("📝 CADASTRO", key="bt_home_1"):
             navegar("📋 CADASTRO")
 
     with col2:
-        # Ícone: Agenda (Ajustado para Amarelo Dourado)
+        # Ícone Agenda (Amarelo Dourado Nítido)
         st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png"></div>', unsafe_allow_html=True)
-        if st.button("📅 OPERACIONAL", key="home_btn2"):
+        if st.button("📅 OPERACIONAL", key="bt_home_2"):
             navegar("📊 GRADE")
 
     with col3:
-        # Ícone: Financeiro (Ajustado para Verde Vibrante)
+        # Ícone Financeiro (Verde Neon Nítido)
         st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png"></div>', unsafe_allow_html=True)
-        if st.button("💰 FINANCEIRO", key="home_btn3"):
-            navegar("💰 FINANCEIRO")            
+        if st.button("💰 FINANCEIRO", key="bt_home_3"):
+            navegar("💰 FINANCEIRO")
    
     # Se quiser a logo no topo bem discreta, use o código abaixo:
     if img_base64:
