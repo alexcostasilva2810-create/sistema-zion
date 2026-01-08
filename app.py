@@ -31,48 +31,52 @@ st.markdown("""
     
     h1 { color: #ffffff !important; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; text-align: center; margin-top: 20px;}
 
-    /* Cards Business */
-    div.stButton > button {
-        width: 100%;
-        height: 150px !important;
-        background: rgba(255, 255, 255, 0.05) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 20px !important;
-        transition: all 0.4s ease-in-out !important;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+   st.markdown("""
+<style>
+    /* Cards Business */ 
+    div.stButton > button { 
+        width: 100%; 
+        height: 150px !important; 
+        background: rgba(255, 255, 255, 0.05) !important; 
+        color: white !important; 
+        border: 1px solid rgba(255, 255, 255, 0.2) !important; 
+        border-radius: 20px !important; 
+        transition: all 0.4s ease-in-out !important; 
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important; 
     }
 
-    div.stButton > button:hover {
-        background: rgba(255, 255, 255, 0.12) !important;
-        border-color: #00ff41 !important;
-        transform: translateY(-8px) !important;
+    div.stButton > button:hover { 
+        background: rgba(255, 255, 255, 0.12) !important; 
+        border-color: #00ff41 !important; 
+        transform: translateY(-8px) !important; 
     }
 
-    .icon-container {
-        font-size: 40px;
-        color: #00ff41;
-        text-align: center;
-        display: block;
-        margin-bottom: 5px;
+    .icon-container { 
+        font-size: 40px; 
+        color: #00ff41; 
+        text-align: center; 
+        display: block; 
+        margin-bottom: 5px; 
     }
 
-    /* Container da Logo abaixo dos ícones */
-    .logo-footer {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 50px;
-        padding: 20px;
+    /* Container da Logo abaixo dos ícones */ 
+    .logo-footer { 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        margin-top: 50px; 
+        padding: 20px; 
     }
 
-    .logo-img {
-        width: 250px; /* Ajuste o tamanho da sua logo aqui */
-        filter: drop-shadow(0px 5px 15px rgba(0,0,0,0.5));
-        opacity: 0.9;
+    .logo-img { 
+        width: 250px; 
+        filter: drop-shadow(0px 5px 15px rgba(0,0,0,0.5)); 
+        opacity: 0.9; 
     }
-    </style>
-    """, unsafe_allow_html=True)# --- FUNÇÃO CARREGAR DADOS ---
+</style>
+""", unsafe_allow_html=True)
+
+# --- FUNÇÃO CARREGAR DADOS ---
 def carregar_dados():
     try:
         res = requests.post(f"https://api.notion.com/v1/databases/{DATABASE}/query", headers=headers)
