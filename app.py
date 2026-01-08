@@ -224,114 +224,106 @@ elif st.session_state.pagina == "📊 GRADE":
             col_print.download_button("🖨️", data=gerar_os_pdf(d), file_name=f"OS_{d['os_n']}.pdf", key=f"pr_{d['ID']}")
             st.divider()
 elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.markdown("<h1>💰 FINANCEIRO AUTOMATIZADO ZION</h1>", unsafe_allow_html=True)
+    st.markdown("<h1>💰 ESTRATÉGICO FINANCEIRO ZION</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
-    col_f1, col_f2 = st.columns(2)
-    data_ini = col_f1.date_input("Início do Período", datetime.now(), format="DD/MM/YYYY")
-    data_fim = col_f2.date_input("Fim do Período", datetime.now(), format="DD/MM/YYYY")
+    # 1. FILTROS (Data e Status)
+    c_f1, c_f2, c_f3 = st.columns([1, 1, 2])
+    data_ini = c_f1.date_input("Início", datetime.now(), format="DD/MM/YYYY")
+    data_fim = c_f2.date_input("Fim", datetime.now(), format="DD/MM/YYYY")
+    filtro_status = c_f3.multiselect("Filtrar por Status:", ["Em Andamento", "Encerrado"], default=["Em Andamento", "Encerrado"])
 
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
         
-        # Garantir que as datas são tratadas como tempo para o cálculo
+        # Conversão para cálculos
         df['ini_m'] = pd.to_datetime(df['ini_m'], errors='coerce')
         df['fim_m'] = pd.to_datetime(df['fim_m'], errors='coerce')
         df['dt_s'] = pd.to_datetime(df['dt_s'], errors='coerce')
 
-        # --- FUNÇÃO DE CÁLCULO COM REGRA DE NEGÓCIO ---
-        def aplicar_regra_financeira(row):
-            # 1. Calcular Dias de Operação
+        # REGRA AUTOMÁTICA DE PREÇOS
+        def aplicar_regra(row):
             if pd.notnull(row['ini_m']) and pd.notnull(row['fim_m']):
-                delta = (row['fim_m'] - row['ini_m']).days
-                qtd_dias = delta + 1 if delta >= 0 else 1
-            else:
-                qtd_dias = 1 # Padrão de 1 dia se as datas estiverem vazias
+                dias = (row['fim_m'] - row['ini_m']).days
+                qtd_dias = dias + 1 if dias >= 0 else 1
+            else: qtd_dias = 1
             
-            # 2. Identificar Tipo e Atribuir Valor (Escolta 1870 / Vigilância 970)
-            servico = str(row.get('modalidade', 'ESCOLTA')).upper()
-            if "VIGILÂNCIA" in servico or "VIGILANCIA" in servico:
-                valor_diaria = 970.00
-                tipo_label = "VIGILÂNCIA"
-            else:
-                valor_diaria = 1870.00
-                tipo_label = "ESCOLTA"
-                
-            return pd.Series([qtd_dias, valor_diaria, qtd_dias * valor_diaria, tipo_label])
+            serv = str(row.get('modalidade', 'ESCOLTA')).upper()
+            v_unit = 970.00 if "VIGILÂNCIA" in serv or "VIGILANCIA" in serv else 1870.00
+            tipo = "VIGILÂNCIA" if v_unit == 970.00 else "ESCOLTA"
+            return pd.Series([qtd_dias, v_unit, qtd_dias * v_unit, tipo])
 
-        # Aplica a automação
-        df[['DIAS', 'V_UNIT', 'TOTAL_OS', 'TIPO_SERV']] = df.apply(aplicar_regra_financeira, axis=1)
+        df[['DIAS', 'V_UNIT', 'TOTAL_OS', 'TIPO_SERV']] = df.apply(aplicar_regra, axis=1)
 
-        # Filtrar pelo período selecionado
-        mask = (df['dt_s'].dt.date >= data_ini) & (df['dt_s'].dt.date <= data_fim)
+        # APLICAR FILTROS (Data + Status)
+        mask = (df['dt_s'].dt.date >= data_ini) & (df['dt_s'].dt.date <= data_fim) & (df['sts'].isin(filtro_status))
         df_f = df.loc[mask].copy()
 
-        # Métricas
-        c_m1, c_m2 = st.columns(2)
-        c_m1.metric("O.S no Período", len(df_f))
-        c_m2.metric("Total a Receber", f"R$ {df_f['TOTAL_OS'].sum():,.2f}")
+        if not df_f.empty:
+            # 2. GRÁFICO DE PIZZA (PROSPECÇÃO POR MODALIDADE)
+            st.write("### 📈 Prospecção por Modalidade")
+            import plotly.express as px
+            # Agrupar por modalidade e somar o faturamento
+            resumo_piz = df_f.groupby('TIPO_SERV')['TOTAL_OS'].sum().reset_index()
+            fig = px.pie(resumo_piz, values='TOTAL_OS', names='TIPO_SERV', 
+                         title='Distribuição do Faturamento (%)',
+                         color_discrete_map={'ESCOLTA':'#002366', 'VIGILÂNCIA':'#00ff41'})
+            fig.update_traces(textinfo='percent+label')
+            st.plotly_chart(fig, use_container_width=True)
 
-        # --- TABELA NA TELA ---
-        st.write("### 📋 Extrato Financeiro Zion")
-        df_view = df_f[['os_n', 'cli', 'TIPO_SERV', 'DIAS', 'V_UNIT', 'TOTAL_OS', 'sts']].copy()
-        df_view.columns = ['Nº O.S', 'CLIENTE', 'TIPO', 'DIAS', 'V. UNIT (R$)', 'TOTAL (R$)', 'STATUS']
-        st.dataframe(df_view, use_container_width=True, hide_index=True)
+            # 3. MÉTRICAS E TABELA
+            col_m1, col_m2 = st.columns(2)
+            col_m1.metric("Total de O.S", len(df_f))
+            col_m2.metric("Faturamento Estimado", f"R$ {df_f['TOTAL_OS'].sum():,.2f}")
 
-        # --- PDF ELEGANTE COM TODAS AS COLUNAS ---
-        def gerar_pdf_premium_zion(df_rel, d1, d2):
-            pdf = FPDF(orientation='L') # Paisagem para caber todas as colunas
-            pdf.add_page()
-            
-            # Cabeçalho Zion
-            pdf.set_fill_color(0, 35, 102)
-            pdf.rect(0, 0, 297, 40, 'F')
-            pdf.set_text_color(255, 255, 255)
-            pdf.set_font("Arial", 'B', 20)
-            pdf.cell(277, 15, "ZION TECNOLOGIA", ln=True, align='C')
-            pdf.set_font("Arial", 'B', 12)
-            pdf.cell(277, 10, f"RELATORIO FINANCEIRO: {d1.strftime('%d/%m/%Y')} A {d2.strftime('%d/%m/%Y')}", ln=True, align='C')
-            
-            pdf.ln(20)
-            pdf.set_text_color(0, 0, 0)
-            pdf.set_font("Arial", 'B', 9)
-            pdf.set_fill_color(230, 230, 230)
-            
-            # Cabeçalho da Tabela PDF
-            # OS(20), CLI(70), TIPO(40), DIAS(20), UNIT(40), TOTAL(40), STS(40)
-            pdf.cell(20, 10, "O.S", 1, 0, 'C', True)
-            pdf.cell(75, 10, "CLIENTE", 1, 0, 'C', True)
-            pdf.cell(35, 10, "TIPO", 1, 0, 'C', True)
-            pdf.cell(15, 10, "DIAS", 1, 0, 'C', True)
-            pdf.cell(40, 10, "V. UNIT (R$)", 1, 0, 'C', True)
-            pdf.cell(40, 10, "TOTAL (R$)", 1, 0, 'C', True)
-            pdf.cell(32, 10, "STATUS", 1, 1, 'C', True)
-            
-            pdf.set_font("Arial", '', 9)
-            for _, r in df_rel.iterrows():
-                pdf.cell(20, 8, str(r['Nº O.S']), 1, 0, 'C')
-                pdf.cell(75, 8, str(r['CLIENTE'])[:35], 1, 0, 'L')
-                pdf.cell(35, 8, str(r['TIPO']), 1, 0, 'C')
-                pdf.cell(15, 8, str(int(r['DIAS'])), 1, 0, 'C')
-                pdf.cell(40, 8, f"{r['V. UNIT (R$)']:,.2f}", 1, 0, 'R')
-                pdf.cell(40, 8, f"{r['TOTAL (R$)']:,.2f}", 1, 0, 'R')
-                pdf.cell(32, 8, str(r['STATUS']), 1, 1, 'C')
-            
-            pdf.ln(10)
-            total_periodo = df_rel['TOTAL (R$)'].sum()
-            pdf.set_font("Arial", 'B', 14)
-            pdf.set_fill_color(0, 35, 102)
-            pdf.set_text_color(255, 255, 255)
-            pdf.cell(210, 12, "", 0, 0)
-            pdf.cell(67, 12, f" TOTAL: R$ {total_periodo:,.2f} ", 0, 1, 'R', True)
-            
-            return pdf.output(dest='S').encode('latin-1')
+            st.write("### 📋 Detalhamento Financeiro")
+            df_view = df_f[['os_n', 'cli', 'TIPO_SERV', 'DIAS', 'V_UNIT', 'TOTAL_OS', 'sts']].copy()
+            df_view.columns = ['Nº O.S', 'CLIENTE', 'TIPO', 'DIAS', 'V. UNIT', 'TOTAL', 'STATUS']
+            st.dataframe(df_view, use_container_width=True, hide_index=True)
 
-        st.download_button(
-            label="🖨️ IMPRIMIR RELATÓRIO PDF",
-            data=gerar_pdf_premium_zion(df_view, data_ini, data_fim),
-            file_name="Financeiro_Zion_Completo.pdf",
-            mime="application/pdf"
-        )
+            # 4. FUNÇÃO PDF ELEGANTE (L)
+            def gerar_pdf_estratégico(df_rel, d1, d2):
+                pdf = FPDF(orientation='L')
+                pdf.add_page()
+                pdf.set_fill_color(0, 35, 102) # Azul Royal
+                pdf.rect(0, 0, 297, 35, 'F')
+                pdf.set_text_color(255, 255, 255)
+                pdf.set_font("Arial", 'B', 18)
+                pdf.cell(277, 12, "ZION TECNOLOGIA - RELATORIO ESTRATEGICO", ln=True, align='C')
+                pdf.set_font("Arial", '', 10)
+                pdf.cell(277, 8, f"PERIODO: {d1.strftime('%d/%m/%Y')} A {d2.strftime('%d/%m/%Y')} | STATUS: {', '.join(filtro_status)}", ln=True, align='C')
+                
+                pdf.ln(15)
+                pdf.set_text_color(0, 0, 0)
+                pdf.set_font("Arial", 'B', 9)
+                headers = ["O.S", "CLIENTE", "TIPO", "DIAS", "V. UNIT", "TOTAL", "STATUS"]
+                widths = [20, 75, 40, 20, 40, 40, 42]
+                
+                for i, h in enumerate(headers):
+                    pdf.cell(widths[i], 10, h, 1, 0, 'C', False)
+                pdf.ln()
+
+                pdf.set_font("Arial", '', 8)
+                for _, r in df_rel.iterrows():
+                    pdf.cell(widths[0], 8, str(r['Nº O.S']), 1, 0, 'C')
+                    pdf.cell(widths[1], 8, str(r['CLIENTE'])[:35], 1, 0, 'L')
+                    pdf.cell(widths[2], 8, str(r['TIPO']), 1, 0, 'C')
+                    pdf.cell(widths[3], 8, str(int(r['DIAS'])), 1, 0, 'C')
+                    pdf.cell(widths[4], 8, f"{r['V. UNIT']:,.2f}", 1, 0, 'R')
+                    pdf.cell(widths[5], 8, f"{r['TOTAL']:,.2f}", 1, 0, 'R')
+                    pdf.cell(widths[6], 8, str(r['STATUS']), 1, 1, 'C')
+                
+                pdf.ln(5)
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(277, 10, f"VALOR TOTAL DO PERIODO: R$ {df_rel['TOTAL'].sum():,.2f}", 0, 1, 'R')
+                return pdf.output(dest='S').encode('latin-1')
+
+            st.download_button("🖨️ IMPRIMIR RELATÓRIO ESTRATÉGICO", 
+                               data=gerar_pdf_estratégico(df_view, data_ini, data_fim),
+                               file_name="Financeiro_Zion_Filtros.pdf",
+                               mime="application/pdf")
+        else:
+            st.warning("Nenhum dado encontrado para os filtros selecionados.")
     else:
-        st.warning("Nenhum dado encontrado para este período.")
+        st.error("Não foi possível carregar os dados da base.")
