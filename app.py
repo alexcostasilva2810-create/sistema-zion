@@ -160,7 +160,10 @@ st.markdown(MENU_HTML, unsafe_allow_html=True)
 # ============================================================
 elif st.session_state.pagina == "📋 CADASTRO":
     st.markdown("<h1>📋 NOVO LANÇAMENTO</h1>", unsafe_allow_html=True)
-    if st.button("⬅️ VOLTAR PARA HOME", key="c1"): navegar("🏠 HOME")
+    
+    # Verifique se a função navegar está definida antes deste bloco
+    if st.button("⬅️ VOLTAR PARA HOME", key="c1"):
+        navegar("🏠 HOME")
     
     with st.form("form_registro"):
         st.markdown("### Preencha os dados da Escolta")
