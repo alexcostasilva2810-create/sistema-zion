@@ -1,27 +1,31 @@
 import streamlit as st
-import pandas as pd
-from datetime import datetime
+import base64
+import os
 
-# 1. CONFIGURAÇÃO DE TELA (Mobile-First)
+# --- FUNÇÃO DE BLINDAGEM DA LOGO ---
+def carregar_logo_safe(caminho="LOGO.PNG"):
+    try:
+        if os.path.exists(caminho):
+            with open(caminho, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+    except:
+        pass
+    return None
+
+# Criamos a variável uma única vez no topo para evitar o NameError
+img_base64 = carregar_logo_safe()
+
+# --- CONFIGURAÇÃO E ESTILO (Azul Suave) ---
 st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. MOTOR DE NAVEGAÇÃO
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = "🏠 HOME"
-
-def navegar(destino):
-    st.session_state.pagina = destino
-    st.rerun()
-
-# 3. ESTILO VISUAL (Azul Suave e Limpeza de Erros)
 st.markdown("""
 <style>
-    /* Azul Suave e Profundo */
+    /* Fundo Azul Suave Profundo */
     .stApp {
-        background: linear-gradient(135deg, #001233 0%, #002855 100%) !important;
+        background: linear-gradient(135deg, #000c24 0%, #001a40 100%) !important;
     }
     
-    /* Remove as faixas de erro padrão do Streamlit que poluem o visual */
+    /* Esconde mensagens de erro automáticas do Streamlit */
     .stAlert { display: none !important; }
 
     /* Estilo dos Botões */
@@ -33,22 +37,16 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 15px !important;
         font-weight: bold !important;
-    }
-    
-    div.stButton > button:hover {
-        border-color: #00ff41 !important;
-        background: rgba(255, 255, 255, 0.1) !important;
+        margin-top: 10px;
     }
 
     .icon-wrapper {
         text-align: center;
-        margin-bottom: -15px;
+        margin-bottom: -10px;
+        padding-top: 20px;
     }
-    
-    h1 { color: white !important; text-align: center; font-size: 28px !important; }
 </style>
 """, unsafe_allow_html=True)
-
 # --- FUNÇÃO CARREGAR DADOS ---
 def carregar_dados():
     try:
@@ -120,29 +118,32 @@ def navegar(p): st.session_state.pagina = p; st.rerun()
 
 #---- Tela Inicial ----# 
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<h1>ZION BUSINESS</h1>", unsafe_allow_html=True)
-    st.markdown("<div style='margin-bottom: 50px;'></div>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: white;'>ZION BUSINESS</h1>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # Ícone acima do botão
-        st.markdown('<div class="icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/6819/6819643.png" width="70"></div>', unsafe_allow_html=True)
-        if st.button("📝 CADASTRO", key="btn_cad"):
+        # Ícone acima do botão de Cadastro
+        st.markdown('<div class="icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/6819/6819643.png" width="80"></div>', unsafe_allow_html=True)
+        if st.button("📝 CADASTRO", key="h_cad"):
             navegar("📋 CADASTRO")
 
     with col2:
-        # Ícone acima do botão
-        st.markdown('<div class="icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" width="70"></div>', unsafe_allow_html=True)
-        if st.button("📅 OPERACIONAL", key="btn_grade"):
+        # Ícone acima do botão de Operacional
+        st.markdown('<div class="icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" width="80"></div>', unsafe_allow_html=True)
+        if st.button("📅 OPERACIONAL", key="h_os"):
             navegar("📊 GRADE")
 
     with col3:
-        # Ícone acima do botão
-        st.markdown('<div class="icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png" width="70"></div>', unsafe_allow_html=True)
-        if st.button("💰 FINANCEIRO", key="btn_fin"):
+        # Ícone acima do botão de Financeiro
+        st.markdown('<div class="icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png" width="80"></div>', unsafe_allow_html=True)
+        if st.button("💰 FINANCEIRO", key="h_fin"):
             navegar("💰 FINANCEIRO")
-
+            
+    # --- LOGO OPCIONAL NO TOPO (SÓ APARECE SE NÃO DER ERRO) ---
+    # Se quiser a logo no topo bem discreta, use o código abaixo:
+    if img_base64:
+        st.sidebar.markdown(f'<img src="data:image/png;base64,{img_base64}" width="150">', unsafe_allow_html=True)
     # A logo e a faixa vermelha foram removidas daqui para limpar o visual.
     # Logo Footer
     st.markdown(f"""
