@@ -153,7 +153,9 @@ MENU_HTML = """
 """
 
 # Comando para renderizar o Menu no Streamlit
-st.markdown(MENU_HTML, unsafe_allow_html=True)</div></div></div># ============================================================
+st.markdown(MENU_HTML, unsafe_allow_html=True)
+
+# ============================================================
 # # ........ BLOCO: CADASTRO (REGISTRO) ........ #
 # ============================================================
 elif st.session_state.pagina == "📋 CADASTRO":
