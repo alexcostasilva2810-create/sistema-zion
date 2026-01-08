@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 from datetime import datetime
 
-# 1. CONFIGURAÇÃO DE TELA (Oculta barra lateral e limpa o layout)
+# 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
 
 # 2. MOTOR DE NAVEGAÇÃO
@@ -14,45 +14,46 @@ def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
 
-# 3. ESTILO VISUAL (Fundo de Escritório + Azul Suave + Ícones Mostarda)
+# 3. ESTILO CSS (Fundo de Escritório, Azul Suave e Ícones Mostarda)
 st.markdown("""
 <style>
-    /* Remove barra lateral e mensagens de erro padrão */
+    /* Remove barra lateral e mensagens de erro automáticas */
     [data-testid="stSidebar"], .stAlert { display: none !important; }
     
-    /* Fundo com Imagem de Escritório e Overlay Azul Suave */
+    /* Fundo com Imagem de Escritório e Camada Azul Suave */
     .stApp {
-        background: linear-gradient(rgba(0, 20, 50, 0.85), rgba(0, 20, 50, 0.85)), 
+        background: linear-gradient(rgba(0, 26, 64, 0.8), rgba(0, 26, 64, 0.8)), 
                     url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000');
         background-size: cover;
         background-attachment: fixed;
     }
 
-    h1 { color: white !important; text-align: center; font-size: 38px !important; margin-bottom: 40px !important; font-weight: 800; }
+    h1 { color: white !important; text-align: center; font-size: 35px !important; margin-bottom: 40px !important; }
 
-    /* Botões Modernos */
+    /* Estilo dos Botões */
     div.stButton > button {
         width: 100%;
         height: 100px !important;
-        background: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(255, 255, 255, 0.07) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 20px !important;
+        border-radius: 15px !important;
         font-weight: bold !important;
         transition: 0.3s ease;
     }
     div.stButton > button:hover {
-        border-color: #FFCC33 !important; /* Cor Mostarda no Hover */
+        border-color: #E2B13C !important; /* Mostarda no foco */
         background: rgba(255, 255, 255, 0.15) !important;
-        transform: translateY(-3px);
     }
 
-    /* Ícones com Filtros de Cor */
+    /* Ajuste de Ícones */
     .icon-box { text-align: center; margin-bottom: -15px; }
-    .icon-box img { width: 85px; filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.5)); }
+    .icon-box img { width: 80px; }
     
-    /* Filtro Mostarda para o primeiro ícone */
-    .icon-mostarda img { filter: sepia(1) saturate(5) hue-rotate(5deg) brightness(1.2); }
+    /* Filtro para transformar o ícone em cor Mostarda */
+    .mostarda img { 
+        filter: invert(78%) sepia(35%) saturate(836%) hue-rotate(354deg) brightness(93%) contrast(92%); 
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -63,24 +64,23 @@ if st.session_state.pagina == "🏠 HOME":
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # Ícone de Lançamento na cor MOSTARDA
-        st.markdown('<div class="icon-box icon-mostarda"><img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png"></div>', unsafe_allow_html=True)
-        if st.button("📝 NOVO LANÇAMENTO", key="bt_1"):
+        # Ícone de CANETA na cor MOSTARDA
+        st.markdown('<div class="icon-box mostarda"><img src="https://cdn-icons-png.flaticon.com/512/1250/1250615.png"></div>', unsafe_allow_html=True)
+        if st.button("📝 NOVO LANÇAMENTO", key="btn_lan"):
             st.session_state.dados_edicao = None
             navegar("📋 CADASTRO")
 
     with col2:
-        # Ícone Operacional (Verde/Azul original)
+        # Ícone de Agenda/Calendário
         st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png"></div>', unsafe_allow_html=True)
-        if st.button("📊 VER AGENDAMENTOS", key="bt_2"):
+        if st.button("📊 VER AGENDAMENTOS", key="btn_grade"):
             navegar("📊 GRADE")
 
     with col3:
-        # Ícone Financeiro (Dourado/Amarelo original)
+        # Ícone Financeiro
         st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png"></div>', unsafe_allow_html=True)
-        if st.button("💰 FINANCEIRO", key="bt_3"):
+        if st.button("💰 FINANCEIRO", key="btn_fin"):
             navegar("💰 FINANCEIRO")
-
 # Os demais blocos (Cadastro, Grade, Financeiro) seguem sua lógica original abaixo
 elif st.session_state.pagina == "📋 CADASTRO":
     edit = st.session_state.dados_edicao
