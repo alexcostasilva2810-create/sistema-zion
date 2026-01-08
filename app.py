@@ -19,39 +19,89 @@ headers = {
 }
 
 # --- ESTILO CSS MELHORADO ---
-# Substitua o bloco de estilo anterior por este:
+# --- SUBSTITUA O BLOCO DE ESTILO E A HOME POR ESTE ---
 
 st.markdown("""
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-    /* 1. Botões como Cards (Menu Principal) */
+    .stApp {
+        background: linear-gradient(rgba(0, 35, 102, 0.85), rgba(0, 35, 102, 0.85)), 
+                    url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=2070&auto=format&fit=crop");
+        background-size: cover; background-position: center; background-attachment: fixed;
+    }
+
+    /* Estilo dos Cards em 3D */
     div.stButton > button {
         width: 100%;
-        border-radius: 15px;
-        height: 100px;
-        font-size: 18px !important;
+        border-radius: 20px;
+        height: 150px; /* Aumentado para caber o ícone grande */
         font-weight: bold;
-        background-color: rgba(255, 255, 255, 0.1) !important;
+        background: rgba(255, 255, 255, 0.15) !important;
         color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        
+        /* Efeito 3D (Sombra projetada e brilho interno) */
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3), inset 0 0 15px rgba(255,255,255,0.1) !important;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
 
-    /* 2. Efeito ao passar o mouse (Hover) */
+    /* Efeito de Clique e Hover 3D */
     div.stButton > button:hover {
-        background-color: rgba(255, 255, 255, 0.2) !important;
-        border-color: #00ff41 !important; /* Verde neon da Zion */
-        transform: translateY(-5px);
-        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+        transform: translateY(-10px) scale(1.02);
+        background: rgba(255, 255, 255, 0.25) !important;
+        border-color: #00ff41 !important;
+        box-shadow: 0 15px 30px rgba(0,255,65,0.2) !important;
     }
 
-    /* 3. Estilização das tabelas de dados */
-    .stDataFrame {
-        background-color: rgba(15, 23, 42, 0.9);
-        border: 1px solid #00ff41;
-        border-radius: 10px;
+    /* Ajuste para os ícones aparecerem grandes e nítidos */
+    .icon-3d {
+        font-size: 50px !important;
+        margin-bottom: 10px;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); /* Sombra no ícone para efeito 3D */
+        display: block;
     }
+
+    .label-3d {
+        font-size: 18px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .zion-header { text-align: center; padding-bottom: 40px; }
+    .logo-img { width: 220px; filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.5)); }
     </style>
     """, unsafe_allow_html=True)
+
+# --- BLOCO DA HOME ---
+if st.session_state.pagina == "🏠 HOME":
+    # Logo Zion no Topo
+    st.markdown('<div class="zion-header"><img src="https://i.imgur.com/vHq0AUP.png" class="logo-img"></div>', unsafe_allow_html=True)
+    
+    st.markdown("<h1>SISTEMA DE GESTÃO ZION</h1>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        # Ícone de Cadastro/OS
+        st.markdown('<div style="text-align:center;"><span class="icon-3d">📋</span></div>', unsafe_allow_html=True)
+        if st.button("NOVO LANÇAMENTO", key="btn_cad"): 
+            navegar("📋 CADASTRO")
+
+    with col2:
+        # Ícone de Grade/OS
+        st.markdown('<div style="text-align:center;"><span class="icon-3d">📊</span></div>', unsafe_allow_html=True)
+        if st.button("VER AGENDAMENTOS", key="btn_gra"): 
+            navegar("📊 GRADE")
+
+    with col3:
+        # Ícone de Financeiro Sofisticado (Tendência de Lucro)
+        st.markdown('<div style="text-align:center;"><span class="icon-3d">📈</span></div>', unsafe_allow_html=True)
+        if st.button("FINANCEIRO", key="btn_fin"): 
+            navegar("💰 FINANCEIRO")
 # --- FUNÇÃO CARREGAR DADOS ---
 def carregar_dados():
     try:
