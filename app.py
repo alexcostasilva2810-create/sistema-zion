@@ -142,12 +142,31 @@ if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
 def navegar(p): st.session_state.pagina = p; st.rerun()
 
 #---- Tela Inicial ----# 
+#---- Tela Inicial ----# 
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<h1>SISTEMA ZION</h1>", unsafe_allow_html=True)
+    st.markdown("<h1>ZION BUSINESS TECHNOLOGY</h1>", unsafe_allow_html=True)
+    
+    # Grid de Navegação
     c1, c2, c3 = st.columns(3)
-    if c1.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
-    if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
-    if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
+    
+    with c1:
+        st.markdown('<i class="fas fa-file-signature icon-container"></i>', unsafe_allow_html=True)
+        if st.button("NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
+        
+    with c2:
+        st.markdown('<i class="fas fa-layer-group icon-container"></i>', unsafe_allow_html=True)
+        if st.button("GRADE DE OPERAÇÕES"): navegar("📊 GRADE")
+        
+    with c3:
+        st.markdown('<i class="fas fa-chart-pie icon-container"></i>', unsafe_allow_html=True)
+        if st.button("INTELIGÊNCIA FINANCEIRA"): navegar("💰 FINANCEIRO")
+
+    # --- LOGO ABAIXO DOS ÍCONES ---
+    st.markdown("""
+        <div class="logo-footer">
+            <img src="https://i.imgur.com/vHq0AUP.png" class="logo-img" alt="Logo Zion">
+        </div>
+    """, unsafe_allow_html=True)
 
 #---- Tela Cadastro ----# 
 elif st.session_state.pagina == "📋 CADASTRO":
