@@ -149,93 +149,30 @@ def navegar(pagina):
     st.rerun()
 
 if st.session_state.pagina == "🏠 HOME":
-    # 1. Configuração Visual (Fundo Azul Royal Leve e Letras Brancas)
+    # Fundo Azul Royal Leve (conforme solicitado)
     st.markdown("""
         <style>
-        .stApp {
-            background: linear-gradient(135deg, #001a4d 0%, #003399 100%);
-            background-attachment: fixed;
-        }
-        
-        .card-home {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border-radius: 25px;
-            padding: 35px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            text-align: center;
-            height: 480px;
-            transition: 0.5s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .card-home:hover {
-            transform: translateY(-15px);
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid #00d4ff;
-        }
-
-        h1, h2, h3, p, span {
-            color: white !important;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-        
-        /* Ajuste do botão dentro do card */
-        .stButton>button {
-            background-color: #ffffff !important;
-            color: #001a4d !important;
-            font-weight: bold !important;
-            border-radius: 12px !important;
-            border: none !important;
-            margin-top: 20px;
-        }
+        .stApp { background: linear-gradient(135deg, #e0e8f9 0%, #f0f4ff 100%); }
+        .card { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #ddd; }
         </style>
-        
-        <div style="text-align: center; padding: 30px 0;">
-            <h1 style="font-size: 48px; font-weight: 900;">ZION TECNOLOGIA</h1>
-            <h2 style="font-size: 24px; font-weight: 300; opacity: 0.9;">Gestão de Escolta</h2>
-        </div>
     """, unsafe_allow_html=True)
 
-    # 2. Grid de Navegação
-    col1, col2, col3 = st.columns(3)
+    st.markdown("<h1 style='text-align:center; color:#002366;'>ZION - GESTÃO DE ESCOLTA</h1>", unsafe_allow_html=True)
 
-    with col1:
-        st.markdown("""
-            <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/8644/8644612.png" width="160" style="filter: drop-shadow(0px 0px 10px rgba(0,212,255,0.5));">
-                <h3 style="margin-top:20px;">CADASTRO</h3>
-                <p>Registro inteligente e preciso de novas missões.</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("NOVO LANÇAMENTO", key="btn_cad_home", use_container_width=True):
-            navegar("📋 CADASTRO")
-
-    with col2:
-        st.markdown("""
-            <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" width="160" style="filter: drop-shadow(0px 0px 10px rgba(0,212,255,0.5));">
-                <h3 style="margin-top:20px;">ORDEM DE SERVIÇO</h3>
-                <p>Grade operacional e impressão de documentos.</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("VER AGENDAMENTOS", key="btn_grade_home", use_container_width=True):
-            navegar("📊 GRADE")
-
-    with col3:
-        st.markdown("""
-            <div class="card-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/9334/9334541.png" width="160" style="filter: drop-shadow(0px 0px 10px rgba(0,212,255,0.5));">
-                <h3 style="margin-top:20px;">FINANCEIRO</h3>
-                <p>Análise de faturamento e extratos estratégicos.</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("VER FINANCEIRO", key="btn_fin_home", use_container_width=True):
-            navegar("💰 FINANCEIRO")
-
+    # Usar colunas que se empilham no celular
+    c1, c2, c3 = st.columns([1,1,1])
+    
+    with c1:
+        st.markdown('<div class="card">🤖<br><b>CADASTRO</b></div>', unsafe_allow_html=True)
+        if st.button("NOVO LANÇAMENTO", use_container_width=True): navegar("📋 CADASTRO")
+    
+    with c2:
+        st.markdown('<div class="card">📅<br><b>GRADE</b></div>', unsafe_allow_html=True)
+        if st.button("VER AGENDAMENTOS", use_container_width=True): navegar("📊 GRADE")
+        
+    with c3:
+        st.markdown('<div class="card">📈<br><b>FINANCEIRO</b></div>', unsafe_allow_html=True)
+        if st.button("ESTRATÉGICO", use_container_width=True): navegar("💰 FINANCEIRO")
     # 3. Barra de Status no rodapé
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.info(f"✅ Sistema Zion Conectado | {datetime.now().strftime('%d/%m/%Y')} | Todos os módulos operacionais.")
