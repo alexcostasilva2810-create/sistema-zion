@@ -163,7 +163,7 @@ elif st.session_state.pagina == "📋 CADASTRO":
     
     # Verifique se a função navegar está definida antes deste bloco
     if st.button("⬅️ VOLTAR PARA HOME", key="c1"):
-        navegar("🏠 HOME")
+        navegar("🏠 HOME")    
     
     with st.form("form_registro"):
         st.markdown("### Preencha os dados da Escolta")
