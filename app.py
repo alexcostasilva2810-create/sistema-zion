@@ -15,7 +15,7 @@ def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
 
-# 3. ESTILO CSS (Fundo Escritório, Azul Suave, Ícones Mostarda e Texto Futuro)
+# 3. ESTILO CSS (Fundo Escritório, Azul Suave, Ícones Mostarda, Mão de Robô e Texto Futuro)
 st.markdown("""
 <style>
     /* Remove barra lateral e erros */
@@ -29,7 +29,14 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    h1 { color: white !important; text-align: center; font-size: 35px !important; margin-bottom: 40px !important; }
+    h1 { 
+        color: white !important; 
+        text-align: center; 
+        font-size: 38px !important; 
+        margin-bottom: 40px !important; 
+        font-weight: 800;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.5); /* Sombra para destaque */
+    }
 
     /* Estilo dos Botões */
     div.stButton > button {
@@ -40,8 +47,12 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 15px !important;
         font-weight: bold !important;
+        transition: 0.3s ease;
     }
-    div.stButton > button:hover { border-color: #E2B13C !important; background: rgba(255, 255, 255, 0.15) !important; }
+    div.stButton > button:hover { 
+        border-color: #E2B13C !important; /* Mostarda no hover */
+        background: rgba(255, 255, 255, 0.15) !important;
+    }
 
     /* Ajuste de Ícones */
     .icon-box { text-align: center; margin-bottom: -15px; }
@@ -56,11 +67,24 @@ st.markdown("""
     .welcome-text {
         color: #E2B13C; /* Cor Mostarda */
         text-align: center;
-        font-size: 42px;
-        font-weight: 800;
+        font-size: 55px; /* Tamanho AUMENTADO */
+        font-weight: 900; /* Negrito Extra */
         margin-top: 60px;
-        text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
+        text-shadow: 3px 3px 20px rgba(0,0,0,0.8); /* Sombra mais forte */
         font-family: 'sans-serif';
+        line-height: 1.2; /* Espaçamento entre linhas */
+    }
+
+    /* Ícone Mão de Robô */
+    .robot-hand-icon {
+        text-align: center;
+        margin-top: 40px; /* Espaço acima da frase */
+        margin-bottom: 20px; /* Espaço abaixo da mão */
+    }
+    .robot-hand-icon img {
+        width: 180px; /* Tamanho da Mão de Robô */
+        filter: invert(90%) sepia(10%) saturate(1000%) hue-rotate(180deg) brightness(1.2); /* Cor de Robô */
+        opacity: 0.8; /* Transparência suave */
     }
 </style>
 """, unsafe_allow_html=True)
@@ -76,20 +100,6 @@ if st.session_state.pagina == "🏠 HOME":
         st.markdown('<div class="icon-box mostarda"><img src="https://cdn-icons-png.flaticon.com/512/1250/1250615.png"></div>', unsafe_allow_html=True)
         if st.button("📝 NOVO LANÇAMENTO", key="bt_lan"):
             st.session_state.dados_edicao = None
-            navegar("📋 CADASTRO")
-
-    with col2:
-        # Ícone de Agenda (Mostarda)
-        st.markdown('<div class="icon-box mostarda"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png"></div>', unsafe_allow_html=True)
-        if st.button("📊 VER AGENDAMENTOS", key="bt_grade"):
-            navegar("📊 GRADE")
-
-    with col3:
-        # Ícone Financeiro
-        st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png"></div>', unsafe_allow_html=True)
-        if st.button("💰 FINANCEIRO", key="bt_fin"):
-            navegar("💰 FINANCEIRO")
-
     # Frase solicitada
     st.markdown('<p class="welcome-text">Seja Bem Vindo ao Futuro</p>', unsafe_allow_html=True)# Os demais blocos (Cadastro, Grade, Financeiro) seguem sua lógica original abaixo
 elif st.session_state.pagina == "📋 CADASTRO":
