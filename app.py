@@ -58,103 +58,95 @@ st.markdown("""
 # ============================================================
 # # ........ BLOCO: HOME (MENU PRINCIPAL) ........ #
 # ============================================================
-import streamlit as st
-
-# O erro anterior ocorria porque o CSS não estava dentro de uma variável string.
-# Aqui definimos o bloco completo como uma constante.
-
-MENU_HTML = """
+# --- Definição do Menu (Coloque isso antes do bloco if/elif) ---
+# Usamos aspas triplas """ para que o Python ignore o CSS lá dentro
+MENU_HOME = """
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-
-    .main-container {
-        font-family: 'Poppins', sans-serif;
+    .main-wrapper {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 40px 10px;
+        padding: 40px 10px; /* O erro estava aqui, agora está protegido por aspas */
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    /* Logo do Zion */
     .logo-zion {
-        width: 200px;
-        margin-bottom: 50px;
-        filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.1));
+        width: 180px;
+        margin-bottom: 40px;
+        transition: 0.3s;
     }
 
-    /* Grid de Navegação */
-    .nav-grid {
+    .menu-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 25px;
+        gap: 20px;
         width: 100%;
-        max-width: 500px;
+        max-width: 400px;
     }
 
-    /* Item de Menu (Card) */
-    .menu-item {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
+    .menu-card {
+        background: #ffffff;
+        border-radius: 15px;
+        padding: 25px;
         text-align: center;
         text-decoration: none;
-        color: #2c3e50;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-        border: 1px solid #f0f0f0;
+        color: #333;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 1px solid #eee;
         transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
     }
 
-    .menu-item:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        border-color: #d4af37; /* Toque de dourado para sofisticação */
+    .menu-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        border-color: #1a237e;
     }
 
-    .menu-item i {
-        font-size: 45px;
+    .menu-card i {
+        font-size: 40px;
         margin-bottom: 15px;
+        display: block;
     }
 
-    /* Cores e Ícones Específicos */
-    .icon-cadastro { color: #34495e; }
-    
-    /* Ícone Financeiro: 'Landmark' ou 'Chart-Line' para sofisticação */
-    .icon-financeiro { color: #1e555c; }
+    /* Cores dos Ícones */
+    .icon-cadastro { color: #455a64; }
+    .icon-financeiro { color: #004d40; } /* Verde escuro sofisticado */
 
-    .menu-label {
-        font-weight: 600;
-        font-size: 1.1rem;
-        letter-spacing: 0.5px;
+    .label {
+        font-weight: bold;
+        font-size: 16px;
     }
 </style>
 
-<div class="main-container">
-    <img src="https://i.imgur.com/vHq0AUP.png" class="logo-zion" alt="Logo Zion">
+<div class="main-wrapper">
+    <img src="https://SUA_URL_DA_LOGO_AQUI.png" class="logo-zion" alt="Zion Logo">
 
-    <div class="nav-grid">
-        
-        <a href="/cadastro" target="_self" class="menu-item">
-            <i class="fas fa-user-check icon-cadastro"></i>
-            <span class="menu-label">Cadastro</span>
+    <div class="menu-grid">
+        <a href="?pagina=CADASTRO" class="menu-card">
+            <i class="fas fa-user-plus icon-cadastro"></i>
+            <span class="label">Cadastro</span>
         </a>
 
-        <a href="/financeiro" target="_self" class="menu-item">
-            <i class="fas fa-balance-scale-left icon-financeiro"></i>
-            <span class="menu-label">Financeiro</span>
+        <a href="?pagina=FINANCEIRO" class="menu-card">
+            <i class="fas fa-chart-line icon-financeiro"></i>
+            <span class="label">Financeiro</span>
         </a>
-
     </div>
 </div>
+"""
 
-# Comando para renderizar o Menu no Streamlit
-st.markdown(MENU_HTML, unsafe_allow_html=True)
+# --- Lógica de Exibição (Onde estava o erro de sintaxe) ---
+if st.session_state.pagina == "🏠 HOME":
+    st.markdown(MENU_HOME, unsafe_allow_html=True)
 
-# ============================================================
+elif st.session_state.pagina == "📋 CADASTRO":
+    # Seu código de cadastro aqui...
+    st.markdown("<h1>Página de Cadastro</h1>", unsafe_allow_html=True)
+    if st.button("Voltar"):
+        st.session_state.pagina = "🏠 HOME"
+        st.rerun()# ============================================================
 # # ........ BLOCO: CADASTRO (REGISTRO) ........ #
 # ============================================================
 elif st.session_state.pagina == "📋 CADASTRO":
