@@ -291,7 +291,8 @@ elif st.session_state.pagina == "📊 GRADE":
             
             st.markdown('<hr style="margin:0; border-top: 1px solid #333;">', unsafe_allow_html=True)
     else:
-        st.info("Nenhuma Ordem de Serviço registrada.")elif st.session_state.pagina == "💰 FINANCEIRO":
+        st.info("Nenhuma Ordem de Serviço registrada.")
+    elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1>💰 FINANCEIRO ESTRATÉGICO ZION</h1>", unsafe_allow_html=True)
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
