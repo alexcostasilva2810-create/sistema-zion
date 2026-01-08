@@ -155,63 +155,62 @@ def navegar(pagina):
     st.session_state.pagina = pagina
     st.rerun()
 
+# ============================================================
+# BLOCO DE NAVEGAÇÃO - SUBSTITUIR DA LINHA 151 ATÉ O FINANCEIRO
+# ============================================================
+
 if st.session_state.pagina == "🏠 HOME":
     st.markdown("""
         <style>
-        .stApp {
-            background: linear-gradient(135deg, #001a4d 0%, #003399 100%);
-        }
+        .stApp { background: linear-gradient(135deg, #001a4d 0%, #003399 100%); }
         .card-home {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 20px;
             text-align: center;
-            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
+        h1, h3, p { color: white !important; }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<h1 style='text-align: center; color: white;'>SISTEMA ZION - CONTROLE</h1>", unsafe_allow_html=True)
-    
-    # Colunas que se ajustam ao celular
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
+    st.markdown("<h1 style='text-align: center;'>ZION - GESTÃO DE ESCOLTA</h1>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown('<div class="card-home">📝 CADASTRO</div>', unsafe_allow_html=True)
-        if st.button("NOVO LANÇAMENTO", key="btn_cad", use_container_width=True):
+        st.markdown('<div class="card-home">🤖<br><h3>CADASTRO</h3></div>', unsafe_allow_html=True)
+        if st.button("NOVO", key="btn_cad_h", use_container_width=True):
             navegar("📋 CADASTRO")
-            
     with col2:
-        st.markdown('<div class="card-home">📅 OPERACIONAL</div>', unsafe_allow_html=True)
-        if st.button("VER AGENDAMENTOS", key="btn_grade", use_container_width=True):
+        st.markdown('<div class="card-home">📅<br><h3>GRADE</h3></div>', unsafe_allow_html=True)
+        if st.button("VER", key="btn_grade_h", use_container_width=True):
             navegar("📊 GRADE")
-            
     with col3:
-        st.markdown('<div class="card-home">💰 FINANCEIRO</div>', unsafe_allow_html=True)
-        if st.button("ESTRATÉGICO", key="btn_fin", use_container_width=True):
+        st.markdown('<div class="card-home">📊<br><h3>FINANCEIRO</h3></div>', unsafe_allow_html=True)
+        if st.button("ESTRATÉGICO", key="btn_fin_h", use_container_width=True):
             navegar("💰 FINANCEIRO")
 
-# --- TRANSIÇÃO PARA GRADE (Fim do erro de Indentação) ---
 elif st.session_state.pagina == "📊 GRADE":
     st.markdown("<h1 style='color: white;'>ORDEM DE SERVIÇOS</h1>", unsafe_allow_html=True)
-    if st.button("⬅️ VOLTAR PARA HOME"):
+    if st.button("⬅️ VOLTAR", key="voltar_grade"):
         navegar("🏠 HOME")
     
     dados = carregar_dados()
     if dados:
         for d in dados:
-            # O st.markdown abaixo deve estar alinhado exatamente aqui (Linha 359)
-            st.write(f"OS: {d['os_n']} - Cliente: {d['cli']}")
+            st.write(f"**OS:** {d.get('os_n', '---')} | **Cliente:** {d.get('cli', '---')}")
+            # Botão de PDF aqui...
             st.markdown("---") 
     else:
-        st.info("Nenhuma O.S registrada no momento.")
+        st.info("Nenhuma O.S registrada.")
 
-# --- TRANSIÇÃO PARA FINANCEIRO ---
 elif st.session_state.pagina == "💰 FINANCEIRO":
     st.markdown("<h1 style='color: white;'>FINANCEIRO ESTRATÉGICO</h1>", unsafe_allow_html=True)
-    if st.button("⬅️ VOLTAR", key="back_f"):
-        navegar("🏠 HOME")    
+    if st.button("⬅️ VOLTAR", key="voltar_fin"):
+        navegar("🏠 HOME")
+    # Seu código de cálculos financeiros continua aqui com 4 espaços de recuo
+# ============================================================   
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
