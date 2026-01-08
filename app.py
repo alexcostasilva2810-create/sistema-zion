@@ -59,22 +59,88 @@ st.markdown("""
 # # ........ BLOCO: HOME (MENU PRINCIPAL) ........ #
 # ============================================================
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<h1 style='text-align: center;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1,1,1])
-    
-    with col1:
-        st.markdown('<div class="card">📝<br><h3>CADASTRO</h3></div>', unsafe_allow_html=True)
-        if st.button("NOVO REGISTRO", key="h1"): navegar("📋 CADASTRO")
-            
-    with col2:
-        st.markdown('<div class="card">📅<br><h3>GRADE</h3></div>', unsafe_allow_html=True)
-        if st.button("VER O.S", key="h2"): navegar("📊 GRADE")
-            
-    with col3:
-        st.markdown('<div class="card">💰<br><h3>FINANCEIRO</h3></div>', unsafe_allow_html=True)
-        if st.button("ESTRATÉGICO", key="h3"): navegar("💰 FINANCEIRO")
+    # Configuração de Estilo Específica para a Home
+    st.markdown("""
+        <style>
+        /* Fundo Azul Royal com sobreposição de Dashboard */
+        .stApp {
+            background: linear-gradient(rgba(0, 26, 77, 0.8), rgba(0, 51, 153, 0.8)), 
+                        url('https://img.freepik.com/free-vector/abstract-digital-technology-background-with-network-connection-lines_1017-25552.jpg');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+        
+        /* Container dos Cards */
+        .card-home {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            margin-bottom: 20px;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+        
+        .card-home:hover {
+            transform: scale(1.02);
+            border: 1px solid #ffdb58; /* Brilho dourado no hover */
+        }
 
+        .icon-img {
+            width: 120px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.3));
+        }
+
+        h1 { font-size: 40px !important; font-weight: 800 !important; margin-bottom: 0px !important; }
+        h3 { font-size: 22px !important; letter-spacing: 1px; margin-top: 10px !important; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Título Principal
+    st.markdown("<h1 style='text-align: center; padding-bottom: 40px;'>ZION TECNOLOGIA</h1>", unsafe_allow_html=True)
+
+    # Grid de Navegação
+    col1, col2, col3 = st.columns([1, 1, 1])
+
+    with col1:
+        st.markdown(f"""
+            <div class="card-home">
+                <img src="https://cdn-icons-png.flaticon.com/512/6819/6819643.png" class="icon-img">
+                <h3>CADASTRO</h3>
+                <p style='font-size: 14px; opacity: 0.8;'>Registro Inteligente</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("ABRIR", key="h_cad"): 
+            navegar("📋 CADASTRO")
+
+    with col2:
+        st.markdown(f"""
+            <div class="card-home">
+                <img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" class="icon-img">
+                <h3 style='color: #FFD700 !important;'>ORDEM SERVIÇO</h3>
+                <p style='font-size: 14px; opacity: 0.8;'>Agenda e Operação</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("ABRIR", key="h_grade"): 
+            navegar("📊 GRADE")
+
+    with col3:
+        st.markdown(f"""
+            <div class="card-home">
+                <img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png" class="icon-img">
+                <h3>FINANCEIRO</h3>
+                <p style='font-size: 14px; opacity: 0.8;'>Calculadora e Métricas</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("ABRIR", key="h_fin"): 
+            navegar("💰 FINANCEIRO")
 # ============================================================
 # # ........ BLOCO: CADASTRO (REGISTRO) ........ #
 # ============================================================
