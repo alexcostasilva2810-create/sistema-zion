@@ -8,10 +8,11 @@ import io
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Zion Tecnologia", layout="wide")
 
-# 2. MOTOR DE NAVEGAÇÃO (Obrigatório estar aqui em cima)
+# 2. INICIALIZAÇÃO DO ESTADO (Evita o erro AttributeError)
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
+# 3. FUNÇÃO DE NAVEGAÇÃO (Evita o erro NameError)
 def navegar(destino):
     st.session_state.pagina = destino
     st.rerun()
@@ -235,13 +236,22 @@ elif st.session_state.pagina == "📋 CADASTRO":
                 "modalidade": modalidade,
                 "v_total": 0 # Valor será definido via regra no Financeiro
             }
-            if salvar_no_notion(dados, e['ID'] if e else None): 
-                st.success("Dados salvos com sucesso!")
-                navegar("📊 GRADE")
-        st.markdown('</div>', unsafe_allow_html=True)
-elif st.session_state.pagina == "📊 GRADE":
-    st.markdown("<h1>ORDEM DE SERVIÇOS 🚢</h1>", unsafe_allow_html=True)
-    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+            # ... (dentro do bloco elif da GRADE)
+    dados = carregar_dados()
+    
+    if dados: # <--- Este IF começa aqui
+        for d in dados:
+            # Seu código de exibição da tabela/cards aqui
+            st.write(f"OS: {d['os_n']}") 
+            
+    else: # <--- Este ELSE deve estar EXATAMENTE na mesma coluna do 'if dados:'
+        st.info("Nenhuma Ordem de Serviço registrada.")
+
+# ESTA LINHA ABAIXO DEVE ESTAR TOTALMENTE À ESQUERDA (COLUNA ZERO)
+elif st.session_state.pagina == "💰 FINANCEIRO":
+    st.markdown("<h1 style='text-align: center; color: white;'>💰 FINANCEIRO ESTRATÉGICO</h1>", unsafe_allow_html=True)
+    if st.button("⬅️ VOLTAR PARA HOME"):
+        navegar("🏠 HOME")
     
     dados = carregar_dados()
     if dados:
