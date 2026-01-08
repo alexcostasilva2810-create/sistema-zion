@@ -18,16 +18,39 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# --- ESTILO CSS AZUL ROYAL (TRAVADO) ---
+# --- ESTILO CSS MELHORADO ---
 st.markdown("""
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     .stApp {
-        background: linear-gradient(rgba(0, 35, 102, 0.9), rgba(0, 35, 102, 0.9)), 
+        background: linear-gradient(rgba(0, 35, 102, 0.85), rgba(0, 35, 102, 0.85)), 
                     url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=2070&auto=format&fit=crop");
         background-size: cover; background-position: center; background-attachment: fixed;
     }
-    h1, h2, h3, label { color: #00ff41 !important; text-shadow: 2px 2px 4px #000; text-align: center; }
-    div.stButton > button:first-child[kind="primary"] { background-color: #28a745 !important; border: none; font-weight: bold; }
+    h1, h2, h3, label { color: #ffffff !important; text-shadow: 2px 2px 4px #000; text-align: center; }
+    
+    /* Menu Principal Estilizado */
+    .zion-header { text-align: center; padding-bottom: 30px; }
+    .logo-img { width: 180px; filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.5)); }
+    
+    /* Botões do Streamlit como Cards */
+    div.stButton > button {
+        width: 100%;
+        border-radius: 15px;
+        height: 100px;
+        font-size: 18px !important;
+        font-weight: bold;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.3) !important;
+        transition: 0.3s;
+    }
+    div.stButton > button:hover {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+        border-color: #00ff41 !important;
+        transform: translateY(-5px);
+    }
+    
     .stDataFrame { background-color: rgba(15, 23, 42, 0.9); border: 1px solid #00ff41; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
@@ -69,7 +92,7 @@ def carregar_dados():
             return lista
     except: return []
 
-# --- FUNÇÃO SALVAR NO NOTION (17 COLUNAS) ---
+# --- FUNÇÃO SALVAR NO NOTION ---
 def salvar_no_notion(d):
     url = "https://api.notion.com/v1/pages"
     payload = {
@@ -102,16 +125,36 @@ if "pagina" not in st.session_state: st.session_state.pagina = "🏠 HOME"
 def navegar(p): st.session_state.pagina = p; st.rerun()
 
 # --- TELAS ---
-if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<h1>SISTEMA ZION</h1>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    if c1.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
-    if c2.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
-    if c3.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
 
+# 🏠 HOME PRINCIPAL
+if st.session_state.pagina == "🏠 HOME":
+    # Logo Centralizada
+    st.markdown('<div class="zion-header"><img src="https://i.imgur.com/vHq0AUP.png" class="logo-img"></div>', unsafe_allow_html=True)
+    st.markdown("<h1>SISTEMA DE GESTÃO ZION</h1>", unsafe_allow_html=True)
+    
+    st.write("---")
+    
+    # Grid de botões estilizados
+    c1, c2, c3 = st.columns(3)
+    
+    with c1:
+        st.markdown("<h3 style='text-align:center'><i class='fas fa-folder-plus'></i></h3>", unsafe_allow_html=True)
+        if st.button("📋 NOVO LANÇAMENTO"): navegar("📋 CADASTRO")
+        
+    with c2:
+        st.markdown("<h3 style='text-align:center'><i class='fas fa-calendar-alt'></i></h3>", unsafe_allow_html=True)
+        if st.button("📊 VER AGENDAMENTOS"): navegar("📊 GRADE")
+        
+    with c3:
+        # Ícone de Financeiro Sofisticado (Gráfico de colunas/tendência)
+        st.markdown("<h3 style='text-align:center'><i class='fas fa-chart-line'></i></h3>", unsafe_allow_html=True)
+        if st.button("💰 FINANCEIRO"): navegar("💰 FINANCEIRO")
+
+# 📋 TELA DE CADASTRO
 elif st.session_state.pagina == "📋 CADASTRO":
     st.header("📋 NOVO REGISTRO (17 COLUNAS)")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+    
     with st.form("form_os"):
         c1, c2, c3 = st.columns(3)
         os_n, dt_s, cli = c1.text_input("Nº O.S"), c2.date_input("DATA SAÍDA", format="DD/MM/YYYY"), c3.text_input("CLIENTE")
@@ -128,31 +171,42 @@ elif st.session_state.pagina == "📋 CADASTRO":
         
         if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
             d = {"os_n":os_n, "dt_s":dt_s, "cli":cli, "emp":emp, "bal":bal, "ped":ped, "h_e":h_e, "esc1":esc1, "esc2":esc2, "loc":loc, "dst":dst, "ass":ass, "ini_m":ini_m, "fim_m":fim_m, "sts":sts, "obs":obs, "v_total":v_total}
-            if salvar_no_notion(d): navegar("📊 GRADE")
+            if salvar_no_notion(d): 
+                st.success("Salvo com sucesso!")
+                navegar("📊 GRADE")
             else: st.error("Erro ao salvar no Notion.")
 
+# 📊 TELA DE GRADE
 elif st.session_state.pagina == "📊 GRADE":
     st.header("📊 AGENDAMENTOS")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     dados = carregar_dados()
-    df = pd.DataFrame(dados) if dados else pd.DataFrame(columns=["Nº OS", "CLIENTE", "DT SAÍDA", "STATUS"])
-    st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]], use_container_width=True)
-    for d in (dados or []):
-        with st.expander(f"Ações O.S {d['Nº OS']}"):
-            c1, c2 = st.columns(2)
-            c1.button("✏️ EDITAR", key=f"ed_{d['ID']}")
-            c2.button("📄 PDF", key=f"pdf_{d['ID']}")
+    if dados:
+        df = pd.DataFrame(dados)
+        st.dataframe(df[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "STATUS"]], use_container_width=True)
+        for d in dados:
+            with st.expander(f"Ações O.S {d['Nº OS']}"):
+                c1, c2 = st.columns(2)
+                c1.button("✏️ EDITAR", key=f"ed_{d['ID']}")
+                c2.button("📄 PDF", key=f"pdf_{d['ID']}")
+    else:
+        st.info("Nenhum registro encontrado.")
 
+# 💰 TELA FINANCEIRA
 elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.header("💰 FINANCEIRO")
+    st.header("💰 GESTÃO FINANCEIRA")
     if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+    
     c1, c2 = st.columns(2)
     i_f, f_f = c1.date_input("INÍCIO", format="DD/MM/YYYY"), c2.date_input("FIM", format="DD/MM/YYYY")
+    
     dados = carregar_dados()
     if dados:
         df = pd.DataFrame(dados)
         df['dt_p'] = pd.to_datetime(df['DT_RAW'])
         df_f = df[(df['dt_p'] >= pd.Timestamp(i_f)) & (df['dt_p'] <= pd.Timestamp(f_f))]
-        st.metric("FATURAMENTO", f"R$ {df_f['VALOR'].sum():,.2f}")
-        st.dataframe(df_f[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "ESCOLTA 1", "ESCOLTA 2", "VALOR"]], use_container_width=True)
-    else: st.dataframe(pd.DataFrame(columns=["Nº OS", "CLIENTE", "DT SAÍDA", "VALOR"]), use_container_width=True)
+        
+        st.metric("FATURAMENTO NO PERÍODO", f"R$ {df_f['VALOR'].sum():,.2f}")
+        st.dataframe(df_f[["Nº OS", "CLIENTE", "DT SAÍDA", "EMPURRADOR", "BALSA", "VALOR"]], use_container_width=True)
+    else:
+        st.warning("Sem dados financeiros para o período.")
