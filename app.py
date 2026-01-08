@@ -59,92 +59,110 @@ st.markdown("""
 # # ........ BLOCO: HOME (MENU PRINCIPAL) ........ #
 # ============================================================
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-    .zion-nav-container {
+    :root {
+        --primary-color: #1a237e; /* Azul Sofisticado Zion */
+        --bg-color: #f4f7f6;
+        --card-white: #ffffff;
+    }
+
+    .zion-dashboard {
+        font-family: 'Inter', sans-serif;
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 40px 20px;
-        background-color: #f8f9fa; /* Fundo suave */
-        border-radius: 15px;
+        padding: 50px 20px;
+        background-color: var(--bg-color);
+        min-height: 100vh;
     }
 
-    .zion-logo {
-        width: 180px; /* Ajuste o tamanho da sua logo aqui */
-        margin-bottom: 40px;
-        filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
+    .zion-logo-container {
+        margin-bottom: 50px;
+        text-align: center;
     }
 
-    .nav-grid {
+    /* Estilo para a Logo (ajustado para não quebrar se a imagem sumir) */
+    .zion-logo-img {
+        max-width: 220px;
+        height: auto;
+        display: block;
+    }
+
+    .nav-grid- Zion {
         display: grid;
-        grid-template-columns: repeat(3, 1fr); /* 3 colunas iguais */
-        gap: 25px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 20px;
         width: 100%;
-        max-width: 500px;
+        max-width: 700px;
     }
 
-    .nav-item {
+    .menu-card {
+        background: var(--card-white);
+        text-decoration: none;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 20px;
-        background: #ffffff;
-        border-radius: 12px;
-        text-decoration: none;
-        color: #333;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        border: 1px solid #eee;
+        padding: 30px 20px;
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,0,0,0.03);
     }
 
-    .nav-item:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        border-color: #007bff; /* Cor de destaque ao passar o mouse */
+    .menu-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        border-color: var(--primary-color);
     }
 
-    .nav-item i {
-        font-size: 28px;
-        margin-bottom: 12px;
+    /* Estilo dos Ícones */
+    .menu-card i {
+        font-size: 36px;
+        margin-bottom: 15px;
     }
 
-    /* Cores específicas para sofisticação */
-    .icon-cadastro { color: #444; }
-    .icon-financeiro { color: #1a5276; } /* Azul marinho sofisticado */
-    .icon-outros { color: #888; }
+    /* Ícone Cadastro - Corrigido */
+    .icon-reg { color: #546e7a; }
+    
+    /* Ícone Financeiro - Sofisticado (Gráfico de colunas com tendência) */
+    .icon-fin { color: #2e7d32; }
 
-    .nav-label {
-        font-size: 14px;
+    .menu-label {
+        font-size: 15px;
         font-weight: 600;
-        letter-spacing: 0.5px;
+        color: #333;
+        letter-spacing: 0.3px;
     }
 </style>
 
-<div class="zion-nav-container">
+<div class="zion-dashboard">
     
-    <img src="URL_DA_SUA_LOGO_AQUI.png" alt="Zion Logo" class="zion-logo">
+    <div class="zion-logo-container">
+        <img src="https://via.placeholder.com/220x80?text=ZION+LOGO" alt="Zion Business" class="zion-logo-img">
+    </div>
 
-    <div class="nav-grid">
+    <div class="nav-grid-Zion">
         
-        <a href="/cadastro" class="nav-item">
-            <i class="fas fa-address-card icon-cadastro"></i>
-            <span class="nav-label">Cadastro</span>
+        <a href="SUA_URL_DE_CADASTRO_AQUI" class="menu-card">
+            <i class="fas fa-id-card-alt icon-reg"></i>
+            <span class="menu-label">Cadastro</span>
         </a>
 
-        <a href="/financeiro" class="nav-item">
-            <i class="fas fa-landmark icon-financeiro"></i>
-            <span class="nav-label">Financeiro</span>
+        <a href="SUA_URL_DE_FINANCEIRO_AQUI" class="menu-card">
+            <i class="fas fa-chart-pie icon-fin"></i>
+            <span class="menu-label">Financeiro</span>
         </a>
 
-        <a href="/configuracoes" class="nav-item">
-            <i class="fas fa-sliders-h icon-outros"></i>
-            <span class="nav-label">Ajustes</span>
+        <a href="#" class="menu-card">
+            <i class="fas fa-users-cog" style="color: #607d8b;"></i>
+            <span class="menu-label">Gestão</span>
         </a>
 
     </div>
-</div># ============================================================
+</div></div># ============================================================
 # # ........ BLOCO: CADASTRO (REGISTRO) ........ #
 # ============================================================
 elif st.session_state.pagina == "📋 CADASTRO":
