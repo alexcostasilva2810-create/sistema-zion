@@ -8,6 +8,14 @@ import io
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Zion Tecnologia - Gestão O.S", layout="wide")
 
+# --- SISTEMA DE NAVEGAÇÃO (Adicionado para evitar erros) ---
+if 'pagina' not in st.session_state:
+    st.session_state.pagina = "🏠 HOME"
+
+def navegar(destino):
+    st.session_state.pagina = destino
+    st.rerun()
+# ----------------------------------------------------------
 # --- CONEXÃO NOTION ---
 TOKEN = st.secrets["notion"]["token"].replace('"', '').strip()
 DATABASE = st.secrets["notion"]["database_id"].replace('"', '').strip()
@@ -331,12 +339,14 @@ elif st.session_state.pagina == "📊 GRADE":
             pdf_bytes = gerar_pdf_os_completa(d)
             c4.download_button("🖨️", pdf_bytes, f"OS_{d['os_n']}.pdf", "application/pdf", key=f"pr_btn_{d['ID']}")
             st.markdown("---")
-    else:
-        st.info("Nenhuma Ordem de Serviço encontrada.")
-# ATENÇÃO: O elif abaixo deve estar EXATAMENTE nesta posição, sem nada na frente dele
-elif st.session_state.pagina == "📊 GRADE":
-    st.markdown("<h1>ORDEM DE SERVIÇOS 🚢</h1>", unsafe_allow_html=True)
-    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
+   else:
+            st.info("Nenhuma Ordem de Serviço registrada.")
+
+# ATENÇÃO: O elif abaixo deve estar encostado na margem esquerda (sem espaços antes)
+elif st.session_state.pagina == "💰 FINANCEIRO":
+    st.markdown("<h1 style='text-align: center; color: white;'>💰 FINANCEIRO ESTRATÉGICO</h1>", unsafe_allow_html=True)
+    if st.button("⬅️ VOLTAR PARA HOME"):
+        navegar("🏠 HOME")
     
     dados = carregar_dados()
     if dados:
