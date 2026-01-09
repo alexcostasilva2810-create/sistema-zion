@@ -99,51 +99,61 @@ if st.session_state.pagina == "🏠 HOME":
 
 # --- SUBSTITUA DA LINHA 101 ATÉ O FINAL POR ESTE BLOCO ---
 
-elif st.session_state.pagina == "LANÇAMENTO":
-    # Título da tela
-    st.markdown('<div class="welcome-text" style="font-size:35px; margin-top:0px;">🚀 Painel de Lançamento</div>', unsafe_allow_html=True)
+elif st.session_state.página == "LANÇAMENTO":
+    # 1. Nome alterado para Ordens de Serviço
+    st.markdown('<div class="welcome-text" style="font-size:35px; margin-top:0px;">🚀 Ordens de Serviço</div>', unsafe_allow_html=True)
     
-    # Botão Voltar
+    # CSS para forçar as letras dos campos (labels) em BRANCO
+    st.markdown("""
+        <style>
+            label {
+                color: white !important;
+                font-weight: bold !important;
+            }
+            .stMarkdown h3 {
+                color: #0096ff !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
     if st.button("⬅️ VOLTAR PARA HOME"):
-        st.session_state.pagina = "🏠 HOME"
+        st.session_state.página = "🏠 CASA"
         st.rerun()
 
     st.write("---")
 
-    # Formulário com as 17 colunas (conforme o Notion)
     with st.form("form_zion"):
         col1, col2, col3 = st.columns(3)
 
         with col1:
             st.markdown("### 📋 Identificação")
-            c1 = st.text_input("1. Cliente")
-            c2 = st.text_input("2. Número da O.S.")
-            c3 = st.date_input("3. Data da Solicitação", format="DD/MM/YYYY")
-            c4 = st.selectbox("4. Tipo de Escolta", ["Ostensiva", "Velada", "Fixo"])
-            c5 = st.selectbox("5. Status", ["Agendado", "Em curso", "Concluído"])
-            c6 = st.select_slider("6. Prioridade", options=["Baixa", "Média", "Alta"])
+            c1 = st.text_input("Cliente")
+            c2 = st.text_input("Número da O.S.")
+            c3 = st.date_input("Data da Solicitação", format="DD/MM/YYYY")
+            c4 = st.selectbox("Tipo de Escolta", ["Ostensiva", "Velada", "Fixo"])
+            c5 = st.selectbox("Status", ["Agendado", "Em curso", "Concluído"])
+            c6 = st.select_slider("Prioridade", options=["Baixa", "Média", "Alta"])
 
         with col2:
             st.markdown("### 📍 Logística")
-            c7 = st.text_input("7. Cidade Origem")
-            c8 = st.text_input("8. Cidade Destino")
-            c9 = st.date_input("9. Data de Início", format="DD/MM/YYYY")
-            c10 = st.time_input("10. Horário de Início")
-            c11 = st.text_input("11. Placa do Veículo")
-            c12 = st.number_input("12. KM Inicial", min_value=0)
+            c7 = st.text_input("Cidade Origem")
+            c8 = st.text_input("Cidade Destino")
+            c9 = st.date_input("Data de Início", format="DD/MM/YYYY")
+            c10 = st.time_input("Horário de Início")
+            c11 = st.text_input("Placa do Veículo")
+            c12 = st.number_input("KM Inicial", min_value=0)
 
         with col3:
             st.markdown("### 👮 Operacional")
-            c13 = st.text_input("13. Agente Líder")
-            c14 = st.text_area("14. Equipe de Apoio")
-            c15 = st.number_input("15. Valor Carga (R$)", min_value=0.0, format="%.2f")
-            c16 = st.text_input("16. Contato Base")
-            c17 = st.text_area("17. Observações")
+            c13 = st.text_input("Agente Líder")
+            c14 = st.text_area("Equipe de Apoio")
+            c15 = st.number_input("Valor Carga (R$)", min_value=0.0, format="%.2f")
+            c16 = st.text_input("Contato Base")
+            c17 = st.text_area("Observações")
 
-        # Botão de Envio
         enviar = st.form_submit_button("💾 SALVAR NO NOTION")
         if enviar:
             st.success(f"✅ O.S {c2} salva com sucesso!")
 
-# Rodapé final para todas as telas
+# Rodapé final
 st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
