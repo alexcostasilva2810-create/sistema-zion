@@ -1,141 +1,160 @@
 import streamlit as st
-import requests
-import pandas as pd
-from datetime import datetime
 
-# --- 1. CONFIGURAÇÃO INICIAL ---
-st.set_page_config(page_title="Zion Tecnologia", layout="wide", initial_sidebar_state="collapsed")
+# --- 1. CONFIGURAÇÃO INICIAL DA PÁGINA ---
+st.set_page_config(
+    page_title="Zion Gestão de Escolta",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# --- 2. MOTOR DE NAVEGAÇÃO ---
+# Inicializa o controle de navegação
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "🏠 HOME"
 
-def navegar(destino):
-    st.session_state.pagina = destino
-    st.rerun()
-
-# --- 3. BLOCO DE ESTILO (CSS) ---
+# --- 2. ESTILO CSS (O CORAÇÃO DO DESIGN) ---
 st.markdown("""
 <style>
-    [data-testid="stSidebar"], .stAlert { display: none !important; }
-    
+    /* Fundo Escuro Profissional */
     .stApp {
-        background: linear-gradient(rgba(0, 26, 64, 0.85), rgba(0, 26, 64, 0.85)), 
-                    url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000');
-        background-size: cover;
-        background-attachment: fixed;
-    }
-
-    h1 { color: white !important; text-align: center; font-size: 40px !important; font-weight: 800; margin-bottom: 50px; }
-
-    div.stButton > button {
-        width: 100%;
-        height: 80px !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 15px !important;
-        font-weight: bold !important;
-    }
-
-    .mostarda img { 
-        filter: invert(78%) sepia(35%) saturate(836%) hue-rotate(354deg) brightness(93%) contrast(92%) !important; 
-    }
-
-    .icon-box { text-align: center; margin-bottom: -10px; }
-    .icon-box img { width: 90px; }
-
-    .welcome-text {
+        background: #000b1a;
         color: white;
-        text-align: center;
-        font-size: 70px !important; 
-        font-weight: 900;
-        margin-top: 60px;
-        text-shadow: 4px 4px 15px rgba(0,0,0,0.8);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    .handshake-box { text-align: center; margin-top: 10px; }
-    .handshake-box img { width: 220px; filter: brightness(1.2); }
+    /* Esconde elementos padrão do Streamlit para limpeza total */
+    [data-testid="stSidebar"], .stHeader, .stFooter { display: none !important; }
+
+    /* Estilização da Saudação no Topo */
+    .welcome-text {
+        font-size: 50px;
+        font-weight: 800;
+        text-align: center;
+        margin-top: 30px;
+        margin-bottom: 40px;
+        color: #ffffff;
+        text-shadow: 0px 0px 20px rgba(0, 150, 255, 0.7);
+        letter-spacing: 2px;
+    }
+
+    /* BOTÕES 3D ESTILO "MÃO DE ROBÔ" */
+    .stButton > button {
+        width: 100% !important;
+        height: 70px !important;
+        background: linear-gradient(145deg, #0096ff, #005bb5) !important;
+        color: white !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        text-transform: uppercase;
+        border: none !important;
+        /* Bordas Assimétricas Futuristas */
+        border-radius: 45px 10px 45px 10px !important;
+        /* Sombras para Efeito 3D */
+        box-shadow: 0px 8px 0px #003d66, 0px 15px 25px rgba(0,0,0,0.5) !important;
+        transition: all 0.1s ease !important;
+        margin-bottom: 20px !important;
+        cursor: pointer;
+    }
+
+    /* Efeito de Pressão ao Clicar (Afundar) */
+    .stButton > button:active {
+        box-shadow: 0px 2px 0px #003d66 !important;
+        transform: translateY(6px) !important;
+    }
+
+    .stButton > button:hover {
+        filter: brightness(1.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* Rodapé Zion Gestão de Escolta */
+    .footer-zion {
+        position: fixed;
+        bottom: 20px;
+        left: 30px;
+        font-size: 15px;
+        font-weight: bold;
+        color: #0096ff;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        opacity: 0.8;
+    }
+
+    /* Efeito de brilho na imagem do robô */
+    [data-testid="stImage"] {
+        filter: drop-shadow(0px 0px 30px rgba(0, 150, 255, 0.3));
+        transition: transform 0.5s ease;
+    }
+    [data-testid="stImage"]:hover {
+        transform: scale(1.01);
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 4. BLOCO DA TELA HOME ---
+# --- 3. LÓGICA DE NAVEGAÇÃO ENTRE TELAS ---
+
+# --- TELA HOME (PRINCIPAL) ---
 if st.session_state.pagina == "🏠 HOME":
-    st.markdown("<h1>ZION BUSINESS</h1>", unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown('<div class="icon-box mostarda"><img src="https://cdn-icons-png.flaticon.com/512/1250/1250615.png"></div>', unsafe_allow_html=True)
-        if st.button("📝 NOVO LANÇAMENTO", key="bt_1"):
-            navegar("📋 CADASTRO")
-
-    with col2:
-        st.markdown('<div class="icon-box mostarda"><img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png"></div>', unsafe_allow_html=True)
-        if st.button("📊 VER AGENDAMENTOS", key="bt_2"):
-            navegar("📊 GRADE")
-
-    with col3:
-        st.markdown('<div class="icon-box"><img src="https://cdn-icons-png.flaticon.com/512/10543/10543111.png"></div>', unsafe_allow_html=True)
-        if st.button("💰 FINANCEIRO", key="bt_3"):
-            navegar("💰 FINANCEIRO")
-
-    st.markdown('<p class="welcome-text">Seja Bem Vindo ao Futuro</p>', unsafe_allow_html=True)
-    st.markdown('<div class="handshake-box"><img src="https://cdn-icons-png.flaticon.com/512/5909/5909249.png"></div>', unsafe_allow_html=True)
-
-# --- A PARTIR DAQUI COMEÇAM OS OUTROS BLOCOS (Cadastro, Grade, etc) ---
-# elif st.session_state.pagina == "📋 CADASTRO":
-# ... continue com seu código original ...    # Frase solicitada
-    st.markdown('<p class="welcome-text">Seja Bem Vindo ao Futuro</p>', unsafe_allow_html=True)# Os demais blocos (Cadastro, Grade, Financeiro) seguem sua lógica original abaixo
-elif st.session_state.pagina == "📋 CADASTRO":
-    edit = st.session_state.dados_edicao
-    st.header("📝 Formulário O.S")
-    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
     
-    with st.form("form_os"):
-        c1, c2, c3 = st.columns(3)
-        os_n = c1.text_input("Nº O.S", value=edit["Nº OS"] if edit else "")
-        dt_val = datetime.strptime(edit["DT_SAIDA_RAW"], '%Y-%m-%d') if edit and edit["DT_SAIDA_RAW"] else datetime.now()
-        dt_s = c2.date_input("DATA SAÍDA", value=dt_val, format="DD/MM/YYYY")
-        cli = c3.text_input("CLIENTE", value=edit["CLIENTE"] if edit else "")
-        
-        # ... (Mantive o restante do seu formulário igual para não perder dados)
-        obs = st.text_area("DESCRIÇÃO / OBSERVAÇÕES", value=edit.get("DESCRIÇÃO", "") if edit else "")
-        
-        if st.form_submit_button("✅ SALVAR OPERAÇÃO", type="primary"):
-            st.success("Dados prontos para envio!")
-            navegar("📊 GRADE")
+    # Saudação
+    st.markdown('<div class="welcome-text">Seja Bem Vindo ao Futuro</div>', unsafe_allow_html=True)
 
-elif st.session_state.pagina == "📊 GRADE":
-    st.header("📊 Ver Agendamentos")
-    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    dados = carregar_dados()
-    if dados:
-        for d in dados:
-            with st.expander(f"O.S {d['Nº OS']} - {d['CLIENTE']}"):
-                st.write(f"**Status:** {d['STATUS']} | **Valor:** R$ {d['VALOR']:,.2f}")
-                c1, c2 = st.columns(2)
-                if c1.button("✏️ EDITAR", key=f"ed_{d['ID']}", type="primary"):
-                    st.session_state.dados_edicao = d; navegar("📋 CADASTRO")
-                pdf_os = gerar_pdf_os(d)
-                c2.download_button("📄 GERAR PDF", pdf_os, f"OS_{d['Nº OS']}.pdf", key=f"p_{d['ID']}")
+    # Layout de Colunas: Botões à Esquerda, Robô à Direita
+    col_vazia_esq, col_btns, col_robo, col_vazia_dir = st.columns([0.2, 1, 1.3, 0.2], gap="large")
 
-elif st.session_state.pagina == "💰 FINANCEIRO":
-    st.header("💰 Financeiro")
-    if st.button("⬅️ VOLTAR"): navegar("🏠 HOME")
-    
-    c1, c2 = st.columns(2)
-    f_ini = c1.date_input("Início", value=datetime.now())
-    f_fim = c2.date_input("Fim", value=datetime.now())
-    
-    dados = carregar_dados()
-    if dados:
-        df = pd.DataFrame(dados)
-        df['dt_filter'] = pd.to_datetime(df['DT_SAIDA_RAW'])
-        df_filt = df[(df['dt_filter'] >= pd.Timestamp(f_ini)) & (df['dt_filter'] <= pd.Timestamp(f_fim))]
+    with col_btns:
+        st.write("##") # Espaçador para alinhar com o centro da imagem
         
-        st.metric("Total Faturado", f"R$ {df_filt['VALOR'].sum():,.2f}")
-        st.dataframe(df_filt[["Nº OS", "CLIENTE", "DT SAÍDA", "VALOR"]], use_container_width=True)
-        
-        pdf_fin = gerar_pdf_financeiro(df_filt, df_filt['VALOR'].sum(), f_ini, f_fim)
-        st.download_button("📥 BAIXAR RELATÓRIO PDF", pdf_fin, "financeiro.pdf", type="primary")
+        if st.button("🚀 LANÇAMENTO"):
+            st.session_state.pagina = "LANÇAMENTO"
+            st.rerun()
+            
+        if st.button("🛠️ ORDEM DE SERVIÇO"):
+            st.session_state.pagina = "ORDEM DE SERVIÇO"
+            st.rerun()
+            
+        if st.button("💰 FINANCEIRO"):
+            st.session_state.pagina = "FINANCEIRO"
+            st.rerun()
+            
+        if st.button("📊 EXTRATO"):
+            st.session_state.pagina = "EXTRATO"
+            st.rerun()
+
+    with col_robo:
+        st.image("https://img.freepik.com/premium-photo/humanoid-robot-head-with-human-features-futuristic-technology-concept-generative-ai_124507-44026.jpg", use_container_width=True)
+
+    # Rodapé fixo no canto inferior
+    st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
+
+# --- TELA DE LANÇAMENTO ---
+elif st.session_state.pagina == "LANÇAMENTO":
+    st.title("🚀 Novo Lançamento")
+    st.write("Área para inserção de dados de escolta.")
+    if st.button("⬅️ VOLTAR PARA HOME"):
+        st.session_state.pagina = "🏠 HOME"
+        st.rerun()
+
+# --- TELA DE ORDEM DE SERVIÇO ---
+elif st.session_state.pagina == "ORDEM DE SERVIÇO":
+    st.title("🛠️ Ordens de Serviço")
+    st.write("Gerenciamento de chamados e serviços.")
+    if st.button("⬅️ VOLTAR PARA HOME"):
+        st.session_state.pagina = "🏠 HOME"
+        st.rerun()
+
+# --- TELA DE FINANCEIRO ---
+elif st.session_state.pagina == "FINANCEIRO":
+    st.title("💰 Financeiro")
+    st.write("Controle de contas e pagamentos.")
+    if st.button("⬅️ VOLTAR PARA HOME"):
+        st.session_state.pagina = "🏠 HOME"
+        st.rerun()
+
+# --- TELA DE EXTRATO ---
+elif st.session_state.pagina == "EXTRATO":
+    st.title("📊 Extrato Geral")
+    st.write("Visualização de relatórios e movimentações.")
+    if st.button("⬅️ VOLTAR PARA HOME"):
+        st.session_state.pagina = "🏠 HOME"
+        st.rerun()
