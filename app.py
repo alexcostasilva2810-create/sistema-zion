@@ -1,145 +1,104 @@
 import streamlit as st
-import os
-import requests
+import pandas as pd
+from datetime import datetime
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
-# --- 1. CONFIGURAÇÃO INICIAL ---
-st.set_page_config(page_title="Zion Business", layout="wide", initial_sidebar_state="collapsed")
+# --- CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(page_title="Zion Sistema", layout="wide")
 
-# Chaves do Notion (COLOQUE AS SUAS AQUI)
-NOTION_TOKEN = "SEU_TOKEN_AQUI"
-DATABASE_ID = "SEU_ID_DA_TABELA_AQUI"
-
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = "🏠 HOME"
-
-# --- 2. ESTILO CSS (Labels Brancas / Texto Digitado Preto) ---
-st.markdown("""
-<style>
-    .stApp { background-color: #000b1a; color: white; }
-    [data-testid="stSidebar"], .stHeader, .stFooter { display: none !important; }
-    .welcome-text { font-size: 45px; font-weight: 800; text-align: center; text-shadow: 0px 0px 20px #0096ff; }
+# --- FUNÇÃO PARA CONECTAR AO GOOGLE SHEETS ---
+def conectar_google_sheets():
+    # Definição do escopo de acesso
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     
-    /* Nomes dos campos em BRANCO */
-    label { color: white !important; font-weight: bold !important; }
+    # Carrega as credenciais do arquivo JSON que você baixou
+    creds = ServiceAccountCredentials.from_json_keyfile_name('credenciais.json', scope)
+    client = gspread.authorize(creds)
     
-    /* Texto digitado em PRETO dentro das caixas brancas */
-    input, select, textarea { color: black !important; background-color: white !important; }
+    # SEU ID DA PLANILHA (Extraído da sua imagem da URL)
+    ID_PLANILHA = "1Rzm55i-k9PSIc3TUownF4wBiGkQz6laU-Lruy-dEZQM"
     
-    /* Botões da Home */
-    div.stButton > button {
-        width: 100% !important; height: 65px !important;
-        background: linear-gradient(145deg, #0096ff, #005bb5) !important;
-        color: white !important; border-radius: 40px 8px 40px 8px !important;
-        box-shadow: 0px 8px 0px #003d66 !important; margin-bottom: 15px !important;
-    }
-    .footer-zion { position: fixed; bottom: 20px; left: 40px; color: #0096ff; font-weight: bold; letter-spacing: 2px; }
-</style>
-""", unsafe_allow_html=True)
+    # Abre a planilha pelo ID e seleciona a primeira aba
+    sheet = client.open_by_key(ID_PLANILHA).sheet1
+    return sheet
 
-# --- 3. NAVEGAÇÃO ---
+# --- INTERFACE DO SISTEMA ZION ---
+st.title("⚓ ZION SISTEMA - CONTROLE OPERACIONAL")
 
-if st.session_state.pagina == "🏠 HOME":
-    st.markdown('<div class="welcome-text">Seja Bem Vindo ao Futuro</div>', unsafe_allow_html=True)
-    col_btns, col_robo = st.columns([1, 1.2], gap="large")
+# Criando as abas do sistema
+aba1, aba2 = st.tabs(["📝 Lançamento", "📊 Extrato"])
+
+with aba1:
+    st.subheader("Nova Ordem de Serviço")
     
-    with col_btns:
-        st.write("##")
-        if st.button("🚀 LANÇAMENTO"):
-            st.session_state.pagina = "LANÇAMENTO"
-            st.rerun()
-        if st.button("🛠️ ORDEM DE SERVIÇO"):
-            st.session_state.pagina = "OS"; st.rerun()
-        if st.button("💰 FINANCEIRO"):
-            st.session_state.pagina = "FINANCEIRO"; st.rerun()
-        if st.button("📊 EXTRATO"):
-            st.session_state.pagina = "EXTRATO"; st.rerun()
-
-    with col_robo:
-        if os.path.exists("robo_humanizado.jpg"):
-            st.image("robo_humanizado.jpg", use_container_width=True)
-    st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
-
-elif st.session_state.pagina == "LANÇAMENTO":
-    st.markdown('<div class="welcome-text" style="font-size:35px; margin-top:0px;">🚀 Ordens de Serviço</div>', unsafe_allow_html=True)
-    
-    # Estilo para labels brancas e texto digitado preto
-    st.markdown("""
-        <style>
-            label { color: white !important; font-weight: bold !important; }
-            input, select, textarea { color: black !important; background-color: white !important; }
-            .stMarkdown h3 { color: #0096ff !important; }
-        </style>
-    """, unsafe_allow_html=True)
-
-    if st.button("⬅️ VOLTAR PARA HOME"):
-        st.session_state.pagina = "🏠 HOME"
-        st.rerun()
-
-    with st.form("form_zion_notion"):
+    with st.form("form_lancamento", clear_on_submit=True):
         col1, col2, col3 = st.columns(3)
+        
         with col1:
-            st.markdown("### 📝 Identificação")
-            f1_os = st.text_input("1. Nº O.S.")
-            f2_cliente = st.text_input("2. CLIENTE")
-            f3_inicio = st.date_input("3. INÍCIO DA MISSÃO", format="DD/MM/YYYY")
-            f4_tipo = st.selectbox("4. TIPO", ["ESCOLTA", "VIGILANTE"])
-            f5_embarque = st.time_input("5. HORA DE EMBARQUE")
-            f6_local = st.text_input("6. LOCAL")
+            f1_os = st.text_input("Nº O.S")
+            f2_pedido = st.text_input("Nº Pedido")
+            f3_cliente = st.text_input("Cliente")
+            f4_tipo = st.selectbox("Tipo de Serviço", ["Escolta", "Empurrador", "Balsa", "Outros"])
+            
         with col2:
-            st.markdown("### 🕒 Cronograma")
-            f7_empurrador = st.text_input("7. EMPURRADOR")
-            f8_dt_saida = st.date_input("8. DT SAÍDA", format="DD/MM/YYYY")
-            f9_fim = st.date_input("9. FIM DA MISSÃO", format="DD/MM/YYYY")
-            f10_status = st.selectbox("10. STATUS", ["Em Andamento", "Encerrado", "Cancelado"])
-            f11_servico = st.text_input("11. SERVIÇO")
-            f12_escolta1 = st.text_input("12. ESCOLTA 1")
+            f5_inicio = st.date_input("Data Início")
+            f6_fim = st.date_input("Data Fim")
+            f7_hora = st.time_input("Horário")
+            f8_saida = st.date_input("Data Saída")
+            
         with col3:
-            st.markdown("### 🚢 Detalhes")
-            f13_escolta2 = st.text_input("13. ESCOLTA 2")
-            f14_balsa = st.text_input("14. BALSA")
-            f15_destino = st.text_input("15. DESTINO")
-            f16_desc = st.text_area("16. DESCRIÇÃO")
-            f17_assinatura = st.text_input("17. ASSINATURA")
+            f9_empurrador = st.text_input("Empurrador")
+            f10_escolta1 = st.text_input("Escolta 01")
+            f11_escolta2 = st.text_input("Escolta 02")
+            f12_local = st.text_input("Localização")
 
-        if st.form_submit_button("💾 SALVAR NO NOTION"):
-            # Cabeçalhos da API
-            headers = {
-                "Authorization": f"Bearer {NOTION_TOKEN}",
-                "Content-Type": "application/json",
-                "Notion-Version": "2022-06-28"
-            }
+        col4, col5, col6 = st.columns(3)
+        with col4:
+            f13_destino = st.text_input("Destino")
+            f14_balsa = st.text_input("Balsa")
+        with col5:
+            f15_status = st.selectbox("Status", ["Em andamento", "Concluído", "Pendente"])
+            f16_desc = st.text_area("Descrição do Serviço")
+        with col6:
+            f17_assinatura = st.text_input("Assinado por")
 
-            # Payload com todas as 17 colunas
-            payload = {
-                "parent": {"database_id": DATABASE_ID},
-                "properties": {
-                    "Nº O.S.": {"title": [{"text": {"content": f1_os}}]},
-                    "CLIENTE": {"rich_text": [{"text": {"content": f2_cliente}}]},
-                    "INÍCIO DA MISSÃO": {"date": {"start": f3_inicio.isoformat()}},
-                    "TIPO": {"select": {"name": f4_tipo}},
-                    "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": str(f5_embarque)}}]},
-                    "LOCAL": {"rich_text": [{"text": {"content": f6_local}}]},
-                    "EMPURRADOR": {"rich_text": [{"text": {"content": f7_empurrador}}]},
-                    "DT SAÍDA": {"date": {"start": f8_dt_saida.isoformat()}},
-                    "FIM DA MISSÃO": {"date": {"start": f9_fim.isoformat()}},
-                    "STATUS": {"select": {"name": f10_status}},
-                    "SERVIÇO": {"rich_text": [{"text": {"content": f11_servico}}]},
-                    "ESCOLTA 1": {"rich_text": [{"text": {"content": f12_escolta1}}]},
-                    "ESCOLTA 2": {"rich_text": [{"text": {"content": f13_escolta2}}]},
-                    "BALSA": {"rich_text": [{"text": {"content": f14_balsa}}]},
-                    "DESTINO": {"rich_text": [{"text": {"content": f15_destino}}]},
-                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": f16_desc}}]},
-                    "ASSINATURA": {"rich_text": [{"text": {"content": f17_assinatura}}]}
-                }
-            }
+        # BOTÃO DE SALVAR
+        botao_salvar = st.form_submit_button("💾 SALVAR NA BASE BD ZION")
 
+        if botao_salvar:
             try:
-                res = requests.post("https://api.notion.com/v1/pages", headers=headers, json=payload)
-                if res.status_code == 200:
-                    st.success(f"✅ O.S. {f1_os} registrada com sucesso!")
-                elif res.status_code == 401:
-                    st.error("❌ Erro 401: Token inválido ou sem permissão. Verifique a conexão no Notion!")
-                else:
-                    st.error(f"❌ Erro: {res.text}")
+                # 1. Conecta na planilha
+                sheet = conectar_google_sheets()
+                
+                # 2. Organiza os dados na ordem das colunas A até Q da sua planilha
+                nova_linha = [
+                    f1_os, f2_pedido, f3_cliente, f4_tipo, 
+                    str(f5_inicio), str(f6_fim), str(f7_hora), str(f8_saida),
+                    f9_empurrador, f10_escolta1, f11_escolta2, 
+                    f12_local, f13_destino, f14_balsa, 
+                    f15_status, f16_desc, f17_assinatura
+                ]
+                
+                # 3. Envia para o Google Sheets
+                sheet.append_row(nova_linha)
+                
+                st.success(f"✅ Sucesso! O.S {f1_os} registrada na planilha BD ZION.")
+                st.balloons()
+                
             except Exception as e:
-                st.error(f"⚠️ Erro de conexão: {e}")
+                st.error(f"❌ Erro ao salvar: {e}")
+
+with aba2:
+    st.subheader("Consulta de Dados Real")
+    if st.button("🔄 Atualizar Extrato"):
+        try:
+            sheet = conectar_google_sheets()
+            dados = sheet.get_all_records()
+            if dados:
+                df = pd.DataFrame(dados)
+                st.dataframe(df, use_container_width=True)
+            else:
+                st.warning("A planilha está vazia.")
+        except Exception as e:
+            st.error(f"Não foi possível carregar os dados: {e}")
