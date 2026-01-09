@@ -81,15 +81,24 @@ if st.session_state.pagina == "🏠 HOME":
     st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
 
 elif st.session_state.pagina == "LANÇAMENTO":
-    # Título da tela conforme sua solicitação
+    # Título da tela
     st.markdown('<div class="welcome-text" style="font-size:35px; margin-top:0px;">🚀 Ordens de Serviço</div>', unsafe_allow_html=True)
     
-    # CSS para garantir que todas as letras dos campos fiquem BRANCAS
+    # CSS AJUSTADO: Labels em Branco e Texto digitado em Preto
     st.markdown("""
         <style>
-            label { color: white !important; font-weight: bold !important; font-size: 15px !important; }
+            /* Cor dos nomes dos campos (Labels) */
+            label { 
+                color: white !important; 
+                font-weight: bold !important; 
+                font-size: 15px !important; 
+            }
+            /* Cor do texto que é DIGITADO dentro dos campos */
+            input, select, textarea { 
+                color: black !important; 
+                background-color: white !important; /* Fundo branco para o texto preto aparecer bem */
+            }
             .stMarkdown h3 { color: #0096ff !important; }
-            input { color: white !important; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -99,17 +108,16 @@ elif st.session_state.pagina == "LANÇAMENTO":
 
     st.write("---")
 
-    # Formulário com os 17 campos (Nº O.S. como primeiro campo)
+    # Formulário com os 17 campos (Nº O.S. como primeiro)
     with st.form("form_notion_zion"):
         col1, col2, col3 = st.columns(3)
 
         with col1:
             st.markdown("### 📝 Identificação")
-            # CAMPO Nº 1: AGORA É O NÚMERO DA O.S.
             f1_os = st.text_input("1. Nº O.S.") 
             f2_cliente = st.text_input("2. CLIENTE")
             f3_inicio = st.date_input("3. INÍCIO DA MISSÃO", format="DD/MM/YYYY")
-            f4_tipo = st.selectbox("4. TIPO", ["ESCOLTA", "VIGILANTE"])
+            f4_tipo = st.selectbox("4. TIPO", ["Ostensiva", "Velada", "Fixo"])
             f5_embarque = st.time_input("5. HORA DE EMBARQUE")
             f6_local = st.text_input("6. LOCAL")
 
@@ -132,12 +140,11 @@ elif st.session_state.pagina == "LANÇAMENTO":
 
         st.write("---")
         
-        # Botão de salvamento
+        # Botão de envio
         if st.form_submit_button("💾 SALVAR NA BASE DE DADOS NOTION"):
             if f1_os:
-                st.success(f"✅ Ordem de Serviço Nº {f1_os} para {f2_cliente} registrada com sucesso!")
+                st.success(f"✅ Ordem de Serviço Nº {f1_os} salva com sucesso!")
             else:
-                st.warning("⚠️ Por favor, preencha o Nº da O.S.")
+                st.error("⚠️ O campo Nº O.S. é obrigatório.")
 
-    # Rodapé Zion
     st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
