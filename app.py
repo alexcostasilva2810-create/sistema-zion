@@ -80,24 +80,20 @@ if st.session_state.pagina == "🏠 HOME":
 
     st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
 
+import requests # Certifique-se de ter instalado: pip install requests
+
 elif st.session_state.pagina == "LANÇAMENTO":
-    # Título da tela
+    # --- CONFIGURAÇÕES DO NOTION (Substitua pelos seus dados) ---
+    NOTION_TOKEN = "seu_token_aqui"
+    DATABASE_ID = "seu_id_da_base_aqui"
+
     st.markdown('<div class="welcome-text" style="font-size:35px; margin-top:0px;">🚀 Ordens de Serviço</div>', unsafe_allow_html=True)
     
-    # CSS AJUSTADO: Labels em Branco e Texto digitado em Preto
+    # CSS para Labels em Branco e Texto digitado em Preto
     st.markdown("""
         <style>
-            /* Cor dos nomes dos campos (Labels) */
-            label { 
-                color: white !important; 
-                font-weight: bold !important; 
-                font-size: 15px !important; 
-            }
-            /* Cor do texto que é DIGITADO dentro dos campos */
-            input, select, textarea { 
-                color: black !important; 
-                background-color: white !important; /* Fundo branco para o texto preto aparecer bem */
-            }
+            label { color: white !important; font-weight: bold !important; }
+            input, select, textarea { color: black !important; background-color: white !important; }
             .stMarkdown h3 { color: #0096ff !important; }
         </style>
     """, unsafe_allow_html=True)
@@ -106,21 +102,16 @@ elif st.session_state.pagina == "LANÇAMENTO":
         st.session_state.pagina = "🏠 HOME"
         st.rerun()
 
-    st.write("---")
-
-    # Formulário com os 17 campos (Nº O.S. como primeiro)
     with st.form("form_notion_zion"):
         col1, col2, col3 = st.columns(3)
-
         with col1:
             st.markdown("### 📝 Identificação")
             f1_os = st.text_input("1. Nº O.S.") 
             f2_cliente = st.text_input("2. CLIENTE")
             f3_inicio = st.date_input("3. INÍCIO DA MISSÃO", format="DD/MM/YYYY")
-            f4_tipo = st.selectbox("4. TIPO", ["Ostensiva", "Velada", "Fixo"])
+            f4_tipo = st.selectbox("4. TIPO", ["ESCOLTA", "VIGILANTE"])
             f5_embarque = st.time_input("5. HORA DE EMBARQUE")
-            f6_local = st.text_input("6. LOCAL")
-
+            f6_local = st.text_input("6. ORIGEM")
         with col2:
             st.markdown("### 🕒 Cronograma")
             f7_empurrador = st.text_input("7. EMPURRADOR")
@@ -129,22 +120,52 @@ elif st.session_state.pagina == "LANÇAMENTO":
             f10_status = st.selectbox("10. STATUS", ["Em Andamento", "Encerrado", "Cancelado"])
             f11_servico = st.text_input("11. SERVIÇO")
             f12_escolta1 = st.text_input("12. ESCOLTA 1")
-
         with col3:
-            st.markdown("### 🚢 Detalhes da Operação")
+            st.markdown("### 🚢 Detalhes")
             f13_escolta2 = st.text_input("13. ESCOLTA 2")
             f14_balsa = st.text_input("14. BALSA")
             f15_destino = st.text_input("15. DESTINO")
             f16_descricao = st.text_area("16. DESCRIÇÃO")
             f17_assinatura = st.text_input("17. ASSINATURA")
 
-        st.write("---")
-        
-        # Botão de envio
         if st.form_submit_button("💾 SALVAR NA BASE DE DADOS NOTION"):
-            if f1_os:
-                st.success(f"✅ Ordem de Serviço Nº {f1_os} salva com sucesso!")
-            else:
-                st.error("⚠️ O campo Nº O.S. é obrigatório.")
+            # Lógica de Integração API Notion
+            headers = {
+                "Authorization": "Bearer " + NOTION_TOKEN,
+                "Content-Type": "application/json",
+                "Notion-Version": "2022-06-28"
+            }
+
+            dados_notion = {
+                "parent": {"database_id": DATABASE_ID},
+                "properties": {
+                    "Nº O.S.": {"title": [{"text": {"content": f1_os}}]},
+                    "CLIENTE": {"rich_text": [{"text": {"content": f2_cliente}}]},
+                    "INÍCIO DA MISSÃO": {"date": {"start": f3_inicio.isoformat()}},
+                    "TIPO": {"select": {"name": f4_tipo}},
+                    "HORA DE EMBARQUE": {"rich_text": [{"text": {"content": str(f5_embarque)}}]},
+                    "LOCAL": {"rich_text": [{"text": {"content": f6_local}}]},
+                    "EMPURRADOR": {"rich_text": [{"text": {"content": f7_empurrador}}]},
+                    "DT SAÍDA": {"date": {"start": f8_dt_saida.isoformat()}},
+                    "FIM DA MISSÃO": {"date": {"start": f9_fim_missao.isoformat()}},
+                    "STATUS": {"select": {"name": f10_status}},
+                    "SERVIÇO": {"rich_text": [{"text": {"content": f11_servico}}]},
+                    "ESCOLTA 1": {"rich_text": [{"text": {"content": f12_escolta1}}]},
+                    "ESCOLTA 2": {"rich_text": [{"text": {"content": f13_escolta2}}]},
+                    "BALSA": {"rich_text": [{"text": {"content": f14_balsa}}]},
+                    "DESTINO": {"rich_text": [{"text": {"content": f15_destino}}]},
+                    "DESCRIÇÃO": {"rich_text": [{"text": {"content": f16_descricao}}]},
+                    "ASSINATURA": {"rich_text": [{"text": {"content": f17_assinatura}}]}
+                }
+            }
+
+            try:
+                response = requests.post("https://api.notion.com/v1/pages", headers=headers, json=dados_notion)
+                if response.status_code == 200:
+                    st.success(f"✅ O.S. {f1_os} enviada com sucesso para o Notion!")
+                else:
+                    st.error(f"❌ Erro ao salvar: {response.text}")
+            except Exception as e:
+                st.error(f"⚠️ Falha de conexão: {e}")
 
     st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
