@@ -98,7 +98,52 @@ if st.session_state.pagina == "🏠 HOME":
     st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
 
 # Lógica básica para voltar das outras telas
-elif st.session_state.pagina in ["LANÇAMENTO", "OS", "FINANCEIRO", "EXTRATO"]:
-    st.title(f"Tela: {st.session_state.pagina}")
-    if st.button("⬅️ VOLTAR PARA HOME"):
-        st.session_state.pagina = "🏠 HOME"; st.rerun()
+elif rua.estado_da_sessão.página == "LANÇAMENTO":
+    # Título estilizado
+    rua.markdown('<div class="welcome-text" style="font-size:38px; margin-top:0px;">🚀 Painel de Lançamento</div>', unsafe_allow_html=Verdadeiro)
+    
+    # Botão Voltar
+    se rua.botão("⬅️ VOLTAR PARA CASA"):
+        rua.estado_da_sessão.página = "🏠 CASA"
+        rua.reprise()
+
+    rua.escrever("---")
+
+    # Formulário com as 17 colunas para o Notion
+    com rua.formulário("form_lancamento"):
+        col1, col2, col3 = rua.colunas(3)
+
+        com col1:
+            rua.subcabeçalho("📋 Identificação")
+            c1 = rua.entrada_de_texto("1. Nome do Cliente")
+            c2 = rua.entrada_de_texto("2. Número da O.S.")
+            c3 = rua.entrada_de_data("3. Data da Solicitação", formato="DD/MM/YYYY")
+            c4 = rua.caixa_de_seleção("4. Tipo de Escolta", ["Velado", "Ostensivo", "Fixo"])
+            c5 = rua.caixa_de_seleção("5. Status", ["Agendado", "Em Andamento", "Finalizado"])
+            c6 = rua.seletor_deslizante("6. Prioridade", opções=["Baixa", "Média", "Alta", "Urgente"])
+
+        com col2:
+            rua.subcabeçalho("📍 Rota e Logística")
+            c7 = rua.entrada_de_texto("7. Cidade Origem")
+            c8 = rua.entrada_de_texto("8. Cidade Destino")
+            c9 = rua.entrada_de_data("9. Previsão de Início", formato="DD/MM/YYYY")
+            c10 = rua.entrada_de_hora("10. Horário de Início")
+            c11 = rua.entrada_de_texto("11. Placa do Veículo")
+            c12 = rua.entrada_de_número("12. KM Inicial", valor_mínimo=0)
+
+        com col3:
+            rua.subcabeçalho("👮 Operacional")
+            c13 = rua.entrada_de_texto("13. Agente Líder")
+            c14 = rua.área_de_texto("14. Equipe de Apoio")
+            c15 = rua.entrada_de_número("15. Valor da Carga (R$)", valor_mínimo=0.0, formato="%.2f")
+            c16 = rua.entrada_de_texto("16. Contato na Base")
+            c17 = rua.área_de_texto("17. Observações Gerais")
+
+        rua.escrever("---")
+        
+        # Botão de salvar
+        se rua.botão_de_envio_do_formulário("💾 SALVAR NO NOTION"):
+            rua.sucesso(f"✅ Dados da O.S {c2} registrados com sucesso!")
+
+    # Rodapé Zion
+    rua.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=Verdadeiro)
