@@ -81,14 +81,15 @@ if st.session_state.pagina == "🏠 HOME":
     st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
 
 elif st.session_state.pagina == "LANÇAMENTO":
-    # 1. Título alterado conforme solicitado
+    # Título da tela conforme sua solicitação
     st.markdown('<div class="welcome-text" style="font-size:35px; margin-top:0px;">🚀 Ordens de Serviço</div>', unsafe_allow_html=True)
     
-    # CSS para garantir que as etiquetas (labels) dos campos fiquem brancas e visíveis
+    # CSS para garantir que todas as letras dos campos fiquem BRANCAS
     st.markdown("""
         <style>
             label { color: white !important; font-weight: bold !important; font-size: 15px !important; }
             .stMarkdown h3 { color: #0096ff !important; }
+            input { color: white !important; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -98,42 +99,45 @@ elif st.session_state.pagina == "LANÇAMENTO":
 
     st.write("---")
 
-    # Formulário com os 17 campos mapeados do seu vídeo do Notion
+    # Formulário com os 17 campos (Nº O.S. como primeiro campo)
     with st.form("form_notion_zion"):
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.markdown("### 📝 Principal")
-            f1_cliente = st.text_input("1. CLIENTE")
-            f2_inicio = st.date_input("2. INÍCIO DA MISSÃO", format="DD/MM/YYYY")
-            f3_tipo = st.selectbox("3. TIPO", ["ESCOLTA", "VIGILANTE"])
-            f4_embarque = st.time_input("4. HORA DE EMBARQUE")
-            f5_local = st.text_input("5. LOCAL")
-            f6_empurrador = st.text_input("6. EMPURRADOR")
+            st.markdown("### 📝 Identificação")
+            # CAMPO Nº 1: AGORA É O NÚMERO DA O.S.
+            f1_os = st.text_input("1. Nº O.S.") 
+            f2_cliente = st.text_input("2. CLIENTE")
+            f3_inicio = st.date_input("3. INÍCIO DA MISSÃO", format="DD/MM/YYYY")
+            f4_tipo = st.selectbox("4. TIPO", ["ESCOLTA", "VIGILANTE"])
+            f5_embarque = st.time_input("5. HORA DE EMBARQUE")
+            f6_local = st.text_input("6. LOCAL")
 
         with col2:
             st.markdown("### 🕒 Cronograma")
-            f7_dt_saida = st.date_input("7. DT SAÍDA", format="DD/MM/YYYY")
-            f8_fim_missao = st.date_input("8. FIM DA MISSÃO", format="DD/MM/YYYY")
-            f9_status = st.selectbox("9. STATUS", ["Em Andamento", "Encerrado"])
-            f10_servico = st.text_input("10. SERVIÇO")
-            f11_escolta1 = st.text_input("11. ESCOLTA 1")
-            f12_escolta2 = st.text_input("12. ESCOLTA 2")
+            f7_empurrador = st.text_input("7. EMPURRADOR")
+            f8_dt_saida = st.date_input("8. DT SAÍDA", format="DD/MM/YYYY")
+            f9_fim_missao = st.date_input("9. FIM DA MISSÃO", format="DD/MM/YYYY")
+            f10_status = st.selectbox("10. STATUS", ["Em Andamento", "Encerrado", "Cancelado"])
+            f11_servico = st.text_input("11. SERVIÇO")
+            f12_escolta1 = st.text_input("12. ESCOLTA 1")
 
         with col3:
-            st.markdown("### 🚢 Detalhes")
-            f13_balsa = st.text_input("13. BALSA")
-            f14_destino = st.text_input("14. DESTINO")
-            f15_descricao = st.text_area("15. DESCRIÇÃO")
-            f16_assinatura = st.text_input("16. ASSINATURA")
-            f17_selecao = st.checkbox("17. FINALIZAR LANÇAMENTO")
+            st.markdown("### 🚢 Detalhes da Operação")
+            f13_escolta2 = st.text_input("13. ESCOLTA 2")
+            f14_balsa = st.text_input("14. BALSA")
+            f15_destino = st.text_input("15. DESTINO")
+            f16_descricao = st.text_area("16. DESCRIÇÃO")
+            f17_assinatura = st.text_input("17. ASSINATURA")
 
         st.write("---")
         
         # Botão de salvamento
         if st.form_submit_button("💾 SALVAR NA BASE DE DADOS NOTION"):
-            # Feedback visual de sucesso
-            st.success(f"✅ Ordem de Serviço para {f1_cliente} registrada com sucesso!")
-            st.info("As informações foram mapeadas para as 17 colunas da sua base de dados.")
+            if f1_os:
+                st.success(f"✅ Ordem de Serviço Nº {f1_os} para {f2_cliente} registrada com sucesso!")
+            else:
+                st.warning("⚠️ Por favor, preencha o Nº da O.S.")
 
+    # Rodapé Zion
     st.markdown('<div class="footer-zion">ZION GESTÃO DE ESCOLTA</div>', unsafe_allow_html=True)
